@@ -38,6 +38,7 @@ test('converts entry to array', function () {
         'meta' => [],
         'slugs' => ['es' => 'nosotros', 'en' => 'about'],
         'mtime' => 0,
+        'tags' => [],
     ];
 
     $entry = Entry::fromArray($data);

@@ -11,6 +11,7 @@ final class Entry
     /**
      * @param array<string, mixed> $meta
      * @param array<string, string> $slugs
+     * @param list<string> $tags
      */
     public function __construct(
         private string $title,
@@ -25,6 +26,7 @@ final class Entry
         private array $meta = [],
         private array $slugs = [],
         private int $mtime = 0,
+        private array $tags = [],
     ) {
     }
 
@@ -48,6 +50,7 @@ final class Entry
             meta: $data['meta'] ?? [],
             slugs: $data['slugs'] ?? [],
             mtime: (int) ($data['mtime'] ?? 0),
+            tags: $data['tags'] ?? [],
         );
     }
 
@@ -69,6 +72,7 @@ final class Entry
             'meta' => $this->meta,
             'slugs' => $this->slugs,
             'mtime' => $this->mtime,
+            'tags' => $this->tags,
         ];
     }
 
@@ -82,6 +86,9 @@ final class Entry
     public function order(): int { return $this->order; }
     public function isDraft(): bool { return $this->draft; }
     public function mtime(): int { return $this->mtime; }
+
+    /** @return list<string> */
+    public function tags(): array { return $this->tags; }
 
     /**
      * @return array<string, mixed>

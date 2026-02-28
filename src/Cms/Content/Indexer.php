@@ -63,9 +63,15 @@ final class Indexer
             }
 
             $files = glob($collectionPath . '/*.md') ?: [];
+            $scheduleChecker = new ScheduleChecker(dirname($this->contentPath));
             foreach ($files as $file) {
                 $entry = $this->indexFile($file, $collectionName);
                 if ($entry === null || $entry['draft']) {
+                    continue;
+                }
+
+                // Skip entries with future publish_date
+                if (!$scheduleChecker->shouldPublish($entry)) {
                     continue;
                 }
 

@@ -186,6 +186,22 @@ final class Application
             $config = $container->get('config');
             return new \Rkn\Cms\Mail\Mailer($config['mail'] ?? []);
         });
+
+        // Event Dispatcher
+        $container->set(\Rkn\Cms\Events\EventDispatcher::class, function () use ($container, $basePath) {
+            $dispatcher = new \Rkn\Cms\Events\EventDispatcher();
+
+            // Register webhooks from config
+            $config = $container->get('config');
+            $webhooks = $config['webhooks'] ?? [];
+            if (!empty($webhooks)) {
+                $queue = new \Rkn\Cms\Queue\FileQueue($basePath);
+                \Rkn\Cms\Events\WebhookListener::registerFromConfig($webhooks, $dispatcher, $queue);
+            }
+
+            return $dispatcher;
+        });
+        $container->set('events', fn () => $container->get(\Rkn\Cms\Events\EventDispatcher::class));
     }
 
     private function registerRoutes(): void

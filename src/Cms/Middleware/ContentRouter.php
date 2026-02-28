@@ -9,9 +9,11 @@ use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
+use Rkn\Cms\Content\DraftResolver;
 use Rkn\Cms\Content\Entry;
 use Rkn\Cms\Content\Indexer;
 use Rkn\Cms\Content\Query;
+use Rkn\Cms\Content\TaxonomyRouter;
 use Rkn\Cms\Template\Engine;
 use Symfony\Component\Yaml\Yaml;
 
@@ -37,6 +39,14 @@ final class ContentRouter implements MiddlewareInterface
         }
 
         $entry = null;
+        $currentPageNumber = 1;
+
+        // Detect pagination: /{collection}/page/{n}
+        if (count($segments) === 3 && $segments[1] === 'page' && ctype_digit($segments[2])) {
+            $currentPageNumber = (int) $segments[2];
+            // Remove page segments, keep collection for template resolution
+            $segments = [$segments[0]];
+        }
 
         if (empty($segments) || (count($segments) === 1 && $segments[0] === '')) {
             // Homepage: try empty slug first (frontmatter slugs.es: ""), then named slugs
@@ -68,6 +78,66 @@ final class ContentRouter implements MiddlewareInterface
             }
         }
 
+        // Taxonomy routes: /{collection}/tag/{tag}, /{collection}/archive/{year}/{month}
+        if ($entry === null && count($segments) >= 3) {
+            $taxonomyRouter = new TaxonomyRouter();
+            $taxonomy = $taxonomyRouter->resolve($segments, $locale, $query);
+
+            if ($taxonomy !== null) {
+                $container = \app();
+                $container->set('content.query', fn () => new Query($index));
+                $container->set('locale', $locale);
+                $container->set('current_page_number', $currentPageNumber);
+
+                $globals = $this->loadGlobals($basePath, $locale);
+                $engine = Engine::create($basePath);
+                $templateDir = $basePath . '/templates';
+
+                // Resolve taxonomy template
+                $templateName = 'taxonomy/' . $taxonomy['type'] . '.twig';
+                if (!file_exists($templateDir . '/' . $templateName)) {
+                    $templateName = '_layouts/taxonomy.twig';
+                    if (!file_exists($templateDir . '/' . $templateName)) {
+                        $templateName = '_layouts/page.twig';
+                    }
+                }
+
+                $html = $engine->render($templateName, [
+                    'taxonomy_type' => $taxonomy['type'],
+                    'taxonomy_value' => $taxonomy['value'],
+                    'taxonomy_collection' => $taxonomy['collection'],
+                    'taxonomy_entries' => $taxonomy['query'],
+                    'locale' => $locale,
+                    'site' => $globals['site'] ?? [],
+                    'nav' => $globals['nav'] ?? [],
+                    'globals' => $globals,
+                ]);
+
+                return new Response(200, ['Content-Type' => 'text/html; charset=UTF-8'], $html);
+            }
+        }
+
+        // Draft preview: try finding a draft if preview token is valid
+        $isPreview = false;
+        if ($entry === null) {
+            $previewToken = $request->getQueryParams()['preview'] ?? '';
+            if ($previewToken !== '') {
+                $draftResolver = new DraftResolver($basePath);
+                if ($draftResolver->isValidToken($previewToken)) {
+                    $collection = 'pages';
+                    $slug = '';
+                    if (count($segments) === 1) {
+                        $slug = $segments[0];
+                    } elseif (count($segments) === 2) {
+                        $collection = $segments[0];
+                        $slug = $segments[1];
+                    }
+                    $entry = $draftResolver->findDraft($collection, $locale, $slug);
+                    $isPreview = $entry !== null;
+                }
+            }
+        }
+
         if ($entry === null) {
             return $handler->handle($request);
         }
@@ -77,6 +147,7 @@ final class ContentRouter implements MiddlewareInterface
         $container->set('current_entry', $entry);
         $container->set('content.query', fn () => new Query($index));
         $container->set('locale', $locale);
+        $container->set('current_page_number', $currentPageNumber);
 
         // Resolve template
         $templateName = $this->resolveTemplate($entry, $basePath);
@@ -94,6 +165,11 @@ final class ContentRouter implements MiddlewareInterface
             'nav' => $globals['nav'] ?? [],
             'globals' => $globals,
         ]);
+
+        // Inject draft banner for preview mode
+        if ($isPreview) {
+            $html = (new DraftResolver($basePath))->injectDraftBanner($html);
+        }
 
         return new Response(200, ['Content-Type' => 'text/html; charset=UTF-8'], $html);
     }

@@ -6,6 +6,7 @@ namespace Rkn\Cms\Cli;
 
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\Helper\QuestionHelper;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -70,6 +71,7 @@ final class ServeCommand extends Command
     private function handlePortConflict(string $host, int $port, InputInterface $input, OutputInterface $output): int|false
     {
         while ($this->isPortInUse($host, $port)) {
+            /** @var QuestionHelper $helper */
             $helper = $this->getHelper('question');
             $question = new ChoiceQuestion(
                 sprintf('<comment>El puerto %d ya está en uso. ¿Qué deseas hacer?</comment>', $port),
