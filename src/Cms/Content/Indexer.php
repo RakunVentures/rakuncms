@@ -11,11 +11,13 @@ final class Indexer
 {
     private string $contentPath;
     private string $cachePath;
+    private string $defaultLocale;
 
     public function __construct(string $basePath)
     {
         $this->contentPath = $basePath . '/content';
         $this->cachePath = $basePath . '/cache/content-index.php';
+        $this->defaultLocale = $this->resolveDefaultLocale($basePath);
     }
 
     /**
@@ -177,12 +179,30 @@ final class Indexer
             }
         }
 
-        // Default locale
+        return $this->defaultLocale;
+    }
+
+    /**
+     * Resolve default locale from config file or Application container.
+     */
+    private function resolveDefaultLocale(string $basePath): string
+    {
+        // Try Application container first
         try {
             return \config('site.default_locale', 'es');
         } catch (\Throwable) {
-            return 'es';
         }
+
+        // Fallback: read config file directly
+        $configFile = $basePath . '/config/rakun.yaml';
+        if (file_exists($configFile)) {
+            $config = Yaml::parseFile($configFile);
+            if (is_array($config) && isset($config['site']['default_locale'])) {
+                return (string) $config['site']['default_locale'];
+            }
+        }
+
+        return 'es';
     }
 
     /**

@@ -96,17 +96,24 @@ class InitCommand extends Command
         return <<<'PHP'
 <?php
 
+declare(strict_types=1);
+
 require __DIR__ . '/../vendor/autoload.php';
 
 $app = new \Rkn\Framework\Application(dirname(__DIR__));
 
+$basePath = $app->getBasePath();
+$pageCache = new \Rkn\Cms\Cache\PageCache($basePath . '/cache/pages');
+$cacheEnabled = $app->config('cache.page_cache', true);
+
 // PSR-15 Middleware Pipeline
 $app->pipe(new \Rkn\Cms\Middleware\ErrorHandler());
-$app->pipe(new \Rkn\Cms\Middleware\PageCacheReader());
+$app->pipe(new \Rkn\Cms\Middleware\PageCacheReader($pageCache, $cacheEnabled));
+$app->pipe(new \Rkn\Cms\Middleware\ApiDispatcher());
 $app->pipe(new \Rkn\Cms\Middleware\LocaleDetector());
 $app->pipe(new \Rkn\Cms\Middleware\ContentRouter());
 $app->pipe(new \Rkn\Cms\Middleware\YoyoHandler());
-$app->pipe(new \Rkn\Cms\Middleware\PageCacheWriter());
+$app->pipe(new \Rkn\Cms\Middleware\PageCacheWriter($pageCache, $cacheEnabled));
 
 $app->run();
 PHP;

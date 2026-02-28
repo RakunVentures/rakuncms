@@ -41,6 +41,7 @@ final class ContentRouter implements MiddlewareInterface
         if (empty($segments) || (count($segments) === 1 && $segments[0] === '')) {
             // Homepage: try empty slug first (frontmatter slugs.es: ""), then named slugs
             $entry = $query->findBySlug('pages', $locale, '')
+                ?? $query->findBySlug('pages', $locale, 'index')
                 ?? $query->findBySlug('pages', $locale, 'home')
                 ?? $query->findBySlug('pages', $locale, 'inicio');
         } elseif (count($segments) === 1) {

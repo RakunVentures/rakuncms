@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Rkn\Cms\Template;
 
+use Clickfwd\Yoyo\Services\Configuration as YoyoConfiguration;
+use Clickfwd\Yoyo\Twig\YoyoTwigExtension;
 use Rkn\Cms\Template\Extensions\AssetExtension;
 use Rkn\Cms\Template\Extensions\ContentExtension;
 use Rkn\Cms\Template\Extensions\I18nExtension;
@@ -50,6 +52,19 @@ final class Engine
         $twig->addExtension(new MarkdownExtension());
         $twig->addExtension(new I18nExtension());
         $twig->addExtension(new SeoExtension());
+
+        // Bootstrap Yoyo configuration and Twig extension
+        $siteUrl = '';
+        try {
+            $siteUrl = \config('site.url', '');
+        } catch (\Throwable) {
+        }
+        new YoyoConfiguration([
+            'url' => rtrim($siteUrl, '/') . '/yoyo',
+            'scriptsPath' => rtrim($siteUrl, '/'),
+            'namespace' => 'Rkn\\Cms\\Components\\',
+        ]);
+        $twig->addExtension(new YoyoTwigExtension());
 
         return new self($twig);
     }
