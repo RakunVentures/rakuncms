@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Rkn\Cms\Cli;
 
+use Rkn\Cms\Mail\EmailRenderer;
 use Rkn\Cms\Mail\Mailer;
 use Rkn\Cms\Queue\FileQueue;
 use Symfony\Component\Console\Attribute\AsCommand;
@@ -91,7 +92,15 @@ final class QueueProcessCommand extends Command
     private function handleContactEmail(array $payload, string $basePath): void
     {
         $config = $this->loadMailConfig($basePath);
-        $mailer = new Mailer($config);
+        $brand = array_merge(
+            ['site_name' => $config['from_name'] ?? 'RakunCMS'],
+            $config['brand'] ?? []
+        );
+        $renderer = new EmailRenderer(
+            EmailRenderer::resolveTemplatePaths($basePath),
+            $brand
+        );
+        $mailer = new Mailer($config, $renderer);
         $mailer->sendContactForm($payload);
     }
 

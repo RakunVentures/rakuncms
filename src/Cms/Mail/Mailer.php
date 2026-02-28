@@ -15,12 +15,16 @@ final class Mailer
     /** @var array<string, mixed> */
     private array $config;
 
+    private ?EmailRenderer $renderer;
+
     /**
      * @param array<string, mixed> $config Mail config section from rakun.yaml
+     * @param EmailRenderer|null $renderer Optional email template renderer
      */
-    public function __construct(array $config)
+    public function __construct(array $config, ?EmailRenderer $renderer = null)
     {
         $this->config = $config;
+        $this->renderer = $renderer;
     }
 
     /**
@@ -45,7 +49,7 @@ final class Mailer
         $mail->isHTML(true);
         $mail->Subject = $subject;
         $mail->Body = $body;
-        $mail->AltBody = strip_tags($body);
+        $mail->AltBody = $this->htmlToText($body);
 
         $mail->send();
     }
@@ -61,18 +65,36 @@ final class Mailer
         $to = $this->config['from_email'] ?? '';
         $subject = 'Nuevo mensaje de contacto de ' . ($data['name'] ?? 'Visitante');
 
-        $body = '<h2>Nuevo mensaje de contacto</h2>';
-        $body .= '<p><strong>Nombre:</strong> ' . htmlspecialchars($data['name'] ?? '') . '</p>';
-        $body .= '<p><strong>Email:</strong> ' . htmlspecialchars($data['email'] ?? '') . '</p>';
+        if ($this->renderer !== null) {
+            $body = $this->renderer->render('contact-form', $data);
+        } else {
+            $body = '<h2>Nuevo mensaje de contacto</h2>';
+            $body .= '<p><strong>Nombre:</strong> ' . htmlspecialchars($data['name'] ?? '') . '</p>';
+            $body .= '<p><strong>Email:</strong> ' . htmlspecialchars($data['email'] ?? '') . '</p>';
 
-        if (!empty($data['phone'])) {
-            $body .= '<p><strong>Teléfono:</strong> ' . htmlspecialchars($data['phone']) . '</p>';
+            if (!empty($data['phone'])) {
+                $body .= '<p><strong>Teléfono:</strong> ' . htmlspecialchars($data['phone']) . '</p>';
+            }
+
+            $body .= '<p><strong>Mensaje:</strong></p>';
+            $body .= '<p>' . nl2br(htmlspecialchars($data['message'] ?? '')) . '</p>';
         }
 
-        $body .= '<p><strong>Mensaje:</strong></p>';
-        $body .= '<p>' . nl2br(htmlspecialchars($data['message'] ?? '')) . '</p>';
-
         $this->send($to, $subject, $body, $data['email'] ?? null);
+    }
+
+    private function htmlToText(string $html): string
+    {
+        $text = preg_replace('/<style\b[^>]*>.*?<\/style>/si', '', $html) ?? $html;
+        $text = preg_replace('/<br\s*\/?>/i', "\n", $text) ?? $text;
+        $text = strip_tags($text);
+        $text = html_entity_decode($text, ENT_QUOTES, 'UTF-8');
+        $lines = explode("\n", $text);
+        $lines = array_map('trim', $lines);
+        $text = implode("\n", $lines);
+        $text = preg_replace('/\n{3,}/', "\n\n", $text) ?? $text;
+
+        return trim($text);
     }
 
     private function createMailer(): PHPMailer
