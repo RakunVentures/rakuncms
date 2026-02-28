@@ -40,7 +40,7 @@ final class RssController
         $xml .= "    <lastBuildDate>" . date('r') . "</lastBuildDate>\n";
 
         foreach ($entries as $entry) {
-            $url = $baseUrl . ($entry->url($defaultLocale) ?? '');
+            $url = $baseUrl . $entry->url();
             $title = $entry->title();
             $date = $entry->date();
             $description = $entry->meta()['description'] ?? '';

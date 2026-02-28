@@ -44,10 +44,7 @@ final class FormController
         }
 
         // Dispatch based on form name
-        return match ($formName) {
-            'contact' => $this->handleContact($body, $container),
-            default => $this->json(['error' => 'Unknown form: ' . $formName], 404),
-        };
+        return $this->handleContact($body, $container);
     }
 
     /**

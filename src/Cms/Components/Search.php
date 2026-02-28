@@ -24,7 +24,7 @@ class Search extends Component
             return;
         }
 
-        $container = \Rkn\Framework\Application::getInstance()?->getContainer();
+        $container = \Rkn\Framework\Application::getInstance()?->container();
         if (!$container) {
             return;
         }
@@ -69,7 +69,8 @@ class Search extends Component
         $this->results = $matched;
     }
 
-    public function render(): string
+    /** @return string|\Clickfwd\Yoyo\Interfaces\ViewProviderInterface */
+    public function render(): string|\Clickfwd\Yoyo\Interfaces\ViewProviderInterface
     {
         return $this->view('yoyo/search');
     }

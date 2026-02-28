@@ -72,9 +72,13 @@ class InitCommand extends Command
         $this->createFile($basePath . '/src/Components/Counter.php', $this->getCounterComponentContent());
         $this->createFile($basePath . '/templates/yoyo/counter.twig', $this->getCounterTwigContent());
         $this->createFile($basePath . '/public/assets/css/style.css', $this->getCssContent());
+        
+        $rakunCliPath = $basePath . '/rakun';
+        $this->createFile($rakunCliPath, $this->getRakunCliContent());
+        chmod($rakunCliPath, 0755);
 
         $output->writeln("<info>¡Proyecto RakunCMS inicializado correctamente en {$basePath}!</info>");
-        $output->writeln("Puedes iniciar el servidor con: <comment>php vendor/bin/rakun serve</comment>");
+        $output->writeln("Puedes iniciar el servidor con: <comment>php rakun serve</comment>");
 
         return Command::SUCCESS;
     }
@@ -303,5 +307,41 @@ body {
 }
 .btn:hover { background-color: #2563eb; }
 CSS;
+    }
+
+    private function getRakunCliContent(): string
+    {
+        return <<<'PHP'
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+if (file_exists(__DIR__ . '/vendor/autoload.php')) {
+    require __DIR__ . '/vendor/autoload.php';
+} else {
+    fwrite(STDERR, "Could not find autoload.php. Run 'composer install' first.\n");
+    exit(1);
+}
+
+use Symfony\Component\Console\Application;
+
+$application = new Application('RakunCMS', '0.1.0');
+
+// Register commands
+$application->add(new \Rkn\Cms\Cli\InitCommand());
+$application->add(new \Rkn\Cms\Cli\IndexRebuildCommand());
+$application->add(new \Rkn\Cms\Cli\CacheClearCommand());
+$application->add(new \Rkn\Cms\Cli\CacheWarmupCommand());
+$application->add(new \Rkn\Cms\Cli\TemplateWarmupCommand());
+$application->add(new \Rkn\Cms\Cli\QueueProcessCommand());
+$application->add(new \Rkn\Cms\Cli\ServeCommand());
+$application->add(new \Rkn\Cms\Cli\MakeComponentCommand());
+$application->add(new \Rkn\Cms\Cli\MakeCollectionCommand());
+$application->add(new \Rkn\Cms\Cli\SitemapGenerateCommand());
+$application->add(new \Rkn\Cms\Cli\BuildCommand());
+
+$application->run();
+PHP;
     }
 }

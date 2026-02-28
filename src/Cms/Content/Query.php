@@ -28,8 +28,8 @@ final class Query
      */
     public function __construct(array $index)
     {
-        $this->entries = $index['entries'] ?? [];
-        $this->indices = $index['indices'] ?? [];
+        $this->entries = $index['entries'];
+        $this->indices = $index['indices'];
     }
 
     public function collection(string $name): self
@@ -169,7 +169,9 @@ final class Query
         // Start with all entries or filtered set
         if ($this->collectionFilter !== null && $this->localeFilter !== null) {
             // Intersect collection + locale indices
+            /** @var list<string> $collKeys */
             $collKeys = $this->indices['by_collection'][$this->collectionFilter] ?? [];
+            /** @var list<string> $localeKeys */
             $localeKeys = $this->indices['by_locale'][$this->localeFilter] ?? [];
             return array_values(array_intersect($collKeys, $localeKeys));
         }

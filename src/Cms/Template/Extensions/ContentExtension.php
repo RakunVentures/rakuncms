@@ -39,7 +39,7 @@ final class ContentExtension extends AbstractExtension
         $index = $indexer->load();
 
         // Path can be "collection/slug" or "collection/slug.locale"
-        $entries = $index['entries'] ?? [];
+        $entries = $index['entries'];
 
         // Direct key match
         if (isset($entries[$path])) {

@@ -20,9 +20,9 @@ class CacheWarmupCommand extends Command
 
         // Step 1: Rebuild content index
         $output->writeln('<info>Rebuilding content index...</info>');
-        $indexer = new \Rkn\Cms\Content\Indexer($basePath . '/content', $cacheDir);
+        $indexer = new \Rkn\Cms\Content\Indexer($basePath);
         $index = $indexer->rebuild();
-        $output->writeln(sprintf('  Indexed %d entries.', count($index['entries'] ?? [])));
+        $output->writeln(sprintf('  Indexed %d entries.', count($index['entries'])));
 
         // Step 2: Warmup Twig templates
         $output->writeln('<info>Pre-compiling Twig templates...</info>');

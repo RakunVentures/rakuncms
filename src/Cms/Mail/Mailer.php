@@ -63,24 +63,24 @@ final class Mailer
     public function sendContactForm(array $data): void
     {
         $to = $this->config['from_email'] ?? '';
-        $subject = 'Nuevo mensaje de contacto de ' . ($data['name'] ?? 'Visitante');
+        $subject = 'Nuevo mensaje de contacto de ' . $data['name'];
 
         if ($this->renderer !== null) {
             $body = $this->renderer->render('contact-form', $data);
         } else {
             $body = '<h2>Nuevo mensaje de contacto</h2>';
-            $body .= '<p><strong>Nombre:</strong> ' . htmlspecialchars($data['name'] ?? '') . '</p>';
-            $body .= '<p><strong>Email:</strong> ' . htmlspecialchars($data['email'] ?? '') . '</p>';
+            $body .= '<p><strong>Nombre:</strong> ' . htmlspecialchars($data['name']) . '</p>';
+            $body .= '<p><strong>Email:</strong> ' . htmlspecialchars($data['email']) . '</p>';
 
             if (!empty($data['phone'])) {
                 $body .= '<p><strong>Teléfono:</strong> ' . htmlspecialchars($data['phone']) . '</p>';
             }
 
             $body .= '<p><strong>Mensaje:</strong></p>';
-            $body .= '<p>' . nl2br(htmlspecialchars($data['message'] ?? '')) . '</p>';
+            $body .= '<p>' . nl2br(htmlspecialchars($data['message'])) . '</p>';
         }
 
-        $this->send($to, $subject, $body, $data['email'] ?? null);
+        $this->send($to, $subject, $body, $data['email']);
     }
 
     private function htmlToText(string $html): string

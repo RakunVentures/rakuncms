@@ -53,7 +53,7 @@ final class BuildCommand extends Command
         // Rebuild index
         $indexer = new Indexer($basePath);
         $index = $indexer->rebuild();
-        $entries = $index['entries'] ?? [];
+        $entries = $index['entries'];
 
         $output->writeln(sprintf('  Found %d entries', count($entries)));
 

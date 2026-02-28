@@ -45,7 +45,7 @@ class ContactForm extends Component
 
         // Form is valid - queue email for sending
         try {
-            $container = \Rkn\Framework\Application::getInstance()?->getContainer();
+            $container = \Rkn\Framework\Application::getInstance()?->container();
             if ($container && $container->has('queue')) {
                 $queue = $container->get('queue');
                 $queue->push('send-contact-email', [
@@ -70,7 +70,8 @@ class ContactForm extends Component
         }
     }
 
-    public function render(): string
+    /** @return string|\Clickfwd\Yoyo\Interfaces\ViewProviderInterface */
+    public function render(): string|\Clickfwd\Yoyo\Interfaces\ViewProviderInterface
     {
         return $this->view('yoyo/contact-form');
     }

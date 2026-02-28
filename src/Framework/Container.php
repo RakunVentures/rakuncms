@@ -19,6 +19,9 @@ final class Container implements ContainerInterface
      * Callables are treated as factories (lazy, singleton).
      * Objects/scalars are stored directly as instances.
      */
+    /**
+     * @param callable|object|string|int|float|bool|array<mixed> $definition
+     */
     public function set(string $id, callable|object|string|int|float|bool|array $definition): void
     {
         if ($definition instanceof \Closure) {
