@@ -1,0 +1,43 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+// When used as a dependency, vendor is in the project root
+// When used standalone, vendor is in the same directory
+$autoloadPaths = [
+    __DIR__ . '/../../../vendor/autoload.php', // as dependency: project/vendor/rkn/cms/bin/rakun
+    __DIR__ . '/../vendor/autoload.php',        // standalone
+];
+
+$autoloaded = false;
+foreach ($autoloadPaths as $autoloadPath) {
+    if (file_exists($autoloadPath)) {
+        require $autoloadPath;
+        $autoloaded = true;
+        break;
+    }
+}
+
+if (!$autoloaded) {
+    fwrite(STDERR, "Could not find autoload.php. Run 'composer install' first.\n");
+    exit(1);
+}
+
+use Symfony\Component\Console\Application;
+
+$application = new Application('RakunCMS', '0.1.0');
+
+// Register commands
+$application->add(new \Rkn\Cms\Cli\IndexRebuildCommand());
+$application->add(new \Rkn\Cms\Cli\CacheClearCommand());
+$application->add(new \Rkn\Cms\Cli\CacheWarmupCommand());
+$application->add(new \Rkn\Cms\Cli\TemplateWarmupCommand());
+$application->add(new \Rkn\Cms\Cli\QueueProcessCommand());
+$application->add(new \Rkn\Cms\Cli\ServeCommand());
+$application->add(new \Rkn\Cms\Cli\MakeComponentCommand());
+$application->add(new \Rkn\Cms\Cli\MakeCollectionCommand());
+$application->add(new \Rkn\Cms\Cli\SitemapGenerateCommand());
+$application->add(new \Rkn\Cms\Cli\BuildCommand());
+
+$application->run();

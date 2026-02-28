@@ -1,0 +1,28 @@
+/vendor/
+/cache/*
+/dist/
+!/cache/.gitkeep
+/storage/logs/*
+!/storage/logs/.gitkeep
+/storage/queue/pending/*
+!/storage/queue/pending/.gitkeep
+/storage/queue/processing/*
+!/storage/queue/processing/.gitkeep
+/storage/queue/failed/*
+!/storage/queue/failed/.gitkeep
+/storage/rates/*
+!/storage/rates/.gitkeep
+.phpunit.result.cache
+.php-cs-fixer.cache
+
+# Entorno y secretos
+.env
+.env.local
+.env.*.local
+
+# Sistema e IDEs
+.DS_Store
+Thumbs.db
+/.idea/
+/.vscode/
+*.swp
