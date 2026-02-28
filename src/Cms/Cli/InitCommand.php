@@ -72,7 +72,8 @@ class InitCommand extends Command
         $this->createFile($basePath . '/src/Components/Counter.php', $this->getCounterComponentContent());
         $this->createFile($basePath . '/templates/yoyo/counter.twig', $this->getCounterTwigContent());
         $this->createFile($basePath . '/public/assets/css/style.css', $this->getCssContent());
-        
+        $this->createFile($basePath . '/templates/_partials/seo.twig', $this->getSeoPartialContent());
+
         $rakunCliPath = $basePath . '/rakun';
         $this->createFile($rakunCliPath, $this->getRakunCliContent());
         chmod($rakunCliPath, 0755);
@@ -139,6 +140,29 @@ HTACCESS;
 site:
   url: "http://localhost:8080"
   default_locale: "es"
+
+seo:
+  site_name: "Mi Sitio"
+  default_image: "/assets/images/default-og.jpg"
+  # twitter_handle: "@misitio"
+  # google_analytics: "G-XXXXXXXXXX"
+  # facebook_pixel: "1234567890"
+  # google_verification: ""
+  # bing_verification: ""
+  # organization:
+  #   name: "Mi Empresa"
+  #   url: "https://ejemplo.com"
+  #   logo: "/assets/images/logo.png"
+  # local_business:
+  #   type: "Hotel"
+  #   address:
+  #     street: "Calle 123"
+  #     city: "Ciudad"
+  #     region: "Estado"
+  #     postal_code: "12345"
+  #     country: "MX"
+  #   phone: "+52 123 456 7890"
+  #   price_range: "$$"
 YAML;
     }
 
@@ -147,6 +171,7 @@ YAML;
         return <<<'YAML'
 title: "RakunCMS Starter"
 description: "Un sitio web súper rápido impulsado por Markdown."
+author: "RakunCMS"
 YAML;
     }
 
@@ -182,6 +207,9 @@ MD;
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}{{ global('site').title }}{% endblock %}</title>
+    {% block head %}
+    {{ seo_head() }}
+    {% endblock %}
     <link rel="stylesheet" href="{{ asset('assets/css/style.css')|default('/assets/css/style.css') }}">
     <!-- El helper de yoyo inyectará htmx y yoyo.js -->
     {{ yoyo_scripts() }}
@@ -199,6 +227,8 @@ MD;
     <footer class="site-footer">
         <p>&copy; {{ "now"|date("Y") }} Construido con RakunCMS.</p>
     </footer>
+    {{ seo_webmcp() }}
+    {{ seo_consent() }}
 </body>
 </html>
 TWIG;
@@ -307,6 +337,56 @@ body {
 }
 .btn:hover { background-color: #2563eb; }
 CSS;
+    }
+
+    private function getSeoPartialContent(): string
+    {
+        return <<<'TWIG'
+{#
+  SEO Partial — Reference template for manual SEO customization.
+  The seo_head() function generates these tags automatically from config and frontmatter.
+  Use this partial if you prefer explicit control over the SEO tags in your templates.
+
+  Usage: {% include "_partials/seo.twig" %}
+#}
+
+{# Meta description from frontmatter or site globals #}
+{% if entry is defined and entry.getMeta('description') %}
+<meta name="description" content="{{ entry.getMeta('description') }}">
+{% elseif global('site').description is defined %}
+<meta name="description" content="{{ global('site').description }}">
+{% endif %}
+
+{# Canonical URL #}
+{% if entry is defined %}
+<link rel="canonical" href="{{ config('site.url') }}{{ entry.url() }}">
+{% endif %}
+
+{# Open Graph #}
+{% if entry is defined %}
+<meta property="og:title" content="{{ entry.title }}">
+<meta property="og:description" content="{{ entry.getMeta('description')|default(global('site').description) }}">
+<meta property="og:url" content="{{ config('site.url') }}{{ entry.url() }}">
+<meta property="og:type" content="{{ entry.getMeta('type')|default('website') }}">
+{% if entry.getMeta('image') %}
+<meta property="og:image" content="{{ config('site.url') }}{{ entry.getMeta('image') }}">
+{% endif %}
+<meta property="og:locale" content="{{ locale }}">
+<meta property="og:site_name" content="{{ config('seo.site_name')|default(global('site').title) }}">
+{% endif %}
+
+{# Twitter Card #}
+{% if entry is defined %}
+<meta name="twitter:card" content="{{ entry.getMeta('image') ? 'summary_large_image' : 'summary' }}">
+<meta name="twitter:title" content="{{ entry.title }}">
+<meta name="twitter:description" content="{{ entry.getMeta('description')|default(global('site').description) }}">
+{% endif %}
+
+{# Hreflang alternate links #}
+<link rel="alternate" hreflang="{{ locale }}" href="{{ url_for_locale(locale) }}">
+<link rel="alternate" hreflang="{{ alternate_locale }}" href="{{ url_for_locale(alternate_locale) }}">
+<link rel="alternate" hreflang="x-default" href="{{ url_for_locale(locale) }}">
+TWIG;
     }
 
     private function getRakunCliContent(): string
