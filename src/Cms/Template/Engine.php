@@ -10,6 +10,7 @@ use Rkn\Cms\Template\Extensions\AssetExtension;
 use Rkn\Cms\Template\Extensions\ContentExtension;
 use Rkn\Cms\Template\Extensions\I18nExtension;
 use Rkn\Cms\Template\Extensions\MarkdownExtension;
+use Rkn\Cms\Template\Extensions\IntegrationsExtension;
 use Rkn\Cms\Template\Extensions\SeoExtension;
 use Twig\Environment;
 use Twig\Loader\FilesystemLoader;
@@ -52,6 +53,7 @@ final class Engine
         $twig->addExtension(new MarkdownExtension());
         $twig->addExtension(new I18nExtension());
         $twig->addExtension(new SeoExtension());
+        $twig->addExtension(new IntegrationsExtension());
 
         // Bootstrap Yoyo configuration and Twig extension
         $siteUrl = '';

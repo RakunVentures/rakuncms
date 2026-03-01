@@ -170,6 +170,31 @@ seo:
   #     country: "MX"
   #   phone: "+52 123 456 7890"
   #   price_range: "$$"
+
+# integrations:
+#   whatsapp:
+#     phone: "+521234567890"
+#     message: "Hola, me interesa..."
+#     position: "bottom-right"
+#     color: "#25D366"
+#     size: "60"
+#   newsletter:
+#     mailchimp_embed_url: "https://example.us1.list-manage.com/subscribe/post?u=XXXXX&id=YYYYY"
+#     button_text: "Suscribirse"
+#     placeholder: "Tu email"
+#   stripe:
+#     links:
+#       - id: "basic"
+#         label: "Plan Basico"
+#         url: "https://buy.stripe.com/XXXXX"
+#         description: "$9/mes"
+#     button_style: "primary"
+#   gumroad:
+#     products:
+#       - id: "my-ebook"
+#         label: "Comprar eBook"
+#         description: "$19"
+#     overlay: true
 YAML;
     }
 
@@ -236,6 +261,7 @@ MD;
     </footer>
     {{ seo_webmcp() }}
     {{ seo_consent() }}
+    {{ whatsapp_button() }}
 </body>
 </html>
 TWIG;
