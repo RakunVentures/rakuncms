@@ -110,22 +110,20 @@ final class Paginator
 
     private function resolveBaseUrl(): string
     {
-        try {
-            $entry = \app('current_entry');
-            if ($entry instanceof Entry) {
-                $collection = $entry->collection();
-                $locale = $entry->locale();
-                return '/' . $locale . '/' . $collection;
+        $uri = $_SERVER['REQUEST_URI'] ?? '/';
+        $path = parse_url($uri, PHP_URL_PATH) ?: '/';
+        
+        // Strip out /page/N
+        $path = preg_replace('#/page/\d+/?$#', '', $path);
+        
+        if ($path === null || $path === '' || $path === '/') {
+            try {
+                return '/' . \app('locale');
+            } catch (\Throwable) {
+                return '/';
             }
-        } catch (\Throwable) {
         }
-
-        try {
-            $locale = \app('locale');
-            return '/' . $locale;
-        } catch (\Throwable) {
-        }
-
-        return '/';
+        
+        return rtrim($path, '/');
     }
 }
