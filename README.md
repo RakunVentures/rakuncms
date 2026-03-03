@@ -1,71 +1,71 @@
 # RakunCMS
 
-RakunCMS es un CMS flat-file de software libre construido sobre un micro-framework PHP propio con adherencia a estándares PSR. Está diseñado para crear sitios web ultra-rápidos basados en contenido Markdown, sin base de datos, y con componentes reactivos renderizados en el servidor (SSR) mediante PHP (vía htmx y Yoyo).
+**The flat-file PHP CMS that deploys to shared hosting in minutes.**
 
-## Características principales
+RakunCMS is a blazing fast, flat-file CMS built for shared hosting environments — powered by Markdown, Twig, Yoyo reactive components, and PSR standards. No database required.
 
-- **Flat-File Architecture:** El contenido vive en archivos Markdown con Frontmatter YAML. La estructura de carpetas es la estructura del sitio.
-- **Micro-framework propio:** Basado en estándares PSR-7, PSR-11 y PSR-15, con un peso menor a 5MB en dependencias totales.
-- **Componentes Reactivos:** Escribe componentes interactivos en PHP puro que se actualizan sin recargar la página y sin escribir JavaScript.
-- **Optimizado para Hosting Compartido:** Despliega por FTP/cPanel. No requiere Node.js, procesos persistentes o VPS.
-- **Caché multinivel:** Respuesta en 1-3ms usando full-page cache HTML estático integrado nativamente con OPcache.
+[![Latest Stable Version](https://poser.pugx.org/rkn/cms/v/stable)](https://packagist.org/packages/rkn/cms)
+[![Total Downloads](https://poser.pugx.org/rkn/cms/downloads)](https://packagist.org/packages/rkn/cms)
+[![License](https://poser.pugx.org/rkn/cms/license)](https://packagist.org/packages/rkn/cms)
 
----
+## Why RakunCMS?
 
-## Creación de un Nuevo Sitio Web (Implementación)
+We built RakunCMS as an alternative to CMSs like WordPress, Grav, Statamic, and Kirby. Our core philosophy is simplicity, performance, and accessibility. 
 
-RakunCMS funciona como un paquete de Composer (`rkn/cms`). Para crear un sitio web utilizando el CMS, no debes modificar el código del framework en sí, sino requerirlo en un proyecto nuevo.
+- **No database — pure Markdown**: Your content lives in simple Markdown files with YAML frontmatter. Your folder structure defines your site structure.
+- **Runs on $3/mo shared hosting (cPanel/Plesk)**: Deploy effortlessly via FTP/cPanel. No persistent processes, no VPS required.
+- **No Node.js or Docker required**: Everything runs in a pure PHP ecosystem.
+- **Composer-installable**: Manage your site easily with Composer.
+- **Reactive components without writing JavaScript**: Build interactive UIs with PHP components that update seamlessly without full page reloads, powered by Yoyo (htmx).
+- **PSR-7/11/15/16 compliant**: Built on a custom micro-framework with under 5MB of total dependencies.
 
-### 1. Inicializar el proyecto con Composer
+## Installation & Quick Start
 
-Normalmente, instalarías el CMS desde Packagist. Si estás desarrollando localmente y probando el framework (como el proyecto `website/`), debes configurar Composer para que use tu ruta local:
-
-```bash
-# Crea la carpeta para tu nuevo sitio web
-mkdir mi-sitio
-cd mi-sitio
-
-# Inicializa el composer.json
-composer init --name="mi-usuario/mi-sitio" -n
-
-# (Solo para desarrollo local) Añade el repositorio local apuntando a la carpeta del framework
-composer config repositories.rkn path "../rakuncms"
-
-# Instala el framework
-composer require rkn/cms:dev-master
-```
-
-### 2. Inicializar la estructura base (Scaffolding)
-
-Una vez que Composer haya descargado RakunCMS y sus dependencias (Twig, Yoyo, etc.), usa el CLI incorporado para generar la estructura de carpetas, configuraciones y el *front-controller*.
+Getting started with RakunCMS is incredibly fast:
 
 ```bash
-php vendor/bin/rakun init
-```
+# 1. Create a new site via Composer
+composer create-project rkn/cms my-website
+cd my-website
 
-El comando `init` creará automáticamente:
-- Estructura de contenido en `content/pages/` y `content/blog/`.
-- Archivos `.md` de ejemplo y configuración global en YAML.
-- Plantillas Twig base en `templates/`.
-- Los directorios requeridos para la caché y el almacenamiento.
-- **Un archivo ejecutable `rakun` en la raíz de tu proyecto.**
+# 2. Initialize the site structure
+php rakun init
 
-### 3. Levantar el servidor de desarrollo
-
-Ya no necesitas acceder a la carpeta `vendor/bin`. El script de inicialización ha colocado un atajo ejecutable en la raíz de tu proyecto.
-
-Puedes iniciar el servidor local de desarrollo con:
-
-```bash
+# 3. Start the built-in development server
 php rakun serve
-# o alternativamente: ./rakun serve
 ```
 
-Abre `http://localhost:8080` en tu navegador para ver tu nuevo sitio web funcionando con páginas renderizadas desde Markdown y componentes reactivos de PHP.
+Open `http://localhost:8080` in your browser to see your site running!
 
-### 4. Flujo de trabajo
+## Core Features
 
-A partir de este momento, todo tu trabajo se centra en el nuevo proyecto:
-- Crea contenido editando o añadiendo archivos `.md` en la carpeta `content/`.
-- Modifica el diseño visual creando o editando plantillas `.twig` en la carpeta `templates/`.
-- Crea nuevos componentes interactivos en `src/Components/` y sus vistas en `templates/yoyo/`.
+- **Flat-File Architecture**: No MySQL configuration, no database backups. Everything is stored in Markdown and YAML.
+- **Reactive Yoyo Components**: Build interactive, stateful PHP components (similar to Livewire) using HTMX under the hood.
+- **Built-in SEO Engine**: Automatically generates Open Graph tags, JSON-LD markup, handles consent management, and integrates with WebMCP.
+- **Full-Text Search**: Features an integrated inverted index for blazing fast search capabilities without needing external services like Algolia or Elasticsearch.
+- **Native i18n**: Out-of-the-box support for multi-locale routing and content localization.
+- **Multi-Level Caching**: Achieve 1-3ms response times in production using static HTML full-page caching coupled with OPcache.
+- **CLI Tools**: Integrated `rakun` command-line tool to easily clear the cache, make components, or run background queue workers.
+
+## Developer Experience (DX)
+- **Laravel Herd Integration**: Includes a custom Valet driver (`RakunCmsValetDriver`) and the `php rakun herd:install` command for automatic site discovery and blazingly fast local development on macOS.
+- **Clean Architecture**: Built on a highly optimized, custom PSR-compliant micro-framework. Total production dependencies are kept strictly under 5MB, ensuring a lightweight footprint for any hosting environment.
+
+## How It Works
+
+1. **Write Content**: Create or edit `.md` files directly in the `content/` directory.
+2. **Customize Design**: Edit the `.twig` templates located in `templates/` to match your brand.
+3. **Add Interactivity**: Build stateful Yoyo components in `src/Components/` with matching views in `templates/yoyo/`.
+
+## Documentation
+
+Full documentation, guides, deployment instructions, and API reference can be found at:  
+[https://rakuncms.com/docs](https://rakuncms.com/docs)
+
+## Contributing
+
+We welcome all contributions from the community! If you're looking to help out, report bugs, or understand how RakunCMS works under the hood, please read our [Contributing Guide](CONTRIBUTING.md) which includes an in-depth **Architecture Overview**.
+
+## License
+
+GPL-3.0-or-later

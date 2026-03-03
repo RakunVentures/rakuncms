@@ -1,8 +1,26 @@
 {
     "name": "rkn/cms",
-    "description": "CMS flat-file de software libre con componentes reactivos",
-    "type": "library",
-    "license": "MIT",
+    "description": "Flat-file CMS for shared hosting — Markdown, Twig, Yoyo reactive components, PSR-7/11/15/16, no database required.",
+    "type": "project",
+    "license": "GPL-3.0-or-later",
+    "keywords": [
+        "cms", "flat-file", "markdown", "twig", "yoyo",
+        "psr-7", "psr-16", "shared-hosting", "cpanel", "plesk",
+        "htmx", "php", "reactive-components"
+    ],
+    "homepage": "https://rakuncms.com",
+    "authors": [
+        {
+            "name": "Rakun Ventures",
+            "homepage": "https://rakun.mx",
+            "role": "Lead Developer"
+        }
+    ],
+    "support": {
+        "issues": "https://github.com/RakunVentures/rakuncms/issues",
+        "source": "https://github.com/RakunVentures/rakuncms",
+        "docs": "https://rakuncms.com/docs"
+    },
     "autoload": {
         "psr-4": {
             "Rkn\\": "src/"
@@ -17,6 +35,7 @@
     "bin": ["bin/rakun"],
     "require": {
         "php": "^8.2",
+        "ext-mbstring": "*",
         "nyholm/psr7": "^1.8",
         "nyholm/psr7-server": "^1.1",
         "laminas/laminas-httphandlerrunner": "^2.10",
