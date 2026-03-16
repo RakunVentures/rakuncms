@@ -37,6 +37,8 @@ final class McpServeCommand extends Command
         $server->registerTool(new \Rkn\Cms\Mcp\Tools\ListTemplatesTool($basePath));
         $server->registerTool(new \Rkn\Cms\Mcp\Tools\ReadTemplateTool($basePath));
         $server->registerTool(new \Rkn\Cms\Mcp\Tools\ListComponentsTool($basePath));
+        $server->registerTool(new \Rkn\Cms\Mcp\Tools\BoostArchetypesTool());
+        $server->registerTool(new \Rkn\Cms\Mcp\Tools\BoostApplyTool($basePath));
 
         // Resources
         $server->registerResource(new \Rkn\Cms\Mcp\Resources\GuidelinesResource($basePath));
@@ -47,6 +49,7 @@ final class McpServeCommand extends Command
         $server->registerPrompt(new \Rkn\Cms\Mcp\Prompts\CreateEntryPrompt($basePath));
         $server->registerPrompt(new \Rkn\Cms\Mcp\Prompts\CreateCollectionPrompt());
         $server->registerPrompt(new \Rkn\Cms\Mcp\Prompts\CreateComponentPrompt());
+        $server->registerPrompt(new \Rkn\Cms\Mcp\Prompts\BoostWizardPrompt());
     }
 
     private function findBasePath(): string

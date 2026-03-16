@@ -9,6 +9,7 @@ use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
+use Rkn\Cms\Http\Controllers\BoostApiController;
 use Rkn\Cms\Http\Controllers\ContentApiController;
 use Rkn\Cms\Http\Controllers\GlobalsApiController;
 use Rkn\Cms\Http\Controllers\MediaApiController;
@@ -127,6 +128,21 @@ final class ContentApiDispatcher implements MiddlewareInterface
                 return $this->forbidden();
             }
             return $this->clearCache($basePath);
+        }
+
+        // Route: /api/v1/boost/archetypes
+        if ($segments[0] === 'boost' && ($segments[1] ?? '') === 'archetypes' && $method === 'GET') {
+            $controller = new BoostApiController($basePath);
+            return $controller->archetypes();
+        }
+
+        // Route: /api/v1/boost/apply
+        if ($segments[0] === 'boost' && ($segments[1] ?? '') === 'apply' && $method === 'POST') {
+            if (!ApiAuthMiddleware::hasPermission($permissions, 'admin')) {
+                return $this->forbidden();
+            }
+            $controller = new BoostApiController($basePath);
+            return $controller->apply($request);
         }
 
         // Route: /api/v1/index/rebuild

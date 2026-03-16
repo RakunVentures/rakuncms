@@ -43,6 +43,7 @@ $application->add(new \Rkn\Cms\Cli\SitemapGenerateCommand());
 $application->add(new \Rkn\Cms\Cli\BuildCommand());
 $application->add(new \Rkn\Cms\Cli\McpServeCommand());
 $application->add(new \Rkn\Cms\Cli\BoostInstallCommand());
+$application->add(new \Rkn\Cms\Cli\BoostCommand());
 $application->add(new \Rkn\Cms\Cli\HerdInstallCommand());
 
 $application->run();
