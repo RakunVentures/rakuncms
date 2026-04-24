@@ -179,6 +179,8 @@ HTACCESS;
     private function getConfigContent(): string
     {
         return <<<'YAML'
+debug: "${APP_DEBUG:-false}"
+
 site:
   url: "${APP_URL:-http://localhost:8080}"
   default_locale: "es"
