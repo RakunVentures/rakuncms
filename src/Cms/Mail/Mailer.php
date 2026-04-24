@@ -57,30 +57,88 @@ final class Mailer
     /**
      * Send a contact form email.
      *
-     * @param array{name: string, email: string, phone?: string, message: string} $data
+     * Canonical fields (name, email, message) are required; any additional
+     * keys in $data (source, phone, company, monthly_volume, model, ...) are
+     * forwarded to the template and rendered as an extra-fields table.
+     *
+     * @param array<string, mixed> $data
      * @throws PHPMailerException
      */
     public function sendContactForm(array $data): void
     {
-        $to = $this->config['from_email'] ?? '';
-        $subject = 'Nuevo mensaje de contacto de ' . $data['name'];
+        // Destination: to_email wins, from_email is the fallback (back-compat).
+        // Treat empty strings as "not set" so ${MAIL_TO_EMAIL:-} falls through.
+        $to = !empty($this->config['to_email'])
+            ? $this->config['to_email']
+            : ($this->config['from_email'] ?? '');
 
-        if ($this->renderer !== null) {
-            $body = $this->renderer->render('contact-form', $data);
-        } else {
-            $body = '<h2>Nuevo mensaje de contacto</h2>';
-            $body .= '<p><strong>Nombre:</strong> ' . htmlspecialchars($data['name']) . '</p>';
-            $body .= '<p><strong>Email:</strong> ' . htmlspecialchars($data['email']) . '</p>';
+        $subjectBase = 'Nuevo mensaje de contacto de ' . (string) ($data['name'] ?? '');
+        $source = (string) ($data['source'] ?? '');
+        $subject = $source !== ''
+            ? sprintf('[%s] %s', $source, $subjectBase)
+            : $subjectBase;
 
-            if (!empty($data['phone'])) {
-                $body .= '<p><strong>Teléfono:</strong> ' . htmlspecialchars($data['phone']) . '</p>';
+        // Split canonical vs extra fields for template rendering.
+        $canonical = ['name', 'email', 'phone', 'message'];
+        $extras = [];
+        foreach ($data as $k => $v) {
+            if (in_array($k, $canonical, true)) {
+                continue;
             }
-
-            $body .= '<p><strong>Mensaje:</strong></p>';
-            $body .= '<p>' . nl2br(htmlspecialchars($data['message'])) . '</p>';
+            if ($v === null || $v === '') {
+                continue;
+            }
+            $extras[$k] = is_scalar($v) ? (string) $v : json_encode($v);
         }
 
-        $this->send($to, $subject, $body, $data['email']);
+        $templateData = [
+            'name'    => (string) ($data['name'] ?? ''),
+            'email'   => (string) ($data['email'] ?? ''),
+            'phone'   => (string) ($data['phone'] ?? ''),
+            'message' => (string) ($data['message'] ?? ''),
+            'extras'  => $extras,
+        ];
+
+        if ($this->renderer !== null) {
+            $body = $this->renderer->render('contact-form', $templateData);
+        } else {
+            $body = $this->renderPlainBody($templateData);
+        }
+
+        $this->send($to, $subject, $body, (string) ($data['email'] ?? ''));
+    }
+
+    /**
+     * Fallback plain-HTML renderer when no EmailRenderer is injected.
+     *
+     * @param array{name:string,email:string,phone:string,message:string,extras:array<string,string>} $d
+     */
+    private function renderPlainBody(array $d): string
+    {
+        $h = static fn(string $s): string => htmlspecialchars($s, ENT_QUOTES, 'UTF-8');
+
+        $body  = '<h2>Nuevo mensaje de contacto</h2>';
+        $body .= '<p><strong>Nombre:</strong> ' . $h($d['name']) . '</p>';
+        $body .= '<p><strong>Email:</strong> ' . $h($d['email']) . '</p>';
+        if ($d['phone'] !== '') {
+            $body .= '<p><strong>Teléfono:</strong> ' . $h($d['phone']) . '</p>';
+        }
+        if (!empty($d['extras'])) {
+            $body .= '<h3>Información adicional</h3><ul>';
+            foreach ($d['extras'] as $k => $v) {
+                $body .= '<li><strong>' . $h($this->humanizeKey($k)) . ':</strong> ' . $h($v) . '</li>';
+            }
+            $body .= '</ul>';
+        }
+        $body .= '<p><strong>Mensaje:</strong></p>';
+        $body .= '<p>' . nl2br($h($d['message'])) . '</p>';
+
+        return $body;
+    }
+
+    private function humanizeKey(string $k): string
+    {
+        return ucfirst(str_replace(['_', '-'], ' ', $k));
     }
 
     private function htmlToText(string $html): string

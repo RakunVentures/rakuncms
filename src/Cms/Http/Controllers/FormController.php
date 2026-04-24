@@ -74,15 +74,12 @@ final class FormController
             return $this->json(['errors' => $errors], 422);
         }
 
-        // Queue email for sending
+        // Queue email for sending. Preserve every non-internal field so the
+        // mailer/template can render arbitrary metadata (source, company,
+        // monthly_volume, model, ...) alongside the canonical ones.
         if ($container !== null && $container->has('queue')) {
             $queue = $container->get('queue');
-            $queue->push('send-contact-email', [
-                'name' => $body['name'],
-                'email' => $body['email'],
-                'phone' => $body['phone'] ?? '',
-                'message' => $body['message'],
-            ]);
+            $queue->push('send-contact-email', $body);
         }
 
         return $this->json(['success' => true, 'message' => 'Message sent successfully.']);

@@ -65,6 +65,9 @@ class InitCommand extends Command
         $this->createFile($basePath . '/public/index.php', $this->getIndexPhpContent());
         $this->createFile($basePath . '/public/.htaccess', $this->getHtaccessContent());
         $this->createFile($basePath . '/config/rakun.yaml', $this->getConfigContent());
+        $this->createFile($basePath . '/.env.example', $this->getDotenvExampleContent());
+        $this->createFile($basePath . '/.env', $this->getDotenvExampleContent());
+        $this->appendIfMissing($basePath . '/.gitignore', "/.env\n");
         $this->createFile($basePath . '/content/_globals/site.yaml', $this->getSiteYamlContent());
         $this->createFile($basePath . '/content/pages/index.md', $this->getIndexMdContent());
         $this->createFile($basePath . '/templates/_layouts/base.twig', $this->getBaseTwigContent());
@@ -89,6 +92,38 @@ class InitCommand extends Command
         if (!file_exists($path)) {
             file_put_contents($path, $content);
         }
+    }
+
+    private function appendIfMissing(string $path, string $line): void
+    {
+        $existing = is_file($path) ? (string) file_get_contents($path) : '';
+        if (str_contains($existing, trim($line))) {
+            return;
+        }
+        $prefix = ($existing === '' || str_ends_with($existing, "\n")) ? '' : "\n";
+        file_put_contents($path, $prefix . $line, FILE_APPEND);
+    }
+
+    private function getDotenvExampleContent(): string
+    {
+        return <<<'ENV'
+APP_ENV=local
+APP_DEBUG=true
+APP_URL=http://localhost:8080
+
+# SMTP (PHPMailer).
+# Leave MAIL_HOST empty for no-op (mail() fallback) or set to an SMTP host.
+# Mailtrap (dev sandbox): smtp.mailtrap.io:2525
+# Amazon SES us-east-1:   email-smtp.us-east-1.amazonaws.com:587
+MAIL_HOST=
+MAIL_PORT=587
+MAIL_ENCRYPTION=tls
+MAIL_USERNAME=
+MAIL_PASSWORD=
+MAIL_FROM_EMAIL=noreply@example.com
+MAIL_FROM_NAME="RakunCMS"
+MAIL_TO_EMAIL=
+ENV;
     }
 
     private function getIndexPhpContent(): string
@@ -145,8 +180,18 @@ HTACCESS;
     {
         return <<<'YAML'
 site:
-  url: "http://localhost:8080"
+  url: "${APP_URL:-http://localhost:8080}"
   default_locale: "es"
+
+mail:
+  smtp_host: "${MAIL_HOST:-localhost}"
+  smtp_port: "${MAIL_PORT:-587}"
+  smtp_encryption: "${MAIL_ENCRYPTION:-tls}"
+  smtp_username: "${MAIL_USERNAME:-}"
+  smtp_password: "${MAIL_PASSWORD:-}"
+  from_email: "${MAIL_FROM_EMAIL:-noreply@example.com}"
+  from_name: "${MAIL_FROM_NAME:-RakunCMS}"
+  to_email: "${MAIL_TO_EMAIL:-}"
 
 seo:
   site_name: "Mi Sitio"

@@ -32,6 +32,7 @@ final class QueueProcessCommand extends Command
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $basePath = $this->findBasePath();
+        $this->bootstrapFramework($basePath);
         $queue = new FileQueue($basePath);
         $limit = (int) $input->getOption('limit');
         $processed = 0;
@@ -105,10 +106,33 @@ final class QueueProcessCommand extends Command
     }
 
     /**
+     * Bootstrap the framework Application so .env is loaded and
+     * ${VAR} placeholders in YAML are resolved (same pipeline as HTTP).
+     */
+    private function bootstrapFramework(string $basePath): void
+    {
+        if (\Rkn\Framework\Application::getInstance() !== null) {
+            return;
+        }
+        if (!class_exists(\Rkn\Framework\Application::class)) {
+            return;
+        }
+        new \Rkn\Framework\Application($basePath);
+    }
+
+    /**
      * @return array<string, mixed>
      */
     private function loadMailConfig(string $basePath): array
     {
+        $app = \Rkn\Framework\Application::getInstance();
+        if ($app !== null) {
+            $mail = $app->config('mail', []);
+            if (is_array($mail)) {
+                return $mail;
+            }
+        }
+
         $configFile = $basePath . '/config/rakun.yaml';
         if (!is_file($configFile)) {
             return [];

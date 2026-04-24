@@ -31,9 +31,27 @@ final class Application
         $this->container->set(Container::class, $this->container);
         $this->container->set(Router::class, $this->router);
 
+        $this->loadDotenv($basePath);
         $this->loadConfig($basePath . '/config');
         $this->registerCoreServices();
         $this->registerRoutes();
+    }
+
+    /**
+     * Load .env file (Laravel-style). Values become available via env() helper
+     * and as ${VAR} placeholders inside YAML config files.
+     *
+     * Priority: real process env > .env file > YAML default.
+     */
+    private function loadDotenv(string $basePath): void
+    {
+        if (!class_exists(\Dotenv\Dotenv::class)) {
+            return;
+        }
+        if (!is_file($basePath . '/.env')) {
+            return;
+        }
+        \Dotenv\Dotenv::createImmutable($basePath)->safeLoad();
     }
 
     public static function getInstance(): ?self
@@ -119,6 +137,8 @@ final class Application
             $config = $this->mergeConfig($config, $envData);
         }
 
+        $config = $this->resolveEnvPlaceholders($config);
+
         $this->container->set('config', $config);
         $this->container->set('environment', $env);
     }
@@ -138,6 +158,63 @@ final class Application
             }
         }
         return $base;
+    }
+
+    /**
+     * Walk the config tree and replace ${VAR} / ${VAR:-default} placeholders
+     * with values from the environment. The .env file (already loaded) and the
+     * real process environment both feed $_ENV / getenv().
+     *
+     * @param mixed $value
+     * @return mixed
+     */
+    private function resolveEnvPlaceholders(mixed $value): mixed
+    {
+        if (is_array($value)) {
+            foreach ($value as $k => $v) {
+                $value[$k] = $this->resolveEnvPlaceholders($v);
+            }
+            return $value;
+        }
+
+        if (!is_string($value) || !str_contains($value, '${')) {
+            return $value;
+        }
+
+        // Full-string placeholder: coerce "true"/"false"/"null"/numeric to proper types
+        if (preg_match('/^\$\{([A-Z0-9_]+)(?::-(.*))?\}$/', $value, $m)) {
+            return $this->castEnvValue($this->readEnv($m[1], $m[2] ?? null));
+        }
+
+        // Embedded placeholder(s): return as string
+        return preg_replace_callback(
+            '/\$\{([A-Z0-9_]+)(?::-([^}]*))?\}/',
+            fn(array $m) => (string) ($this->readEnv($m[1], $m[2] ?? null) ?? ''),
+            $value
+        );
+    }
+
+    private function readEnv(string $key, ?string $default): ?string
+    {
+        $raw = $_ENV[$key] ?? $_SERVER[$key] ?? getenv($key);
+        if ($raw === false || $raw === null || $raw === '') {
+            return $default;
+        }
+        return (string) $raw;
+    }
+
+    private function castEnvValue(?string $v): mixed
+    {
+        if ($v === null) {
+            return null;
+        }
+        return match (strtolower($v)) {
+            'true'  => true,
+            'false' => false,
+            'null'  => null,
+            'empty' => '',
+            default => is_numeric($v) ? $v + 0 : $v,
+        };
     }
 
     private function registerCoreServices(): void

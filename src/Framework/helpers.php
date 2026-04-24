@@ -76,6 +76,29 @@ if (!function_exists('asset')) {
     }
 }
 
+if (!function_exists('env')) {
+    /**
+     * Read an environment variable with a fallback. Mirrors Laravel's env():
+     * casts "true"/"false"/"null"/"empty"/numeric strings to their proper type.
+     */
+    function env(string $key, mixed $default = null): mixed
+    {
+        $value = $_ENV[$key] ?? $_SERVER[$key] ?? getenv($key);
+
+        if ($value === false || $value === null || $value === '') {
+            return $default;
+        }
+
+        return match (strtolower((string) $value)) {
+            'true'  => true,
+            'false' => false,
+            'null'  => null,
+            'empty' => '',
+            default => is_numeric($value) ? $value + 0 : (string) $value,
+        };
+    }
+}
+
 if (!function_exists('url')) {
     /**
      * Generate an absolute URL.
