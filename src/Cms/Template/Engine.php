@@ -54,6 +54,9 @@ final class Engine
         $twig->addExtension(new I18nExtension());
         $twig->addExtension(new SeoExtension());
         $twig->addExtension(new IntegrationsExtension());
+        $twig->addExtension(new \Rkn\Cms\Template\Extensions\CsrfExtension(
+            \app(\Rkn\Cms\Middleware\CsrfProtection::class)
+        ));
 
         // Bootstrap Yoyo configuration and Twig extension
         $siteUrl = '';

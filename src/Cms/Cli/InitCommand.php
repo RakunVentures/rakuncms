@@ -110,6 +110,7 @@ class InitCommand extends Command
 APP_ENV=local
 APP_DEBUG=true
 APP_URL=http://localhost:8080
+APP_KEY=change-me-to-a-secure-random-string-at-least-32-chars-long
 
 # SMTP (PHPMailer).
 # Leave MAIL_HOST empty for no-op (mail() fallback) or set to an SMTP host.
@@ -143,6 +144,8 @@ $cacheEnabled = $app->config('cache.page_cache', true);
 
 // PSR-15 Middleware Pipeline
 $app->pipe(new \Rkn\Cms\Middleware\ErrorHandler());
+$app->pipe(new \Rkn\Cms\Middleware\JsonBodyParser());
+$app->pipe($app->container()->get(\Rkn\Cms\Middleware\CsrfProtection::class));
 $app->pipe(new \Rkn\Cms\Middleware\PageCacheReader($pageCache, $cacheEnabled));
 $app->pipe(new \Rkn\Cms\Middleware\ApiDispatcher());
 $app->pipe(new \Rkn\Cms\Middleware\LocaleDetector());

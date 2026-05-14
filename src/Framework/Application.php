@@ -253,6 +253,12 @@ final class Application
         // PSR-17 Factory
         $container->set(Psr17Factory::class, new Psr17Factory());
 
+        // CSRF Protection
+        $container->set(\Rkn\Cms\Middleware\CsrfProtection::class, function () use ($container) {
+            $secret = (string) env('APP_KEY', 'change-me-at-least-32-chars-long');
+            return new \Rkn\Cms\Middleware\CsrfProtection($secret);
+        });
+
         // File Queue
         $container->set('queue', function () use ($basePath) {
             return new \Rkn\Cms\Queue\FileQueue($basePath);

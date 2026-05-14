@@ -25,16 +25,6 @@ final class ApiDispatcher implements MiddlewareInterface
         if ($method === 'POST' && preg_match('#^/api/form/([a-zA-Z0-9_-]+)$#', $path, $matches)) {
             $formName = $matches[1];
 
-            // Parse JSON body
-            $contentType = $request->getHeaderLine('Content-Type');
-            if (str_contains($contentType, 'application/json')) {
-                $body = (string) $request->getBody();
-                $parsed = json_decode($body, true);
-                if (is_array($parsed)) {
-                    $request = $request->withParsedBody($parsed);
-                }
-            }
-
             $controller = new FormController();
             return $controller->handle($request, $formName);
         }
