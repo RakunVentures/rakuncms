@@ -39,7 +39,7 @@ afterEach(function () {
 
 test('generates CLAUDE.md', function () {
     $app = new Application();
-    $app->add(new BoostInstallCommand());
+    $app->addCommand(new BoostInstallCommand());
     $tester = new CommandTester($app->find('boost:install'));
     $tester->execute([]);
 
@@ -54,7 +54,7 @@ test('generates CLAUDE.md', function () {
 
 test('generates .mcp.json', function () {
     $app = new Application();
-    $app->add(new BoostInstallCommand());
+    $app->addCommand(new BoostInstallCommand());
     $tester = new CommandTester($app->find('boost:install'));
     $tester->execute([]);
 
@@ -67,7 +67,7 @@ test('generates .mcp.json', function () {
 
 test('output confirms generated files', function () {
     $app = new Application();
-    $app->add(new BoostInstallCommand());
+    $app->addCommand(new BoostInstallCommand());
     $tester = new CommandTester($app->find('boost:install'));
     $tester->execute([]);
 
@@ -79,7 +79,7 @@ test('output confirms generated files', function () {
 
 test('CLAUDE.md includes templates section', function () {
     $app = new Application();
-    $app->add(new BoostInstallCommand());
+    $app->addCommand(new BoostInstallCommand());
     $tester = new CommandTester($app->find('boost:install'));
     $tester->execute([]);
 
@@ -90,7 +90,7 @@ test('CLAUDE.md includes templates section', function () {
 
 test('CLAUDE.md includes CLI commands', function () {
     $app = new Application();
-    $app->add(new BoostInstallCommand());
+    $app->addCommand(new BoostInstallCommand());
     $tester = new CommandTester($app->find('boost:install'));
     $tester->execute([]);
 

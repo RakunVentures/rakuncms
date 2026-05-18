@@ -25,8 +25,8 @@ afterEach(function () {
 
 test('boost creates blog site structure', function () {
     $app = new Application();
-    $app->add(new InitCommand());
-    $app->add(new BoostCommand());
+    $app->addCommand(new InitCommand());
+    $app->addCommand(new BoostCommand());
     $tester = new CommandTester($app->find('boost'));
     $tester->execute([
         'path' => $this->tmpDir,
@@ -65,8 +65,8 @@ test('boost creates blog site structure', function () {
 
 test('boost creates docs site structure', function () {
     $app = new Application();
-    $app->add(new InitCommand());
-    $app->add(new BoostCommand());
+    $app->addCommand(new InitCommand());
+    $app->addCommand(new BoostCommand());
     $tester = new CommandTester($app->find('boost'));
     $tester->execute([
         'path' => $this->tmpDir,
@@ -82,8 +82,8 @@ test('boost creates docs site structure', function () {
 
 test('boost creates business site structure', function () {
     $app = new Application();
-    $app->add(new InitCommand());
-    $app->add(new BoostCommand());
+    $app->addCommand(new InitCommand());
+    $app->addCommand(new BoostCommand());
     $tester = new CommandTester($app->find('boost'));
     $tester->execute([
         'path' => $this->tmpDir,
@@ -100,8 +100,8 @@ test('boost creates business site structure', function () {
 
 test('boost creates portfolio site structure', function () {
     $app = new Application();
-    $app->add(new InitCommand());
-    $app->add(new BoostCommand());
+    $app->addCommand(new InitCommand());
+    $app->addCommand(new BoostCommand());
     $tester = new CommandTester($app->find('boost'));
     $tester->execute([
         'path' => $this->tmpDir,
@@ -117,8 +117,8 @@ test('boost creates portfolio site structure', function () {
 
 test('boost creates catalog site structure', function () {
     $app = new Application();
-    $app->add(new InitCommand());
-    $app->add(new BoostCommand());
+    $app->addCommand(new InitCommand());
+    $app->addCommand(new BoostCommand());
     $tester = new CommandTester($app->find('boost'));
     $tester->execute([
         'path' => $this->tmpDir,
@@ -136,8 +136,8 @@ test('boost creates catalog site structure', function () {
 
 test('boost creates multilingual site structure', function () {
     $app = new Application();
-    $app->add(new InitCommand());
-    $app->add(new BoostCommand());
+    $app->addCommand(new InitCommand());
+    $app->addCommand(new BoostCommand());
     $tester = new CommandTester($app->find('boost'));
     $tester->execute([
         'path' => $this->tmpDir,
@@ -156,8 +156,8 @@ test('boost creates multilingual site structure', function () {
 
 test('boost fails with unknown archetype', function () {
     $app = new Application();
-    $app->add(new InitCommand());
-    $app->add(new BoostCommand());
+    $app->addCommand(new InitCommand());
+    $app->addCommand(new BoostCommand());
     $tester = new CommandTester($app->find('boost'));
     $tester->execute([
         'path' => $this->tmpDir,
@@ -171,8 +171,8 @@ test('boost fails with unknown archetype', function () {
 
 test('boost writes site name to globals', function () {
     $app = new Application();
-    $app->add(new InitCommand());
-    $app->add(new BoostCommand());
+    $app->addCommand(new InitCommand());
+    $app->addCommand(new BoostCommand());
     $tester = new CommandTester($app->find('boost'));
     $tester->execute([
         'path' => $this->tmpDir,
@@ -186,8 +186,8 @@ test('boost writes site name to globals', function () {
 
 test('boost writes locale to config', function () {
     $app = new Application();
-    $app->add(new InitCommand());
-    $app->add(new BoostCommand());
+    $app->addCommand(new InitCommand());
+    $app->addCommand(new BoostCommand());
     $tester = new CommandTester($app->find('boost'));
     $tester->execute([
         'path' => $this->tmpDir,
@@ -202,8 +202,8 @@ test('boost writes locale to config', function () {
 
 test('boost output confirms success', function () {
     $app = new Application();
-    $app->add(new InitCommand());
-    $app->add(new BoostCommand());
+    $app->addCommand(new InitCommand());
+    $app->addCommand(new BoostCommand());
     $tester = new CommandTester($app->find('boost'));
     $tester->execute([
         'path' => $this->tmpDir,
@@ -218,8 +218,8 @@ test('boost output confirms success', function () {
 
 test('boost entries contain valid frontmatter YAML', function () {
     $app = new Application();
-    $app->add(new InitCommand());
-    $app->add(new BoostCommand());
+    $app->addCommand(new InitCommand());
+    $app->addCommand(new BoostCommand());
     $tester = new CommandTester($app->find('boost'));
     $tester->execute([
         'path' => $this->tmpDir,
@@ -234,8 +234,8 @@ test('boost entries contain valid frontmatter YAML', function () {
 
 test('boost CSS includes archetype-specific styles', function () {
     $app = new Application();
-    $app->add(new InitCommand());
-    $app->add(new BoostCommand());
+    $app->addCommand(new InitCommand());
+    $app->addCommand(new BoostCommand());
     $tester = new CommandTester($app->find('boost'));
     $tester->execute([
         'path' => $this->tmpDir,

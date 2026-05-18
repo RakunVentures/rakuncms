@@ -148,6 +148,7 @@ $app->pipe(new \Rkn\Cms\Middleware\JsonBodyParser());
 $app->pipe($app->container()->get(\Rkn\Cms\Middleware\CsrfProtection::class));
 $app->pipe(new \Rkn\Cms\Middleware\PageCacheReader($pageCache, $cacheEnabled));
 $app->pipe(new \Rkn\Cms\Middleware\ApiDispatcher());
+$app->pipe(new \Rkn\Cms\Middleware\WpApiDispatcher());
 $app->pipe(new \Rkn\Cms\Middleware\LocaleDetector());
 $app->pipe(new \Rkn\Cms\Middleware\ContentRouter());
 $app->pipe(new \Rkn\Cms\Middleware\YoyoHandler());
@@ -492,17 +493,18 @@ use Symfony\Component\Console\Application;
 $application = new Application('RakunCMS', '0.1.0');
 
 // Register commands
-$application->add(new \Rkn\Cms\Cli\InitCommand());
-$application->add(new \Rkn\Cms\Cli\IndexRebuildCommand());
-$application->add(new \Rkn\Cms\Cli\CacheClearCommand());
-$application->add(new \Rkn\Cms\Cli\CacheWarmupCommand());
-$application->add(new \Rkn\Cms\Cli\TemplateWarmupCommand());
-$application->add(new \Rkn\Cms\Cli\QueueProcessCommand());
-$application->add(new \Rkn\Cms\Cli\ServeCommand());
-$application->add(new \Rkn\Cms\Cli\MakeComponentCommand());
-$application->add(new \Rkn\Cms\Cli\MakeCollectionCommand());
-$application->add(new \Rkn\Cms\Cli\SitemapGenerateCommand());
-$application->add(new \Rkn\Cms\Cli\BuildCommand());
+$application->addCommand(new \Rkn\Cms\Cli\InitCommand());
+$application->addCommand(new \Rkn\Cms\Cli\WxrImportCommand());
+$application->addCommand(new \Rkn\Cms\Cli\IndexRebuildCommand());
+$application->addCommand(new \Rkn\Cms\Cli\CacheClearCommand());
+$application->addCommand(new \Rkn\Cms\Cli\CacheWarmupCommand());
+$application->addCommand(new \Rkn\Cms\Cli\TemplateWarmupCommand());
+$application->addCommand(new \Rkn\Cms\Cli\QueueProcessCommand());
+$application->addCommand(new \Rkn\Cms\Cli\ServeCommand());
+$application->addCommand(new \Rkn\Cms\Cli\MakeComponentCommand());
+$application->addCommand(new \Rkn\Cms\Cli\MakeCollectionCommand());
+$application->addCommand(new \Rkn\Cms\Cli\SitemapGenerateCommand());
+$application->addCommand(new \Rkn\Cms\Cli\BuildCommand());
 
 $application->run();
 PHP;

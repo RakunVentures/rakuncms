@@ -66,7 +66,7 @@ afterEach(function () {
 
 test('backup:create generates valid ZIP file', function () {
     $app = new Application();
-    $app->add(new BackupCreateCommand());
+    $app->addCommand(new BackupCreateCommand());
 
     $outputPath = $this->tempDir . '/test-backup.zip';
     $tester = new CommandTester($app->find('backup:create'));
@@ -95,7 +95,7 @@ test('backup:create includes content, config, and templates', function () {
     $outputPath = $this->tempDir . '/test-backup.zip';
 
     $app = new Application();
-    $app->add(new BackupCreateCommand());
+    $app->addCommand(new BackupCreateCommand());
 
     $tester = new CommandTester($app->find('backup:create'));
     $tester->execute(['--output' => $outputPath]);
@@ -127,7 +127,7 @@ test('backup:create sanitizes secrets in config', function () {
     $outputPath = $this->tempDir . '/test-backup.zip';
 
     $app = new Application();
-    $app->add(new BackupCreateCommand());
+    $app->addCommand(new BackupCreateCommand());
 
     $tester = new CommandTester($app->find('backup:create'));
     $tester->execute(['--output' => $outputPath]);
@@ -147,7 +147,7 @@ test('backup:create includes valid manifest.json', function () {
     $outputPath = $this->tempDir . '/test-backup.zip';
 
     $app = new Application();
-    $app->add(new BackupCreateCommand());
+    $app->addCommand(new BackupCreateCommand());
 
     $tester = new CommandTester($app->find('backup:create'));
     $tester->execute(['--output' => $outputPath]);
@@ -171,8 +171,8 @@ test('backup:restore extracts files with --force', function () {
     // First create a backup
     $outputPath = $this->tempDir . '/test-backup.zip';
     $app = new Application();
-    $app->add(new BackupCreateCommand());
-    $app->add(new BackupRestoreCommand());
+    $app->addCommand(new BackupCreateCommand());
+    $app->addCommand(new BackupRestoreCommand());
 
     $tester = new CommandTester($app->find('backup:create'));
     $tester->execute(['--output' => $outputPath]);
@@ -192,8 +192,8 @@ test('backup:restore extracts files with --force', function () {
 test('backup:restore without --force shows warning', function () {
     $outputPath = $this->tempDir . '/test-backup.zip';
     $app = new Application();
-    $app->add(new BackupCreateCommand());
-    $app->add(new BackupRestoreCommand());
+    $app->addCommand(new BackupCreateCommand());
+    $app->addCommand(new BackupRestoreCommand());
 
     $createTester = new CommandTester($app->find('backup:create'));
     $createTester->execute(['--output' => $outputPath]);
@@ -207,8 +207,8 @@ test('backup:restore without --force shows warning', function () {
 test('backup:list shows backup files', function () {
     // Create a couple of backups
     $app = new Application();
-    $app->add(new BackupCreateCommand());
-    $app->add(new BackupListCommand());
+    $app->addCommand(new BackupCreateCommand());
+    $app->addCommand(new BackupListCommand());
 
     $tester = new CommandTester($app->find('backup:create'));
     $tester->execute([]);
@@ -228,7 +228,7 @@ test('backup:list --cleanup removes old backups', function () {
     file_put_contents($backupDir . '/backup-2024-01-03.zip', 'fake');
 
     $app = new Application();
-    $app->add(new BackupListCommand());
+    $app->addCommand(new BackupListCommand());
 
     $tester = new CommandTester($app->find('backup:list'));
     $tester->execute(['--cleanup' => '1']);

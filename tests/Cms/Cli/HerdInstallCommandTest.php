@@ -33,7 +33,7 @@ afterEach(function () {
 
 test('local install generates LocalValetDriver.php', function () {
     $app = new Application();
-    $app->add(new HerdInstallCommand());
+    $app->addCommand(new HerdInstallCommand());
     $tester = new CommandTester($app->find('herd:install'));
     $tester->execute(['--local' => true]);
 
@@ -43,7 +43,7 @@ test('local install generates LocalValetDriver.php', function () {
 
 test('local driver contains class LocalValetDriver', function () {
     $app = new Application();
-    $app->add(new HerdInstallCommand());
+    $app->addCommand(new HerdInstallCommand());
     $tester = new CommandTester($app->find('herd:install'));
     $tester->execute(['--local' => true]);
 
@@ -53,7 +53,7 @@ test('local driver contains class LocalValetDriver', function () {
 
 test('local driver serves() returns true', function () {
     $app = new Application();
-    $app->add(new HerdInstallCommand());
+    $app->addCommand(new HerdInstallCommand());
     $tester = new CommandTester($app->find('herd:install'));
     $tester->execute(['--local' => true]);
 
@@ -64,7 +64,7 @@ test('local driver serves() returns true', function () {
 
 test('local driver frontControllerPath points to public/index.php', function () {
     $app = new Application();
-    $app->add(new HerdInstallCommand());
+    $app->addCommand(new HerdInstallCommand());
     $tester = new CommandTester($app->find('herd:install'));
     $tester->execute(['--local' => true]);
 
@@ -75,7 +75,7 @@ test('local driver frontControllerPath points to public/index.php', function () 
 
 test('local driver isStaticFile checks public directory', function () {
     $app = new Application();
-    $app->add(new HerdInstallCommand());
+    $app->addCommand(new HerdInstallCommand());
     $tester = new CommandTester($app->find('herd:install'));
     $tester->execute(['--local' => true]);
 
@@ -86,7 +86,7 @@ test('local driver isStaticFile checks public directory', function () {
 
 test('local install output confirms installation', function () {
     $app = new Application();
-    $app->add(new HerdInstallCommand());
+    $app->addCommand(new HerdInstallCommand());
     $tester = new CommandTester($app->find('herd:install'));
     $tester->execute(['--local' => true]);
 
@@ -123,7 +123,7 @@ test('global install fails when Herd is not installed', function () {
 
     try {
         $app = new Application();
-        $app->add(new HerdInstallCommand());
+        $app->addCommand(new HerdInstallCommand());
         $tester = new CommandTester($app->find('herd:install'));
         $tester->execute([]);
 

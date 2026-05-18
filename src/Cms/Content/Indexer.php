@@ -27,6 +27,7 @@ final class Indexer
      */
     public function load(): array
     {
+        clearstatcache(true, $this->cachePath);
         if (file_exists($this->cachePath)) {
             return require $this->cachePath;
         }
@@ -62,7 +63,17 @@ final class Indexer
                 continue;
             }
 
-            $files = glob($collectionPath . '/*.md') ?: [];
+            $files = [];
+            if (is_dir($collectionPath)) {
+                $directory = new \RecursiveDirectoryIterator($collectionPath, \FilesystemIterator::SKIP_DOTS);
+                $iterator = new \RecursiveIteratorIterator($directory, \RecursiveIteratorIterator::LEAVES_ONLY);
+                /** @var \SplFileInfo $fileInfo */
+                foreach ($iterator as $fileInfo) {
+                    if ($fileInfo->getExtension() === 'md') {
+                        $files[] = $fileInfo->getPathname();
+                    }
+                }
+            }
             $scheduleChecker = new ScheduleChecker(dirname($this->contentPath));
             foreach ($files as $file) {
                 $entry = $this->indexFile($file, $collectionName);
