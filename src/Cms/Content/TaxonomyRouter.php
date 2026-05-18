@@ -49,7 +49,7 @@ final class TaxonomyRouter
                 'value' => $value,
                 'query' => $query->collection($collection)
                     ->locale($locale)
-                    ->where('category', '=', $value),
+                    ->where('categories', 'has', $value),
             ];
         }
 

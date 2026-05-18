@@ -292,6 +292,10 @@ final class Indexer
         $export = '<?php return ' . var_export($data, true) . ';' . PHP_EOL;
         file_put_contents($this->cachePath, $export);
 
+        if (function_exists('opcache_invalidate')) {
+            opcache_invalidate($this->cachePath, true);
+        }
+
         return $data;
     }
 }

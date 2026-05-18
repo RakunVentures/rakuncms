@@ -13,6 +13,7 @@ use Rkn\Cms\Search\SearchIndexer;
 use Symfony\Component\Yaml\Yaml;
 use Twig\Extension\AbstractExtension;
 use Twig\TwigFunction;
+use SQLite3;
 
 final class ContentExtension extends AbstractExtension
 {
@@ -27,6 +28,7 @@ final class ContentExtension extends AbstractExtension
             new TwigFunction('search', [$this, 'search']),
             new TwigFunction('request_param', [$this, 'requestParam']),
             new TwigFunction('unique_tags', [$this, 'uniqueTags']),
+            new TwigFunction('views', [$this, 'getViews']),
         ];
     }
 
@@ -159,5 +161,31 @@ final class ContentExtension extends AbstractExtension
         sort($result);
 
         return $result;
+    }
+
+    /**
+     * Get view count for a slug from SQLite.
+     */
+    public function getViews(string $slug): int
+    {
+        try {
+            $basePath = \app('base_path');
+            $dbPath = $basePath . '/storage/analytics.db';
+            
+            if (!file_exists($dbPath)) {
+                return 0;
+            }
+
+            $db = new SQLite3($dbPath, SQLITE3_OPEN_READONLY);
+            $stmt = $db->prepare('SELECT views FROM hits WHERE slug = :slug');
+            $stmt->bindValue(':slug', $slug, SQLITE3_TEXT);
+            $result = $stmt->execute();
+            $row = $result->fetchArray(SQLITE3_ASSOC);
+            $db->close();
+
+            return $row ? (int) $row['views'] : 0;
+        } catch (\Throwable) {
+            return 0;
+        }
     }
 }

@@ -6,6 +6,8 @@ namespace Rkn\Cms\Template;
 
 use Clickfwd\Yoyo\Services\Configuration as YoyoConfiguration;
 use Clickfwd\Yoyo\Twig\YoyoTwigExtension;
+use Clickfwd\Yoyo\Yoyo;
+use Clickfwd\Yoyo\ViewProviders\TwigViewProvider;
 use Rkn\Cms\Template\Extensions\AssetExtension;
 use Rkn\Cms\Template\Extensions\ContentExtension;
 use Rkn\Cms\Template\Extensions\I18nExtension;
@@ -59,16 +61,29 @@ final class Engine
         ));
 
         // Bootstrap Yoyo configuration and Twig extension
-        $siteUrl = '';
-        try {
-            $siteUrl = \config('site.url', '');
-        } catch (\Throwable) {
-        }
+        // Use relative URLs to support any port/domain
         new YoyoConfiguration([
-            'url' => rtrim($siteUrl, '/') . '/yoyo',
-            'scriptsPath' => rtrim($siteUrl, '/'),
+            'url' => '/yoyo',
+            'scriptsPath' => '/',
             'namespace' => 'Rkn\\Cms\\Components\\',
         ]);
+
+        $yoyo = Yoyo::getInstance();
+        $twigProvider = new TwigViewProvider($twig);
+        
+        // Register Twig as the view provider for Yoyo
+        $yoyo->registerViewProvider('default', $twigProvider);
+        $yoyo->registerViewProvider('twig', $twigProvider);
+        
+        // Register known components
+        $yoyo->registerComponents([
+            'category-grid' => \Rkn\Cms\Components\CategoryGrid::class,
+            'trend-grid' => \Rkn\Cms\Components\TrendGrid::class,
+            'search' => \Rkn\Cms\Components\Search::class,
+            'contact-form' => \Rkn\Cms\Components\ContactForm::class,
+            'newsletter-subscription' => \Rkn\Cms\Components\NewsletterSubscription::class,
+        ]);
+
         $twig->addExtension(new YoyoTwigExtension());
 
         return new self($twig);

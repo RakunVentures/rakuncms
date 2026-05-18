@@ -10,6 +10,7 @@ use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
+use Rkn\Cms\Template\Engine;
 
 /**
  * Intercepts POST /yoyo/ requests and delegates to the Yoyo component system.
@@ -28,6 +29,10 @@ class YoyoHandler implements MiddlewareInterface
         if ($request->getMethod() !== 'POST') {
             return $handler->handle($request);
         }
+
+        // Ensure Yoyo is bootstrapped via Engine
+        $basePath = \app('base_path');
+        Engine::create($basePath);
 
         // Process Yoyo request
         $yoyo = Yoyo::getInstance();

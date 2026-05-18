@@ -10,10 +10,14 @@ use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
+use SimpleXMLElement;
 
 #[AsCommand(name: 'wxr:import', description: 'Import content from a WordPress WXR backup')]
 final class WxrImportCommand extends Command
 {
+    /** @var array<string, string> */
+    private array $authorMap = [];
+
     protected function configure(): void
     {
         $this->addArgument('path', InputArgument::REQUIRED, 'The WXR XML file or directory containing XML files');
@@ -23,6 +27,9 @@ final class WxrImportCommand extends Command
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
+        ini_set('memory_limit', '1024M');
+        set_time_limit(0);
+
         $path = $input->getArgument('path');
         $targetCollection = $input->getOption('collection');
         $allowedPostTypes = $input->getOption('post-type');
@@ -30,6 +37,7 @@ final class WxrImportCommand extends Command
         $files = [];
         if (is_dir($path)) {
             $files = glob(rtrim($path, '/') . '/*.xml');
+            sort($files);
         } elseif (file_exists($path)) {
             $files = [$path];
         }
@@ -39,12 +47,23 @@ final class WxrImportCommand extends Command
             return Command::FAILURE;
         }
 
+        libxml_use_internal_errors(true);
+
+        // Pre-scan all files for author mappings
+        $output->writeln("<info>Scanning for author data...</info>");
+        foreach ($files as $file) {
+            $this->scanAuthors($file);
+        }
+        $output->writeln(sprintf("Found <info>%d</info> unique authors.", count($this->authorMap)));
+
         $output->writeln(sprintf("Importing from <info>%d</info> file(s) to <info>%s</info>...", count($files), $targetCollection));
 
         $totalCount = 0;
         foreach ($files as $file) {
-            $output->writeln("Processing <comment>{$file}</comment>...");
-            $totalCount += $this->importFile($file, $targetCollection, $allowedPostTypes, $output);
+            $output->writeln("Processing <comment>" . basename($file) . "</comment>...");
+            $fileCount = $this->importFileManually($file, $targetCollection, $allowedPostTypes, $output);
+            $output->writeln("Finished <comment>" . basename($file) . "</comment>: <info>{$fileCount}</info> items.");
+            $totalCount += $fileCount;
         }
 
         $output->writeln("<info>Successfully imported {$totalCount} entries total.</info>");
@@ -52,100 +71,125 @@ final class WxrImportCommand extends Command
         return Command::SUCCESS;
     }
 
-    private function importFile(string $file, string $collection, array $allowedPostTypes, OutputInterface $output): int
+    private function scanAuthors(string $file): void
     {
-        // Use LIBXML_PARSEHUGE to handle large XML files
-        $xml = @simplexml_load_file($file, 'SimpleXMLElement', LIBXML_NOCDATA | LIBXML_PARSEHUGE);
-        if ($xml === false) {
-            $output->writeln("<error>Failed to parse XML file: {$file}</error>");
-            return 0;
-        }
+        $content = file_get_contents($file);
+        if ($content === false) return;
 
-        $namespaces = $xml->getDocNamespaces(true);
-        $wpNs = $namespaces['wp'] ?? 'http://wordpress.org/export/1.2/';
-        $contentNs = $namespaces['content'] ?? 'http://purl.org/rss/1.0/modules/content/';
-        $dcNs = $namespaces['dc'] ?? 'http://purl.org/dc/elements/1.1/';
+        if (preg_match_all('/<wp:author>(.*?)<\/wp:author>/s', $content, $matches)) {
+            foreach ($matches[1] as $authorXml) {
+                if (preg_match('/<wp:author_login><!\[CDATA\[(.*?)\]\]><\/wp:author_login>/', $authorXml, $loginMatch) ||
+                    preg_match('/<wp:author_login>(.*?)<\/wp:author_login>/', $authorXml, $loginMatch)) {
+                    
+                    $login = trim($loginMatch[1]);
+                    
+                    if (preg_match('/<wp:author_display_name><!\[CDATA\[(.*?)\]\]><\/wp:author_display_name>/', $authorXml, $nameMatch) ||
+                        preg_match('/<wp:author_display_name>(.*?)<\/wp:author_display_name>/', $authorXml, $nameMatch)) {
+                        
+                        $this->authorMap[$login] = trim($nameMatch[1]);
+                    }
+                }
+            }
+        }
+    }
+
+    private function importFileManually(string $file, string $collection, array $allowedPostTypes, OutputInterface $output): int
+    {
+        $content = file_get_contents($file);
+        if ($content === false) return 0;
+
+        preg_match('/<rss[^>]*>/i', $content, $matches);
+        $rssTag = $matches[0] ?? '<rss version="2.0" xmlns:excerpt="http://wordpress.org/export/1.2/excerpt/" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:wfw="http://wellformedweb.org/CommentAPI/" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:wp="http://wordpress.org/export/1.2/">';
+
+        $parts = explode('<item>', $content);
+        array_shift($parts);
 
         $count = 0;
-        foreach ($xml->channel->item as $item) {
-            $wp = $item->children($wpNs);
-            $content = $item->children($contentNs);
-            $dc = $item->children($dcNs);
+        foreach ($parts as $part) {
+            $itemContent = explode('</item>', $part)[0];
+            $itemXml = '<item>' . $itemContent . '</item>';
+            $fragment = '<?xml version="1.0" encoding="UTF-8" ?>' . $rssTag . $itemXml . '</rss>';
 
-            $postType = (string) $wp->post_type;
-            
-            if (!in_array($postType, $allowedPostTypes)) {
-                continue;
-            }
-
-            $title = (string) $item->title;
-            $slug = (string) $wp->post_name;
-            $status = (string) $wp->status;
-            $date = (string) $wp->post_date;
-            $body = (string) $content->encoded;
-            $author = (string) $dc->creator;
-
-            // Handle empty slug
-            if (empty($slug)) {
-                $slug = $this->slugify($title) ?: uniqid();
-            }
-
-                        $basePath = getcwd();
-            $timestamp = strtotime($date) ?: time();
-            $folder = "{$basePath}/content/{$collection}/" . date('Y', $timestamp) . "/" . date('m', $timestamp);
-            if (!is_dir($folder)) {
-                mkdir($folder, 0o755, true);
-            }
-
-            $filename = "{$folder}/{$slug}.md";
-            
-            $link = (string) $item->link;
-            $parsedUrl = parse_url($link);
-            $oldUrlPath = $parsedUrl["path"] ?? "";
-
-            $frontmatter = [
-                'title' => $title,
-                'date' => $date,
-                'status' => $status,
-                'author' => $author,
-                'template' => $postType === 'page' ? 'page' : 'blog-post',
-                'wp_id' => (string) $wp->post_id,
-                'wp_type' => $postType,
-                'old_url' => $oldUrlPath,
-            ];
-
-            // Categories and Tags
-            foreach ($item->category as $cat) {
-                $domain = (string) $cat['domain'];
-                $nicename = (string) $cat['nicename'];
-                $name = (string) $cat;
-                if ($domain === 'category') {
-                    $frontmatter['categories'][] = $name;
-                } elseif ($domain === 'post_tag') {
-                    $frontmatter['tags'][] = $name;
+            try {
+                $xml = @simplexml_load_string($fragment, 'SimpleXMLElement', LIBXML_NOCDATA | LIBXML_PARSEHUGE | LIBXML_RECOVER);
+                
+                if (!$xml || !isset($xml->item)) {
+                    libxml_clear_errors();
+                    continue;
                 }
-            }
 
-            // Simple conversion of WordPress [caption] shortcodes
-            $body = preg_replace('/\[caption[^\]]*\].*?href="([^"]*)".*?src="([^"]*)".*?\[\/caption\]/is', '![]($2)', $body);
-            $body = preg_replace('/\[caption[^\]]*\].*?src="([^"]*)".*?\[\/caption\]/is', '![]($1)', $body);
+                $item = $xml->item;
+                $namespaces = $item->getDocNamespaces(true);
+                $wpNs = $namespaces['wp'] ?? 'http://wordpress.org/export/1.2/';
+                $contentNs = $namespaces['content'] ?? 'http://purl.org/rss/1.0/modules/content/';
+                $dcNs = $namespaces['dc'] ?? 'http://purl.org/dc/elements/1.1/';
 
-            $contentMd = "---\n";
-            foreach ($frontmatter as $key => $value) {
-                if (is_array($value)) {
-                    if (is_array($value)) {
-                    $contentMd .= "{$key}: " . json_encode(array_values(array_unique($value)), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . "\n";
-                } else {
-                    $contentMd .= "{$key}: " . json_encode($value, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . "\n";
+                $wp = $item->children($wpNs);
+                $postType = (string) $wp->post_type;
+                
+                if (in_array($postType, $allowedPostTypes)) {
+                    $contentChild = $item->children($contentNs);
+                    $dc = $item->children($dcNs);
+
+                    $title = (string) $item->title;
+                    $slug = (string) $wp->post_name;
+                    $status = (string) $wp->status;
+                    $date = (string) $wp->post_date;
+                    $body = (string) $contentChild->encoded;
+                    
+                    $authorLogin = (string) $dc->creator;
+                    $authorName = $this->authorMap[$authorLogin] ?? $authorLogin;
+
+                    if (empty($slug)) {
+                        $slug = $this->slugify($title) ?: uniqid();
+                    }
+
+                    $timestamp = strtotime($date) ?: time();
+                    $folder = getcwd() . "/content/{$collection}/" . date('Y', $timestamp) . "/" . date('m', $timestamp);
+                    if (!is_dir($folder)) mkdir($folder, 0755, true);
+
+                    $filename = "{$folder}/{$slug}.md";
+
+                    $frontmatter = [
+                        'title' => $title,
+                        'date' => $date,
+                        'status' => $status,
+                        'author' => $authorName,
+                        'template' => $postType === 'page' ? 'page' : 'blog-post',
+                        'wp_id' => (string) $wp->post_id,
+                        'wp_type' => $postType,
+                    ];
+
+                    foreach ($item->category as $cat) {
+                        $domain = (string) $cat['domain'];
+                        $name = (string) $cat;
+                        if ($domain === 'category') {
+                            $frontmatter['categories'][] = $name;
+                        } elseif ($domain === 'post_tag') {
+                            $frontmatter['tags'][] = $name;
+                        }
+                    }
+
+                    $body = preg_replace('/\[caption[^\]]*\].*?href="([^"]*)".*?src="([^"]*)".*?\[\/caption\]/is', '![]($2)', $body);
+                    $body = preg_replace('/\[caption[^\]]*\].*?src="([^"]*)".*?\[\/caption\]/is', '![]($1)', $body);
+
+                    $contentMd = "---\n";
+                    foreach ($frontmatter as $key => $value) {
+                        $val = is_array($value) ? array_values(array_unique($value)) : $value;
+                        $contentMd .= "{$key}: " . json_encode($val, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . "\n";
+                    }
+                    $contentMd .= "---\n\n{$body}";
+
+                    file_put_contents($filename, $contentMd);
+                    $count++;
+                    
+                    if ($count % 50 === 0) $output->write('.');
                 }
+            } catch (\Throwable) {
+                libxml_clear_errors();
             }
-            }
-            $contentMd .= "---\n\n{$body}";
-
-            file_put_contents($filename, $contentMd);
-            $count++;
         }
-
+        $output->writeln('');
         return $count;
     }
 

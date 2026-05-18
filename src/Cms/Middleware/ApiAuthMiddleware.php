@@ -16,8 +16,8 @@ final class ApiAuthMiddleware implements MiddlewareInterface
     {
         $path = $request->getUri()->getPath();
 
-        // Only apply to /api/ routes
-        if (!str_starts_with($path, '/api/')) {
+        // Only apply to /api/v1/ routes
+        if (!str_starts_with($path, '/api/v1/')) {
             return $handler->handle($request);
         }
 

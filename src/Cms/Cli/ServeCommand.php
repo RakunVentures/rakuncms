@@ -56,10 +56,11 @@ final class ServeCommand extends Command
         $output->writeln('Press Ctrl+C to stop.');
 
         $command = sprintf(
-            '%s -S %s:%s -t %s',
+            '%s -S %s:%s -t %s %s/index.php',
             escapeshellarg(PHP_BINARY),
             escapeshellarg($host),
             $port,
+            escapeshellarg($docRoot),
             escapeshellarg($docRoot),
         );
 

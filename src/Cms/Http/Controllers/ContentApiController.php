@@ -83,6 +83,8 @@ final class ContentApiController
 
         $data = $this->serializeEntry($entry);
         $data['content'] = $entry->content();
+        $filePath = $this->basePath . '/' . $entry->file();
+        $data['raw_content'] = file_exists($filePath) ? file_get_contents($filePath) : '';
 
         return $this->json(200, ['data' => $data]);
     }
@@ -144,6 +146,7 @@ final class ContentApiController
 
     public function update(ServerRequestInterface $request, string $collection, string $slug): ResponseInterface
     {
+        error_log("UPDATE CALLED FOR $collection / $slug");
         $body = json_decode((string) $request->getBody(), true);
         if (!is_array($body)) {
             return $this->json(400, ['error' => 'Invalid JSON body']);
@@ -163,22 +166,58 @@ final class ContentApiController
             $entry = $entries[0] ?? null;
         }
 
+        $isRaw = isset($body['content']) && str_starts_with(trim($body['content']), '---');
+        error_log("ENTRY IS NULL? " . ($entry === null ? 'YES' : 'NO'));
+
         if ($entry === null) {
-            return $this->json(404, ['error' => 'Entry not found']);
+            // UPSERT behavior
+            $collectionDir = $this->basePath . '/content/' . $collection;
+            if (!is_dir($collectionDir)) {
+                mkdir($collectionDir, 0755, true);
+            }
+            $filename = $slug;
+            if ($locale !== '') {
+                $filename .= '.' . $locale;
+            }
+            $filePath = $collectionDir . '/' . $filename . '.md';
+
+            if ($isRaw) {
+                $fileContent = $body['content'];
+            } else {
+                $title = $body['title'] ?? $slug;
+                $meta = $body['meta'] ?? [];
+                $content = $body['content'] ?? '';
+                $frontmatter = array_merge(['title' => $title], $meta);
+                $fileContent = "---\n" . Yaml::dump($frontmatter, 2) . "---\n\n" . $content;
+            }
+
+            file_put_contents($filePath, $fileContent);
+            $indexer->rebuild();
+
+            error_log("UPSERT RETURNING 201");
+            return $this->json(201, [
+                'data' => ['title' => $slug, 'slug' => $slug, 'collection' => $collection],
+                'message' => 'Entry created via UPSERT',
+            ]);
         }
 
         $filePath = $this->basePath . '/' . $entry->file();
-        if (!file_exists($filePath)) {
-            return $this->json(404, ['error' => 'Entry file not found']);
+        $dir = dirname($filePath);
+        if (!is_dir($dir)) {
+            mkdir($dir, 0755, true);
         }
 
-        // Build updated content
-        $title = $body['title'] ?? $entry->title();
-        $meta = $body['meta'] ?? $entry->meta();
-        $content = $body['content'] ?? '';
+        if ($isRaw) {
+            $fileContent = $body['content'];
+        } else {
+            // Build updated content
+            $title = $body['title'] ?? $entry->title();
+            $meta = $body['meta'] ?? $entry->meta();
+            $content = $body['content'] ?? '';
 
-        $frontmatter = array_merge(['title' => $title], $meta);
-        $fileContent = "---\n" . Yaml::dump($frontmatter, 2) . "---\n\n" . $content;
+            $frontmatter = array_merge(['title' => $title], $meta);
+            $fileContent = "---\n" . Yaml::dump($frontmatter, 2) . "---\n\n" . $content;
+        }
 
         file_put_contents($filePath, $fileContent);
 
@@ -186,7 +225,7 @@ final class ContentApiController
         $indexer->rebuild();
 
         return $this->json(200, [
-            'data' => ['title' => $title, 'slug' => $slug, 'collection' => $collection],
+            'data' => ['title' => $entry->title(), 'slug' => $slug, 'collection' => $collection],
             'message' => 'Entry updated',
         ]);
     }

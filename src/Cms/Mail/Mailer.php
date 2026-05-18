@@ -58,7 +58,7 @@ final class Mailer
      * Send a contact form email.
      *
      * Canonical fields (name, email, message) are required; any additional
-     * keys in $data (source, phone, company, monthly_volume, model, ...) are
+     * keys in $data (source, phone, company, monthly_volume, monthly_volume, model, ...) are
      * forwarded to the template and rendered as an extra-fields table.
      *
      * @param array<string, mixed> $data
@@ -159,25 +159,38 @@ final class Mailer
     {
         $mail = new PHPMailer(true);
 
-        $host = $this->config['smtp_host'] ?? '';
+        $host = (string) ($this->config['smtp_host'] ?? '');
 
         if ($host !== '' && $host !== 'localhost') {
             $mail->isSMTP();
             $mail->Host = $host;
             $mail->Port = (int) ($this->config['smtp_port'] ?? 587);
 
-            $encryption = $this->config['smtp_encryption'] ?? 'tls';
+            $encryption = (string) ($this->config['smtp_encryption'] ?? '');
             if ($encryption === 'tls') {
                 $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
             } elseif ($encryption === 'ssl') {
                 $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
+            } else {
+                $mail->SMTPAutoTLS = false;
             }
 
-            $username = $this->config['smtp_username'] ?? '';
+            $username = (string) ($this->config['smtp_username'] ?? '');
             if ($username !== '') {
                 $mail->SMTPAuth = true;
                 $mail->Username = $username;
-                $mail->Password = $this->config['smtp_password'] ?? '';
+                $mail->Password = (string) ($this->config['smtp_password'] ?? '');
+            }
+            
+            // Local development SSL bypass
+            if ($host === '127.0.0.1' || $host === 'localhost') {
+                $mail->SMTPOptions = [
+                    'ssl' => [
+                        'verify_peer' => false,
+                        'verify_peer_name' => false,
+                        'allow_self_signed' => true
+                    ]
+                ];
             }
         }
 

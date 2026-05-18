@@ -31,6 +31,8 @@ final class ContentApiDispatcher implements MiddlewareInterface
         $permissions = $request->getAttribute('api_permissions', []);
         $basePath = \app('base_path');
 
+        error_log("API DISPATCHER: Method=$method, Path=$apiPath, Segments=" . json_encode($segments));
+
         // Route: /api/v1/entries
         if ($segments[0] === 'entries') {
             $controller = new ContentApiController($basePath);
@@ -51,6 +53,7 @@ final class ContentApiDispatcher implements MiddlewareInterface
             }
 
             if (count($segments) === 3 && $method === 'PUT') {
+                error_log("CALLING UPDATE FOR " . $segments[1] . " " . $segments[2]);
                 if (!ApiAuthMiddleware::hasPermission($permissions, 'write')) {
                     return $this->forbidden();
                 }
@@ -58,6 +61,7 @@ final class ContentApiDispatcher implements MiddlewareInterface
             }
 
             if (count($segments) === 3 && $method === 'DELETE') {
+                error_log("CALLING DELETE FOR " . $segments[1] . " " . $segments[2]);
                 if (!ApiAuthMiddleware::hasPermission($permissions, 'write')) {
                     return $this->forbidden();
                 }
