@@ -65,7 +65,7 @@ final class Engine
         new YoyoConfiguration([
             'url' => '/yoyo',
             'scriptsPath' => '/',
-            'namespace' => 'Rkn\\Cms\\Components\\',
+            'namespace' => 'App\\Components\\',
         ]);
 
         $yoyo = Yoyo::getInstance();
@@ -77,11 +77,11 @@ final class Engine
         
         // Register known components
         $yoyo->registerComponents([
-            'category-grid' => \Rkn\Cms\Components\CategoryGrid::class,
-            'trend-grid' => \Rkn\Cms\Components\TrendGrid::class,
-            'search' => \Rkn\Cms\Components\Search::class,
-            'contact-form' => \Rkn\Cms\Components\ContactForm::class,
-            'newsletter-subscription' => \Rkn\Cms\Components\NewsletterSubscription::class,
+            'category-grid' => \App\Components\CategoryGrid::class,
+            'trend-grid' => \App\Components\TrendGrid::class,
+            'search' => \App\Components\Search::class,
+            'contact-form' => \App\Components\ContactForm::class,
+            'newsletter-subscription' => \App\Components\NewsletterSubscription::class,
         ]);
 
         $twig->addExtension(new YoyoTwigExtension());

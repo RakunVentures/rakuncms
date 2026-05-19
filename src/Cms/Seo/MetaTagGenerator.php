@@ -43,9 +43,19 @@ final class MetaTagGenerator
 
     private function descriptionTag(?Entry $entry): string
     {
-        $description = $entry?->getMeta('description')
-            ?? $this->siteGlobals['description']
-            ?? '';
+        $description = $entry?->getMeta('description');
+        
+        if (empty($description) && $entry !== null) {
+            // Auto-generate description from content (first 160 chars)
+            $content = strip_tags($entry->content());
+            $description = mb_substr($content, 0, 160);
+            $description = str_replace(["\r", "\n"], ' ', $description);
+            $description = trim($description) . '...';
+        }
+
+        if (empty($description)) {
+            $description = $this->siteGlobals['description'] ?? '';
+        }
 
         if ($description === '') {
             return '';
@@ -56,13 +66,21 @@ final class MetaTagGenerator
 
     private function keywordsTag(?Entry $entry): string
     {
-        $keywords = $entry?->getMeta('keywords') ?? '';
+        $keywords = $entry?->getMeta('keywords');
+        
+        if (empty($keywords) && $entry !== null) {
+            // Try to use tags as keywords
+            $tags = $entry->getMeta('tags');
+            if (is_array($tags)) {
+                $keywords = implode(', ', $tags);
+            }
+        }
 
-        if ($keywords === '') {
+        if (empty($keywords)) {
             return '';
         }
 
-        return '<meta name="keywords" content="' . $this->escape($keywords) . '">';
+        return '<meta name="keywords" content="' . $this->escape((string)$keywords) . '">';
     }
 
     private function authorTag(?Entry $entry): string
@@ -116,7 +134,17 @@ final class MetaTagGenerator
     {
         $baseUrl = $context['base_url'] ?? '';
         $title = $entry?->title() ?? $this->siteGlobals['title'] ?? '';
-        $description = $entry?->getMeta('description') ?? $this->siteGlobals['description'] ?? '';
+        
+        // Use same logic for description as descriptionTag
+        $description = $entry?->getMeta('description');
+        if (empty($description) && $entry !== null) {
+            $content = strip_tags($entry->content());
+            $description = mb_substr($content, 0, 160) . '...';
+        }
+        if (empty($description)) {
+            $description = $this->siteGlobals['description'] ?? '';
+        }
+
         $siteName = $this->seoConfig['site_name'] ?? $this->siteGlobals['title'] ?? '';
 
         if ($title === '' && $siteName === '') {
@@ -125,7 +153,19 @@ final class MetaTagGenerator
 
         $type = $entry?->getMeta('type') ?? $this->resolveOgType($entry);
         $url = ($entry !== null && $baseUrl !== '') ? rtrim($baseUrl, '/') . $entry->url() : $baseUrl;
-        $image = $entry?->getMeta('image') ?? $this->seoConfig['default_image'] ?? '';
+        
+        // Try to find image
+        $image = $entry?->getMeta('image');
+        if (empty($image) && $entry !== null) {
+            // Try to extract first image from content
+            if (preg_match('/<img[^>]+src="([^">]+)"/', $entry->content(), $imgMatches)) {
+                $image = $imgMatches[1];
+            }
+        }
+        if (empty($image)) {
+            $image = $this->seoConfig['default_image'] ?? '';
+        }
+
         $locale = $context['locale'] ?? '';
 
         $tags = [];
@@ -159,14 +199,32 @@ final class MetaTagGenerator
     private function twitterCardTags(?Entry $entry, array $context): string
     {
         $title = $entry?->title() ?? $this->siteGlobals['title'] ?? '';
-        $description = $entry?->getMeta('description') ?? $this->siteGlobals['description'] ?? '';
+        
+        $description = $entry?->getMeta('description');
+        if (empty($description) && $entry !== null) {
+            $content = strip_tags($entry->content());
+            $description = mb_substr($content, 0, 160) . '...';
+        }
+        if (empty($description)) {
+            $description = $this->siteGlobals['description'] ?? '';
+        }
+
         $baseUrl = $context['base_url'] ?? '';
 
         if ($title === '' && $description === '') {
             return '';
         }
 
-        $image = $entry?->getMeta('image') ?? $this->seoConfig['default_image'] ?? '';
+        $image = $entry?->getMeta('image');
+        if (empty($image) && $entry !== null) {
+            if (preg_match('/<img[^>]+src="([^">]+)"/', $entry->content(), $imgMatches)) {
+                $image = $imgMatches[1];
+            }
+        }
+        if (empty($image)) {
+            $image = $this->seoConfig['default_image'] ?? '';
+        }
+
         $cardType = $image !== '' ? 'summary_large_image' : 'summary';
         $twitterHandle = $this->seoConfig['twitter_handle'] ?? '';
 

@@ -179,7 +179,7 @@ final class WpApiDispatcher implements MiddlewareInterface
             if (isset($keyConfig['key']) && hash_equals($keyConfig['key'], $password)) {
                 return [
                     'id' => 1,
-                    'name' => $username,
+                    'name' => $keyConfig['name'] ?? $username,
                     'permissions' => $keyConfig['permissions'] ?? [],
                 ];
             }
@@ -256,6 +256,7 @@ final class WpApiDispatcher implements MiddlewareInterface
             'title' => is_array($title) ? $title['raw'] ?? '' : $title,
             'date' => $date,
             'status' => $status,
+            'author' => $user['name'],
             'template' => $wpType === 'page' ? 'page' : 'blog-post',
             'wp_id' => (string) $wpId,
             'wp_type' => $wpType,

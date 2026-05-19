@@ -49,7 +49,6 @@ final class WxrImportCommand extends Command
 
         libxml_use_internal_errors(true);
 
-        // Pre-scan all files for author mappings
         $output->writeln("<info>Scanning for author data...</info>");
         foreach ($files as $file) {
             $this->scanAuthors($file);
@@ -150,6 +149,10 @@ final class WxrImportCommand extends Command
 
                     $filename = "{$folder}/{$slug}.md";
 
+                    $link = (string) $item->link;
+                    $parsedUrl = parse_url($link);
+                    $oldUrlPath = $parsedUrl["path"] ?? "";
+
                     $frontmatter = [
                         'title' => $title,
                         'date' => $date,
@@ -158,6 +161,7 @@ final class WxrImportCommand extends Command
                         'template' => $postType === 'page' ? 'page' : 'blog-post',
                         'wp_id' => (string) $wp->post_id,
                         'wp_type' => $postType,
+                        'old_url' => $oldUrlPath,
                     ];
 
                     foreach ($item->category as $cat) {
