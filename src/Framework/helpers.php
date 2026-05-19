@@ -3,6 +3,9 @@
 declare(strict_types=1);
 
 use Rkn\Framework\Application;
+use Rkn\Cms\Content\Indexer;
+use Rkn\Cms\Content\Query;
+use Rkn\Cms\Content\Entry;
 
 if (!function_exists('app')) {
     /**
@@ -37,6 +40,50 @@ if (!function_exists('config')) {
         }
 
         return $application->config($key, $default);
+    }
+}
+
+if (!function_exists('collection')) {
+    /**
+     * Get a content collection query.
+     */
+    function collection(string $name): Query
+    {
+        $basePath = app('base_path');
+        $indexer = new Indexer($basePath);
+        $index = $indexer->load();
+
+        return (new Query($index))->collection($name);
+    }
+}
+
+if (!function_exists('entry')) {
+    /**
+     * Get a specific content entry.
+     */
+    function entry(string $path): ?Entry
+    {
+        $basePath = app('base_path');
+        $indexer = new Indexer($basePath);
+        $index = $indexer->load();
+        $entries = $index['entries'];
+
+        if (isset($entries[$path])) {
+            return Entry::fromArray($entries[$path]);
+        }
+
+        $locale = 'es';
+        try {
+            $locale = app('locale');
+        } catch (\Throwable) {}
+
+        foreach ($entries as $key => $data) {
+            if (str_starts_with($key, $path) && $data['locale'] === $locale) {
+                return Entry::fromArray($data);
+            }
+        }
+
+        return null;
     }
 }
 

@@ -82,6 +82,7 @@ final class Engine
             'search' => \App\Components\Search::class,
             'contact-form' => \App\Components\ContactForm::class,
             'newsletter-subscription' => \App\Components\NewsletterSubscription::class,
+            'magazine-grid' => \App\Components\MagazineGrid::class,
         ]);
 
         $twig->addExtension(new YoyoTwigExtension());

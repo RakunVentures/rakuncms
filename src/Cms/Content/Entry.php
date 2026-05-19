@@ -109,6 +109,22 @@ final class Entry
     }
 
     /**
+     * Magic getter for meta fields.
+     */
+    public function __get(string $key): mixed
+    {
+        return $this->meta[$key] ?? null;
+    }
+
+    /**
+     * Magic isset for Twig property checking.
+     */
+    public function __isset(string $key): bool
+    {
+        return isset($this->meta[$key]);
+    }
+
+    /**
      * Get the slug for a specific locale.
      */
     public function slugForLocale(string $locale): string
