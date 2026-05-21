@@ -45,7 +45,10 @@ final class SitemapController
                 }
 
                 if (!empty($entry['date'])) {
-                    $xml .= "    <lastmod>" . date('Y-m-d', strtotime((string) $entry['date'])) . "</lastmod>\n";
+                    $timestamp = strtotime((string) $entry['date']);
+                    if ($timestamp !== false) {
+                        $xml .= "    <lastmod>" . date('Y-m-d', $timestamp) . "</lastmod>\n";
+                    }
                 }
 
                 $xml .= "    <changefreq>weekly</changefreq>\n";

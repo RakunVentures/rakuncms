@@ -158,9 +158,28 @@ final class Indexer
         $slug = $this->extractSlug($basename);
         $order = $this->extractOrder($basename);
 
+        $actualSlug = $matter['slugs'][$locale] ?? $matter['slug'] ?? $slug;
+        $urlPath = '';
+        if ($collectionName === 'pages') {
+            if (in_array($actualSlug, ['index', 'home', 'inicio', ''], true)) {
+                $urlPath = '/';
+            } else {
+                $urlPath = '/' . $actualSlug;
+            }
+        } else {
+            $urlPath = '/' . $collectionName . '/' . $actualSlug;
+        }
+        
+        if ($urlPath === '/') {
+            $urlPath = '/' . $locale . '/';
+        } elseif ($locale !== $this->defaultLocale) {
+            $urlPath = '/' . $locale . $urlPath;
+        }
+
         return [
             'title' => $matter['title'] ?? ucfirst($slug),
             'slug' => $matter['slug'] ?? $slug,
+            'url' => $urlPath,
             'collection' => $collectionName,
             'locale' => $locale,
             'file' => $this->relativePath($filePath),

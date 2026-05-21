@@ -134,7 +134,34 @@ ENV;
 
 declare(strict_types=1);
 
+// Static file serve for PHP built-in server (handling URL encoding for spaces)
+if (PHP_SAPI === 'cli-server') {
+    $path = urldecode(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH));
+    $file = __DIR__ . $path;
+    if (is_file($file)) {
+        return false;
+    }
+}
+
 require __DIR__ . '/../vendor/autoload.php';
+
+// Custom Autoloader for local components in /components/
+spl_autoload_register(function ($class) {
+    $prefix = 'App\\';
+    $base_dir = __DIR__ . '/../';
+
+    $len = strlen($prefix);
+    if (strncmp($prefix, $class, $len) !== 0) {
+        return;
+    }
+
+    $relative_class = substr($class, $len);
+    $file = $base_dir . str_replace('\\', '/', $relative_class) . '.php';
+
+    if (file_exists($file)) {
+        require $file;
+    }
+});
 
 $app = new \Rkn\Framework\Application(dirname(__DIR__));
 
@@ -144,9 +171,13 @@ $cacheEnabled = $app->config('cache.page_cache', true);
 
 // PSR-15 Middleware Pipeline
 $app->pipe(new \Rkn\Cms\Middleware\ErrorHandler());
+$app->pipe(new \Rkn\Cms\Middleware\RedirectMiddleware());
 $app->pipe(new \Rkn\Cms\Middleware\JsonBodyParser());
 $app->pipe($app->container()->get(\Rkn\Cms\Middleware\CsrfProtection::class));
 $app->pipe(new \Rkn\Cms\Middleware\PageCacheReader($pageCache, $cacheEnabled));
+$app->pipe(new \Rkn\Cms\Middleware\AnalyticsMiddleware($basePath . '/storage'));
+$app->pipe(new \Rkn\Cms\Middleware\ApiAuthMiddleware());
+$app->pipe(new \Rkn\Cms\Middleware\ContentApiDispatcher());
 $app->pipe(new \Rkn\Cms\Middleware\ApiDispatcher());
 $app->pipe(new \Rkn\Cms\Middleware\WpApiDispatcher());
 $app->pipe(new \Rkn\Cms\Middleware\LocaleDetector());

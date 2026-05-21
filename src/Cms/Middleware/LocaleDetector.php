@@ -16,17 +16,15 @@ final class LocaleDetector implements MiddlewareInterface
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
         $path = $request->getUri()->getPath();
-        $config = [];
         $basePath = '';
 
         try {
-            $config = \app('config');
             $basePath = \app('base_path');
         } catch (\Throwable) {
         }
 
-        $defaultLocale = $config['site']['default_locale'] ?? 'es';
-        $supportedLocales = $config['site']['locales'] ?? ['es', 'en'];
+        $defaultLocale = \config('rakun.site.default_locale') ?? \config('site.default_locale', 'es');
+        $supportedLocales = \config('rakun.site.locales') ?? \config('site.locales', ['es', 'en']);
 
         // 1. Detect from URL prefix
         $locale = $this->detectFromUrl($path, $supportedLocales);
