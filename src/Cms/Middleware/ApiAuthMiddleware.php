@@ -16,23 +16,16 @@ final class ApiAuthMiddleware implements MiddlewareInterface
     {
         $path = $request->getUri()->getPath();
 
-        // Only apply to /api/v1/ routes
         if (!str_starts_with($path, '/api/v1/')) {
             return $handler->handle($request);
         }
 
-        // Check if API is enabled
-        $apiEnabled = false;
-        try {
-            $apiEnabled = (bool) \config('api.enabled', false);
-        } catch (\Throwable) {
-        }
+        $apiEnabled = \config('api.enabled') ?? \config('rakun.api.enabled') ?? false;
 
         if (!$apiEnabled) {
             return $this->jsonResponse(404, ['error' => 'API not enabled']);
         }
 
-        // Extract Bearer token
         $authHeader = $request->getHeaderLine('Authorization');
         $token = '';
         if (str_starts_with($authHeader, 'Bearer ')) {
@@ -43,12 +36,7 @@ final class ApiAuthMiddleware implements MiddlewareInterface
             return $this->jsonResponse(401, ['error' => 'Authentication required']);
         }
 
-        // Validate against configured API keys
-        $apiKeys = [];
-        try {
-            $apiKeys = \config('api.keys', []);
-        } catch (\Throwable) {
-        }
+        $apiKeys = \config('api.keys') ?? \config('rakun.api.keys') ?? [];
 
         $matchedKey = null;
         foreach ($apiKeys as $keyConfig) {
@@ -62,26 +50,17 @@ final class ApiAuthMiddleware implements MiddlewareInterface
             return $this->jsonResponse(401, ['error' => 'Invalid API key']);
         }
 
-        // Store API key info in request attributes
         $request = $request->withAttribute('api_key', $matchedKey);
         $request = $request->withAttribute('api_permissions', $matchedKey['permissions'] ?? []);
 
         return $handler->handle($request);
     }
 
-    /**
-     * Check if the request has a specific permission.
-     *
-     * @param list<string> $permissions
-     */
     public static function hasPermission(array $permissions, string $required): bool
     {
         return in_array($required, $permissions, true) || in_array('admin', $permissions, true);
     }
 
-    /**
-     * @param array<string, mixed> $data
-     */
     private function jsonResponse(int $status, array $data): ResponseInterface
     {
         return new Response(

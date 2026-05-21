@@ -206,7 +206,12 @@ final class Indexer
     {
         // Try Application container first
         try {
-            return \config('site.default_locale', 'es');
+            if (function_exists('config')) {
+                $locale = \config('rakun.site.default_locale', null) ?? \config('site.default_locale', 'es');
+                if ($locale !== 'es') {
+                    return $locale;
+                }
+            }
         } catch (\Throwable) {
         }
 

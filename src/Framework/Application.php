@@ -37,184 +37,36 @@ final class Application
         $this->registerRoutes();
     }
 
-    /**
-     * Load .env file (Laravel-style). Values become available via env() helper
-     * and as ${VAR} placeholders inside YAML config files.
-     *
-     * Priority: real process env > .env file > YAML default.
-     */
     private function loadDotenv(string $basePath): void
     {
         if (!class_exists(\Dotenv\Dotenv::class)) {
             return;
         }
-        if (!is_file($basePath . '/.env')) {
-            return;
+        try {
+            $dotenv = \Dotenv\Dotenv::createImmutable($basePath);
+            $dotenv->safeLoad();
+        } catch (\Throwable) {
         }
-        \Dotenv\Dotenv::createImmutable($basePath)->safeLoad();
     }
 
-    public static function getInstance(): ?self
-    {
-        return self::$instance;
-    }
-
-    public function container(): Container
-    {
-        return $this->container;
-    }
-
-    public function router(): Router
-    {
-        return $this->router;
-    }
-
-    public function pipe(MiddlewareInterface $middleware): self
-    {
-        $this->middleware[] = $middleware;
-        return $this;
-    }
-
-    public function run(): void
-    {
-        $factory = new Psr17Factory();
-        $creator = new ServerRequestCreator($factory, $factory, $factory, $factory);
-        $request = $creator->fromGlobals();
-
-        $dispatcher = new Dispatcher($this->middleware);
-        $response = $dispatcher->handle($request);
-
-        (new SapiEmitter())->emit($response);
-    }
-
-    public function getBasePath(): string
-    {
-        return $this->container->get('base_path');
-    }
-
-    /**
-     * @return mixed
-     */
-    public function config(string $key, mixed $default = null): mixed
-    {
-        $config = $this->container->get('config');
-
-        $keys = explode('.', $key);
-        $value = $config;
-
-        foreach ($keys as $segment) {
-            if (is_array($value) && array_key_exists($segment, $value)) {
-                $value = $value[$segment];
-            } else {
-                return $default;
-            }
-        }
-
-        return $value;
-    }
-
-    private function loadConfig(string $configPath): void
+    private function loadConfig(string $configDir): void
     {
         $config = [];
+        if (is_dir($configDir)) {
+            foreach (glob($configDir . '/*.yaml') as $file) {
+                $content = file_get_contents($file) ?: '';
+                $name = pathinfo($file, PATHINFO_FILENAME);
+                
+                // Allow ${VAR} in YAML
+                $content = preg_replace_callback('/\$\{([A-Z0-9_]+)(?::-([^}]*))?\}/', function ($matches) {
+                    $val = $_ENV[$matches[1]] ?? $_SERVER[$matches[1]] ?? getenv($matches[1]);
+                    return ($val !== false && $val !== null) ? $val : ($matches[2] ?? '');
+                }, $content) ?: $content;
 
-        // Load rakun.yaml (main config)
-        $mainConfig = $configPath . '/rakun.yaml';
-        if (file_exists($mainConfig)) {
-            $config = Yaml::parseFile($mainConfig) ?? [];
+                $config[$name] = Yaml::parse($content);
+            }
         }
-
-        // Load collections.yaml
-        $collectionsConfig = $configPath . '/collections.yaml';
-        if (file_exists($collectionsConfig)) {
-            $config['collections'] = Yaml::parseFile($collectionsConfig) ?? [];
-        }
-
-        // Load environment-specific config (merge over main)
-        $env = getenv('APP_ENV') ?: ($_ENV['APP_ENV'] ?? 'production');
-        $envConfig = $configPath . '/environments/' . $env . '.yaml';
-        if (file_exists($envConfig)) {
-            $envData = Yaml::parseFile($envConfig) ?? [];
-            $config = $this->mergeConfig($config, $envData);
-        }
-
-        $config = $this->resolveEnvPlaceholders($config);
-
         $this->container->set('config', $config);
-        $this->container->set('environment', $env);
-    }
-
-    /**
-     * @param array<string, mixed> $base
-     * @param array<string, mixed> $override
-     * @return array<string, mixed>
-     */
-    private function mergeConfig(array $base, array $override): array
-    {
-        foreach ($override as $key => $value) {
-            if (is_array($value) && isset($base[$key]) && is_array($base[$key])) {
-                $base[$key] = $this->mergeConfig($base[$key], $value);
-            } else {
-                $base[$key] = $value;
-            }
-        }
-        return $base;
-    }
-
-    /**
-     * Walk the config tree and replace ${VAR} / ${VAR:-default} placeholders
-     * with values from the environment. The .env file (already loaded) and the
-     * real process environment both feed $_ENV / getenv().
-     *
-     * @param mixed $value
-     * @return mixed
-     */
-    private function resolveEnvPlaceholders(mixed $value): mixed
-    {
-        if (is_array($value)) {
-            foreach ($value as $k => $v) {
-                $value[$k] = $this->resolveEnvPlaceholders($v);
-            }
-            return $value;
-        }
-
-        if (!is_string($value) || !str_contains($value, '${')) {
-            return $value;
-        }
-
-        // Full-string placeholder: coerce "true"/"false"/"null"/numeric to proper types
-        if (preg_match('/^\$\{([A-Z0-9_]+)(?::-(.*))?\}$/', $value, $m)) {
-            return $this->castEnvValue($this->readEnv($m[1], $m[2] ?? null));
-        }
-
-        // Embedded placeholder(s): return as string
-        return preg_replace_callback(
-            '/\$\{([A-Z0-9_]+)(?::-([^}]*))?\}/',
-            fn(array $m) => (string) ($this->readEnv($m[1], $m[2] ?? null) ?? ''),
-            $value
-        );
-    }
-
-    private function readEnv(string $key, ?string $default): ?string
-    {
-        $raw = $_ENV[$key] ?? $_SERVER[$key] ?? getenv($key);
-        if ($raw === false || $raw === null || $raw === '') {
-            return $default;
-        }
-        return (string) $raw;
-    }
-
-    private function castEnvValue(?string $v): mixed
-    {
-        if ($v === null) {
-            return null;
-        }
-        return match (strtolower($v)) {
-            'true'  => true,
-            'false' => false,
-            'null'  => null,
-            'empty' => '',
-            default => is_numeric($v) ? $v + 0 : $v,
-        };
     }
 
     private function registerCoreServices(): void
@@ -222,11 +74,8 @@ final class Application
         $container = $this->container;
         $basePath = $this->getBasePath();
 
-        // Twig Environment
         $container->set(\Twig\Environment::class, function () use ($container, $basePath) {
             $templatePaths = [$basePath . '/templates'];
-
-            // Check if rkn/cms package has default templates
             $cmsTemplates = $basePath . '/vendor/rkn/cms/templates';
             if (is_dir($cmsTemplates)) {
                 $templatePaths[] = $cmsTemplates;
@@ -247,41 +96,58 @@ final class Application
                 $twig->addExtension(new \Twig\Extension\DebugExtension());
             }
 
+            // Register Banner Slot Function (Task 2.4)
+            $twig->addFunction(new \Twig\TwigFunction('banner_slot', function (string $slot) use ($basePath) {
+                $indexer = new \Rkn\Cms\Content\Indexer($basePath);
+                $query = new \Rkn\Cms\Content\Query($indexer->load());
+                $banners = $query->collection('banners')
+                    ->where('slot', '=', $slot)
+                    ->where('status', '=', 'publish')
+                    ->get();
+                
+                if (empty($banners)) return '';
+                
+                $banner = $banners[0];
+                $meta = $banner->meta();
+                
+                $img = $meta['image'] ?? '';
+                $url = $meta['url'] ?? '#';
+                
+                return sprintf(
+                    '<div class="banner-slot banner-slot-%s"><a href="%s" target="_blank"><img src="%s" alt="Ad" class="w-full h-auto"></a></div>',
+                    htmlspecialchars($slot),
+                    htmlspecialchars($url),
+                    htmlspecialchars($img)
+                );
+            }, ['is_safe' => ['html']]));
+
             return $twig;
         });
 
-        // PSR-17 Factory
         $container->set(Psr17Factory::class, new Psr17Factory());
 
-        // CSRF Protection
         $container->set(\Rkn\Cms\Middleware\CsrfProtection::class, function () use ($container) {
             $secret = (string) env('APP_KEY', 'change-me-at-least-32-chars-long');
             return new \Rkn\Cms\Middleware\CsrfProtection($secret);
         });
 
-        // File Queue
         $container->set('queue', function () use ($basePath) {
             return new \Rkn\Cms\Queue\FileQueue($basePath);
         });
 
-        // Mailer
         $container->set(\Rkn\Cms\Mail\Mailer::class, function () use ($container) {
             $config = $container->get('config');
             return new \Rkn\Cms\Mail\Mailer($config['mail'] ?? []);
         });
 
-        // Event Dispatcher
         $container->set(\Rkn\Cms\Events\EventDispatcher::class, function () use ($container, $basePath) {
             $dispatcher = new \Rkn\Cms\Events\EventDispatcher();
-
-            // Register webhooks from config
             $config = $container->get('config');
             $webhooks = $config['webhooks'] ?? [];
             if (!empty($webhooks)) {
                 $queue = new \Rkn\Cms\Queue\FileQueue($basePath);
                 \Rkn\Cms\Events\WebhookListener::registerFromConfig($webhooks, $dispatcher, $queue);
             }
-
             return $dispatcher;
         });
         $container->set('events', fn () => $container->get(\Rkn\Cms\Events\EventDispatcher::class));
@@ -289,11 +155,61 @@ final class Application
 
     private function registerRoutes(): void
     {
-        // CMS routes registered automatically
         $this->router->post('/yoyo[/{action}]', 'yoyo_handler');
         $this->router->post('/api/form/{name}', 'form_controller');
         $this->router->get('/sitemap.xml', 'sitemap_controller');
         $this->router->get('/rss.xml', 'rss_controller');
         $this->router->get('/{path:.*}', 'content_router');
+    }
+
+    public function pipe(MiddlewareInterface $middleware): void
+    {
+        $this->middleware[] = $middleware;
+    }
+
+    public function run(): void
+    {
+        $psr17Factory = new Psr17Factory();
+        $creator = new ServerRequestCreator($psr17Factory, $psr17Factory, $psr17Factory, $psr17Factory);
+        $request = $creator->fromGlobals();
+
+        $handler = new Dispatcher($this->middleware);
+        $response = $handler->handle($request);
+
+        $emitter = new SapiEmitter();
+        $emitter->emit($response);
+    }
+
+    public static function getInstance(): ?self
+    {
+        return self::$instance;
+    }
+
+    public function getContainer(): Container
+    {
+        return $this->container;
+    }
+
+    public function getBasePath(): string
+    {
+        return $this->container->get('base_path');
+    }
+
+    public function config(string $key, mixed $default = null): mixed
+    {
+        $config = $this->container->get('config');
+        $parts = explode('.', $key);
+        foreach ($parts as $part) {
+            if (!isset($config[$part])) {
+                return $default;
+            }
+            $config = $config[$part];
+        }
+        return $config;
+    }
+
+    public function container(): Container
+    {
+        return $this->container;
     }
 }

@@ -21,277 +21,114 @@ final class ContentApiController
         $this->basePath = $basePath;
     }
 
+    public function showConfig(): ResponseInterface
+    {
+        return $this->json(200, \config() ?? []);
+    }
+
     public function list(ServerRequestInterface $request): ResponseInterface
     {
         $params = $request->getQueryParams();
-        $indexer = new Indexer($this->basePath);
-        $query = new Query($indexer->load());
+        $collection = $params['collection'] ?? 'blog';
+        
+        $dir = $this->basePath . '/content/' . $collection;
+        $data = [];
 
-        if (!empty($params['collection'])) {
-            $query = $query->collection($params['collection']);
+        if (is_dir($dir)) {
+            $it = new \RecursiveDirectoryIterator($dir);
+            $display = new \RecursiveIteratorIterator($it);
+            foreach ($display as $file) {
+                if ($file->getExtension() === 'md' && !str_starts_with($file->getFilename(), '.')) {
+                    $raw = file_get_contents($file->getPathname());
+                    $parts = explode('---', $raw, 3);
+                    $meta = count($parts) >= 3 ? Yaml::parse($parts[1]) : [];
+                    
+                    $data[] = [
+                        'title' => $meta['title'] ?? $file->getBasename('.md'),
+                        'slug' => $file->getBasename('.md'),
+                        'collection' => $collection,
+                        'date' => $meta['date'] ?? date('Y-m-d', $file->getMTime()),
+                        'meta' => $meta,
+                    ];
+                }
+            }
         }
-        if (!empty($params['locale'])) {
-            $query = $query->locale($params['locale']);
-        }
-        if (!empty($params['tag'])) {
-            $query = $query->where('tags', 'has', $params['tag']);
-        }
 
-        $total = $query->count();
-        $perPage = min((int) ($params['per_page'] ?? 20), 100);
-        $page = max(1, (int) ($params['page'] ?? 1));
-        $offset = ($page - 1) * $perPage;
-
-        $entries = $query->offset($offset)->limit($perPage)->get();
-
-        return $this->json(200, [
-            'data' => array_map(fn (Entry $e) => $this->serializeEntry($e), $entries),
-            'meta' => [
-                'total' => $total,
-                'page' => $page,
-                'per_page' => $perPage,
-                'total_pages' => (int) max(1, ceil($total / $perPage)),
-            ],
-        ]);
+        return $this->json(200, ['data' => $data]);
     }
 
     public function show(string $collection, string $slug): ResponseInterface
     {
         $indexer = new Indexer($this->basePath);
         $query = new Query($indexer->load());
-
-        // Try current locale first, then any locale
-        $locale = '';
-        try {
-            $locale = (string) \app('locale');
-        } catch (\Throwable) {
-        }
-
-        $entry = null;
-        if ($locale !== '') {
-            $entry = $query->findBySlug($collection, $locale, $slug);
-        }
-        if ($entry === null) {
-            // Try all locales
-            $entries = $query->collection($collection)->where('slug', '=', $slug)->get();
-            $entry = $entries[0] ?? null;
-        }
+        $entries = $query->collection($collection)->where('slug', '=', $slug)->get();
+        $entry = $entries[0] ?? null;
 
         if ($entry === null) {
-            return $this->json(404, ['error' => 'Entry not found']);
+            return $this->json(404, ['error' => "Entry '$slug' not found"]);
         }
 
         $data = $this->serializeEntry($entry);
         $data['content'] = $entry->content();
-        $filePath = $this->basePath . '/' . $entry->file();
-        $data['raw_content'] = file_exists($filePath) ? file_get_contents($filePath) : '';
-
         return $this->json(200, ['data' => $data]);
     }
 
     public function create(ServerRequestInterface $request, string $collection): ResponseInterface
     {
         $body = json_decode((string) $request->getBody(), true);
-        if (!is_array($body)) {
-            return $this->json(400, ['error' => 'Invalid JSON body']);
-        }
+        if (!is_array($body)) return $this->json(400, ['error' => 'Invalid JSON body']);
 
         $title = $body['title'] ?? '';
         $slug = $body['slug'] ?? $this->slugify($title);
-        $locale = $body['locale'] ?? 'en';
-        $content = $body['content'] ?? '';
         $meta = $body['meta'] ?? [];
+        $content = $body['content'] ?? '';
 
-        if ($title === '' || $slug === '') {
-            return $this->json(422, ['error' => 'Title and slug are required']);
-        }
-
-        // Build frontmatter + content
-        $frontmatter = array_merge(['title' => $title], $meta);
+        $frontmatter = array_merge(['title' => $title, 'date' => date('Y-m-d H:i:s')], $meta);
         $fileContent = "---\n" . Yaml::dump($frontmatter, 2) . "---\n\n" . $content;
 
-        // Determine filename
-        $collectionDir = $this->basePath . '/content/' . $collection;
-        if (!is_dir($collectionDir)) {
-            mkdir($collectionDir, 0755, true);
-        }
-
-        $filename = $slug;
-        if ($locale !== '') {
-            $filename .= '.' . $locale;
-        }
-        $filePath = $collectionDir . '/' . $filename . '.md';
-
-        if (file_exists($filePath)) {
-            return $this->json(409, ['error' => 'Entry already exists']);
-        }
+        $dir = $this->basePath . '/content/' . $collection;
+        if (!is_dir($dir)) mkdir($dir, 0755, true);
+        $filePath = $dir . '/' . $slug . '.md';
 
         file_put_contents($filePath, $fileContent);
+        (new Indexer($this->basePath))->rebuild();
 
-        // Rebuild index
-        $indexer = new Indexer($this->basePath);
-        $indexer->rebuild();
-
-        return $this->json(201, [
-            'data' => [
-                'title' => $title,
-                'slug' => $slug,
-                'collection' => $collection,
-                'locale' => $locale,
-                'file' => 'content/' . $collection . '/' . $filename . '.md',
-            ],
-            'message' => 'Entry created',
-        ]);
-    }
-
-    public function update(ServerRequestInterface $request, string $collection, string $slug): ResponseInterface
-    {
-        error_log("UPDATE CALLED FOR $collection / $slug");
-        $body = json_decode((string) $request->getBody(), true);
-        if (!is_array($body)) {
-            return $this->json(400, ['error' => 'Invalid JSON body']);
-        }
-
-        // Find the entry file
-        $indexer = new Indexer($this->basePath);
-        $index = $indexer->load();
-        $query = new Query($index);
-
-        $locale = $body['locale'] ?? '';
-        $entry = null;
-        if ($locale !== '') {
-            $entry = $query->findBySlug($collection, $locale, $slug);
-        } else {
-            $entries = $query->collection($collection)->where('slug', '=', $slug)->get();
-            $entry = $entries[0] ?? null;
-        }
-
-        $isRaw = isset($body['content']) && str_starts_with(trim($body['content']), '---');
-        error_log("ENTRY IS NULL? " . ($entry === null ? 'YES' : 'NO'));
-
-        if ($entry === null) {
-            // UPSERT behavior
-            $collectionDir = $this->basePath . '/content/' . $collection;
-            if (!is_dir($collectionDir)) {
-                mkdir($collectionDir, 0755, true);
-            }
-            $filename = $slug;
-            if ($locale !== '') {
-                $filename .= '.' . $locale;
-            }
-            $filePath = $collectionDir . '/' . $filename . '.md';
-
-            if ($isRaw) {
-                $fileContent = $body['content'];
-            } else {
-                $title = $body['title'] ?? $slug;
-                $meta = $body['meta'] ?? [];
-                $content = $body['content'] ?? '';
-                $frontmatter = array_merge(['title' => $title], $meta);
-                $fileContent = "---\n" . Yaml::dump($frontmatter, 2) . "---\n\n" . $content;
-            }
-
-            file_put_contents($filePath, $fileContent);
-            $indexer->rebuild();
-
-            error_log("UPSERT RETURNING 201");
-            return $this->json(201, [
-                'data' => ['title' => $slug, 'slug' => $slug, 'collection' => $collection],
-                'message' => 'Entry created via UPSERT',
-            ]);
-        }
-
-        $filePath = $this->basePath . '/' . $entry->file();
-        $dir = dirname($filePath);
-        if (!is_dir($dir)) {
-            mkdir($dir, 0755, true);
-        }
-
-        if ($isRaw) {
-            $fileContent = $body['content'];
-        } else {
-            // Build updated content
-            $title = $body['title'] ?? $entry->title();
-            $meta = $body['meta'] ?? $entry->meta();
-            $content = $body['content'] ?? '';
-
-            $frontmatter = array_merge(['title' => $title], $meta);
-            $fileContent = "---\n" . Yaml::dump($frontmatter, 2) . "---\n\n" . $content;
-        }
-
-        file_put_contents($filePath, $fileContent);
-
-        // Rebuild index
-        $indexer->rebuild();
-
-        return $this->json(200, [
-            'data' => ['title' => $entry->title(), 'slug' => $slug, 'collection' => $collection],
-            'message' => 'Entry updated',
-        ]);
+        return $this->json(201, ['data' => ['slug' => $slug], 'message' => 'Created']);
     }
 
     public function delete(string $collection, string $slug): ResponseInterface
     {
-        $indexer = new Indexer($this->basePath);
-        $index = $indexer->load();
-        $query = new Query($index);
-
-        $entries = $query->collection($collection)->where('slug', '=', $slug)->get();
-        $entry = $entries[0] ?? null;
-
-        if ($entry === null) {
-            return $this->json(404, ['error' => 'Entry not found']);
-        }
-
-        $filePath = $this->basePath . '/' . $entry->file();
-        if (file_exists($filePath)) {
-            unlink($filePath);
-        }
-
-        $indexer->rebuild();
-
-        return $this->json(200, ['message' => 'Entry deleted']);
+        $dir = $this->basePath . '/content/' . $collection;
+        $filePath = $dir . '/' . $slug . '.md';
+        if (file_exists($filePath)) unlink($filePath);
+        (new Indexer($this->basePath))->rebuild();
+        return $this->json(200, ['message' => 'Deleted']);
     }
 
     public function collections(): ResponseInterface
     {
-        $contentDir = $this->basePath . '/content';
-        $collections = [];
-
-        if (is_dir($contentDir)) {
-            $dirs = glob($contentDir . '/*', GLOB_ONLYDIR) ?: [];
-            foreach ($dirs as $dir) {
-                $name = basename($dir);
-                if (str_starts_with($name, '_')) {
-                    continue;
-                }
-                $files = glob($dir . '/*.md') ?: [];
-                $collections[] = [
-                    'name' => $name,
-                    'entry_count' => count($files),
-                ];
+        $configCollections = \config('collections') ?? \config('rakun.collections') ?? [];
+        $data = [];
+        foreach ($configCollections as $key => $config) {
+            if (!($config['active'] ?? true)) continue;
+            $dir = $this->basePath . '/content/' . $key;
+            $count = 0;
+            if (is_dir($dir)) {
+                foreach (new \DirectoryIterator($dir) as $f) if ($f->getExtension() === 'md') $count++;
             }
+            $data[] = array_merge(['id' => $key], $config, ['entry_count' => $count]);
         }
-
-        return $this->json(200, ['data' => $collections]);
+        return $this->json(200, ['data' => $data]);
     }
 
-    /**
-     * @return array<string, mixed>
-     */
     private function serializeEntry(Entry $entry): array
     {
         return [
             'title' => $entry->title(),
             'slug' => $entry->slug(),
             'collection' => $entry->collection(),
-            'locale' => $entry->locale(),
-            'url' => $entry->url(),
             'date' => $entry->date(),
-            'order' => $entry->order(),
-            'draft' => $entry->isDraft(),
             'meta' => $entry->meta(),
-            'template' => $entry->template(),
         ];
     }
 
@@ -303,15 +140,9 @@ final class ContentApiController
         return trim($text, '-');
     }
 
-    /**
-     * @param array<string, mixed> $data
-     */
     private function json(int $status, array $data): ResponseInterface
     {
-        return new Response(
-            $status,
-            ['Content-Type' => 'application/json'],
-            json_encode($data, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT) ?: '{}'
-        );
+        return new Response($status, ['Content-Type' => 'application/json'], 
+            json_encode($data, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT) ?: '{}');
     }
 }

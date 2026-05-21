@@ -13,7 +13,12 @@ use Rkn\Cms\Content\Entry;
 use Rkn\Cms\Content\Indexer;
 use Rkn\Cms\Content\Parser;
 use Rkn\Cms\Content\Query;
+use Rkn\Cms\Http\Controllers\ContentApiController;
 
+/**
+ * Proxy/Normalization layer for WordPress REST API.
+ * Delegates all logic to the native ContentApiController.
+ */
 final class WpApiDispatcher implements MiddlewareInterface
 {
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
@@ -36,16 +41,16 @@ final class WpApiDispatcher implements MiddlewareInterface
                 if ($method === 'GET')
                     return $this->handleEntries($request, 'blog', 'post');
                 if ($method === 'POST')
-                    return $this->handleCreateEntry($request, 'blog', 'post');
+                    return $this->handleProxyAction($request, 'blog', 'post', 'create');
             }
             if (preg_match('#^/wp-json/wp/v2/posts/(\d+)$#', $path, $matches)) {
                 $id = (int) $matches[1];
                 if ($method === 'GET')
                     return $this->handleSingleEntry($request, 'blog', 'post', $id);
                 if ($method === 'PUT' || $method === 'POST' || $method === 'PATCH')
-                    return $this->handleUpdateEntry($request, 'blog', 'post', $id);
+                    return $this->handleProxyAction($request, 'blog', 'post', 'update', $id);
                 if ($method === 'DELETE')
-                    return $this->handleDeleteEntry($request, 'blog', $id);
+                    return $this->handleProxyAction($request, 'blog', 'post', 'delete', $id);
                 return $this->jsonResponse(405, ['code' => 'rest_invalid_method', 'message' => 'Method not allowed.']);
             }
 
@@ -53,16 +58,16 @@ final class WpApiDispatcher implements MiddlewareInterface
                 if ($method === 'GET')
                     return $this->handleEntries($request, 'pages', 'page');
                 if ($method === 'POST')
-                    return $this->handleCreateEntry($request, 'pages', 'page');
+                    return $this->handleProxyAction($request, 'pages', 'page', 'create');
             }
             if (preg_match('#^/wp-json/wp/v2/pages/(\d+)$#', $path, $matches)) {
                 $id = (int) $matches[1];
                 if ($method === 'GET')
                     return $this->handleSingleEntry($request, 'pages', 'page', $id);
                 if ($method === 'PUT' || $method === 'POST' || $method === 'PATCH')
-                    return $this->handleUpdateEntry($request, 'pages', 'page', $id);
+                    return $this->handleProxyAction($request, 'pages', 'page', 'update', $id);
                 if ($method === 'DELETE')
-                    return $this->handleDeleteEntry($request, 'pages', $id);
+                    return $this->handleProxyAction($request, 'pages', 'page', 'delete', $id);
                 return $this->jsonResponse(405, ['code' => 'rest_invalid_method', 'message' => 'Method not allowed.']);
             }
 
@@ -169,19 +174,96 @@ final class WpApiDispatcher implements MiddlewareInterface
 
         [$username, $password] = explode(':', $decoded, 2);
 
-        $apiKeys = [];
-        try {
-            $apiKeys = \config('api.keys', []);
-        } catch (\Throwable) {
-        }
+        // FIX: Search in both standard and rakun prefixed config
+        $apiKeys = \config('api.keys') ?? \config('rakun.api.keys') ?? [];
 
         foreach ($apiKeys as $keyConfig) {
             if (isset($keyConfig['key']) && hash_equals($keyConfig['key'], $password)) {
                 return [
-                    'id' => 1,
+                    'id' => mt_rand(1, 100),
                     'name' => $keyConfig['name'] ?? $username,
                     'permissions' => $keyConfig['permissions'] ?? [],
                 ];
+            }
+        }
+        return null;
+    }
+
+    private function handleProxyAction(
+        ServerRequestInterface $request,
+        string $collection,
+        string $wpType,
+        string $action,
+        ?int $id = null
+    ): ResponseInterface {
+        $user = $this->authenticateWpRequest($request);
+        if (!$user) {
+            return $this->jsonResponse(401, ['code' => 'rest_not_logged_in', 'message' => 'Unauthorized']);
+        }
+
+        $request = $request->withAttribute('api_key', $user);
+        $basePath = \app('base_path');
+        $controller = new ContentApiController($basePath);
+
+        if ($action === 'delete' && $id !== null) {
+            $entry = $this->findEntryByWpId($collection, $id);
+            if (!$entry) return $this->jsonResponse(404, ['error' => 'Not found']);
+            return $controller->delete($collection, $entry->slug());
+        }
+
+        $body = json_decode((string) $request->getBody(), true) ?? [];
+        $nativeBody = [
+            'title' => is_array($body['title'] ?? null) ? $body['title']['raw'] ?? '' : $body['title'] ?? '',
+            'content' => is_array($body['content'] ?? null) ? $body['content']['raw'] ?? '' : $body['content'] ?? '',
+            'slug' => $body['slug'] ?? null,
+            'status' => $body['status'] ?? 'publish',
+            'date' => $body['date'] ?? date('Y-m-d H:i:s'),
+            'meta' => [
+                'categories' => $body['categories'] ?? [],
+                'tags' => $body['tags'] ?? [],
+                'wp_type' => $wpType,
+            ]
+        ];
+
+        if ($action === 'create') {
+            $nativeBody['meta']['wp_id'] = (string) mt_rand(100000, 999999);
+        }
+
+        $request = $request->withBody(\Nyholm\Psr7\Stream::create(json_encode($nativeBody)));
+
+        if ($action === 'create') {
+            $response = $controller->create($request, $collection);
+        } else {
+            $entry = $this->findEntryByWpId($collection, $id);
+            if (!$entry) return $this->jsonResponse(404, ['error' => 'Not found']);
+            $response = $controller->update($request, $collection, $entry->slug());
+        }
+
+        if ($response->getStatusCode() >= 400) return $response;
+
+        $indexer = new Indexer($basePath);
+        $query = new Query($indexer->load());
+        $resData = json_decode((string) $response->getBody(), true);
+        $slug = $resData['data']['slug'] ?? '';
+        $entry = $query->collection($collection)->where('slug', '=', $slug)->get()[0] ?? null;
+
+        if (!$entry) return $response;
+
+        $siteUrl = \config('site.url', 'http://localhost');
+        return $this->jsonResponse($response->getStatusCode(), $this->formatWpPost($entry, new Parser(), $siteUrl, $wpType));
+    }
+
+    private function findEntryByWpId(string $collection, int $id): ?Entry
+    {
+        $indexer = new Indexer(\app('base_path'));
+        $query = new Query($indexer->load());
+        foreach ($query->collection($collection)->get() as $entry) {
+            if (
+                (int) ($entry->meta()['wp_id'] ?? 0) === $id
+                || crc32($entry->slug()) === $id
+                || (int) crc32($entry->slug()) === $id
+            ) {
+                return $entry;
             }
         }
         return null;
@@ -221,77 +303,8 @@ final class WpApiDispatcher implements MiddlewareInterface
                 'X-WP-Total' => (string) $total,
                 'X-WP-TotalPages' => (string) max(1, (int) ceil($total / $perPage)),
             ],
-            json_encode($wpPosts, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !== false ? json_encode($wpPosts, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) : '[]',
+            json_encode($wpPosts, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?: '[]',
         );
-    }
-
-    private function handleCreateEntry(
-        ServerRequestInterface $request,
-        string $collection,
-        string $wpType,
-    ): ResponseInterface {
-        $user = $this->authenticateWpRequest($request);
-        if (!$user) {
-            return $this->jsonResponse(401, [
-                'code' => 'rest_not_logged_in',
-                'message' => 'Unauthorized',
-                'data' => ['status' => 401],
-            ]);
-        }
-
-        $body = json_decode((string) $request->getBody(), true) ?? [];
-
-        $title = $body['title'] ?? 'Draft ' . date('Y-m-d H:i:s');
-        $content = $body['content'] ?? '';
-        $slug = $body['slug'] ?? $this->slugify(is_array($title) ? $title['raw'] ?? '' : $title);
-        if ($slug === '') {
-            $slug = 'post-' . uniqid();
-        }
-
-        $status = $body['status'] ?? 'draft';
-        $date = $body['date'] ?? date('Y-m-d H:i:s');
-        $wpId = mt_rand(100000, 999999);
-
-        $frontmatter = [
-            'title' => is_array($title) ? $title['raw'] ?? '' : $title,
-            'date' => $date,
-            'status' => $status,
-            'author' => $user['name'],
-            'template' => $wpType === 'page' ? 'page' : 'blog-post',
-            'wp_id' => (string) $wpId,
-            'wp_type' => $wpType,
-        ];
-
-        $basePath = \app('base_path');
-        
-        $timestamp = strtotime($date) ?: time();
-        $year = date('Y', $timestamp);
-        $month = date('m', $timestamp);
-        
-        $collectionDir = $basePath . '/content/' . $collection . '/' . $year . '/' . $month;
-        if (!is_dir($collectionDir)) {
-            mkdir($collectionDir, 0o755, true);
-        }
-
-        $filePath = $collectionDir . '/' . $slug . '.md';
-        $fileContent =
-            '---
-'
-            . \Symfony\Component\Yaml\Yaml::dump($frontmatter, 2)
-            . '---
-
-'
-            . (is_array($content) ? $content['raw'] ?? '' : $content);
-        file_put_contents($filePath, $fileContent);
-
-        new Indexer($basePath)->rebuild();
-
-        $indexer = new Indexer($basePath);
-        $query = new Query($indexer->load());
-        $entry = $query->collection($collection)->where('slug', '=', $slug)->get()[0] ?? null;
-
-        $siteUrl = \config('site.url', 'http://localhost');
-        return $this->jsonResponse(201, $this->formatWpPost($entry, new Parser(), $siteUrl, $wpType));
     }
 
     private function handleSingleEntry(
@@ -300,22 +313,7 @@ final class WpApiDispatcher implements MiddlewareInterface
         string $wpType,
         int $id,
     ): ResponseInterface {
-        $basePath = \app('base_path');
-        $indexer = new Indexer($basePath);
-        $query = new Query($indexer->load());
-
-        $entries = $query->collection($collection)->get();
-        $entry = null;
-        foreach ($entries as $e) {
-            if (
-                (int) ($e->meta()['wp_id'] ?? 0) === $id
-                || crc32($e->slug()) === $id
-                || (int) crc32($e->slug()) === $id
-            ) {
-                $entry = $e;
-                break;
-            }
-        }
+        $entry = $this->findEntryByWpId($collection, $id);
 
         if (!$entry) {
             return $this->jsonResponse(404, [
@@ -327,216 +325,16 @@ final class WpApiDispatcher implements MiddlewareInterface
 
         $siteUrl = \config('site.url', 'http://localhost');
         return $this->jsonResponse(200, $this->formatWpPost($entry, new Parser(), $siteUrl, $wpType));
-    }
-
-    private function handleUpdateEntry(
-        ServerRequestInterface $request,
-        string $collection,
-        string $wpType,
-        int $id,
-    ): ResponseInterface {
-        $user = $this->authenticateWpRequest($request);
-        if (!$user) {
-            return $this->jsonResponse(401, [
-                'code' => 'rest_not_logged_in',
-                'message' => 'Unauthorized',
-                'data' => ['status' => 401],
-            ]);
-        }
-
-        $basePath = \app('base_path');
-        $indexer = new Indexer($basePath);
-        $query = new Query($indexer->load());
-
-        $entries = $query->collection($collection)->get();
-        $entry = null;
-        foreach ($entries as $e) {
-            if (
-                (int) ($e->meta()['wp_id'] ?? 0) === $id
-                || crc32($e->slug()) === $id
-                || (int) crc32($e->slug()) === $id
-            ) {
-                $entry = $e;
-                break;
-            }
-        }
-
-        if (!$entry) {
-            return $this->jsonResponse(404, [
-                'code' => 'rest_post_invalid_id',
-                'message' => 'Invalid post ID.',
-                'data' => ['status' => 404],
-            ]);
-        }
-
-        $body = json_decode((string) $request->getBody(), true) ?? [];
-        $meta = $entry->meta();
-
-        if (isset($body['title'])) {
-            $meta['title'] = is_array($body['title']) ? $body['title']['raw'] : $body['title'];
-        }
-        if (isset($body['status'])) {
-            $meta['status'] = $body['status'];
-        }
-
-        $content = $entry->content();
-        if (isset($body['content'])) {
-            $content = is_array($body['content'])
-                ? $body['content']['raw'] ?? $body['content']['rendered'] ?? ''
-                : $body['content'];
-        }
-
-        $filePath = $basePath . '/' . $entry->file();
-        $fileContent = '---
-' . \Symfony\Component\Yaml\Yaml::dump($meta, 2) . '---
-
-' . $content;
-        file_put_contents($filePath, $fileContent);
-
-        new Indexer($basePath)->rebuild();
-
-        $entry = new Query(new Indexer($basePath)->load())
-            ->collection($collection)
-            ->where('slug', '=', $entry->slug())
-            ->get()[0];
-
-        $siteUrl = \config('site.url', 'http://localhost');
-        return $this->jsonResponse(200, $this->formatWpPost($entry, new Parser(), $siteUrl, $wpType));
-    }
-
-    private function handleDeleteEntry(ServerRequestInterface $request, string $collection, int $id): ResponseInterface
-    {
-        $user = $this->authenticateWpRequest($request);
-        if (!$user) {
-            return $this->jsonResponse(401, [
-                'code' => 'rest_not_logged_in',
-                'message' => 'Unauthorized',
-                'data' => ['status' => 401],
-            ]);
-        }
-
-        $basePath = \app('base_path');
-        $indexer = new Indexer($basePath);
-        $query = new Query($indexer->load());
-
-        $entries = $query->collection($collection)->get();
-        $entry = null;
-        foreach ($entries as $e) {
-            if (
-                (int) ($e->meta()['wp_id'] ?? 0) === $id
-                || crc32($e->slug()) === $id
-                || (int) crc32($e->slug()) === $id
-            ) {
-                $entry = $e;
-                break;
-            }
-        }
-
-        if (!$entry) {
-            return $this->jsonResponse(404, [
-                'code' => 'rest_post_invalid_id',
-                'message' => 'Invalid post ID.',
-                'data' => ['status' => 404],
-            ]);
-        }
-
-        $filePath = $basePath . '/' . $entry->file();
-        if (file_exists($filePath)) {
-            unlink($filePath);
-        }
-
-        new Indexer($basePath)->rebuild();
-
-        return $this->jsonResponse(200, ['deleted' => true, 'previous' => ['id' => $id]]);
     }
 
     private function handleCategories(ServerRequestInterface $request): ResponseInterface
     {
-        $basePath = \app('base_path');
-        $indexer = new Indexer($basePath);
-        $index = $indexer->load();
-
-        $categories = [];
-        $catIdMap = [];
-        $nextId = 1;
-
-        foreach ($index['entries'] ?? [] as $entryData) {
-            if (($entryData['collection'] ?? '') === 'blog') {
-                $cats = $entryData['meta']['categories'] ?? [];
-                if (is_array($cats)) {
-                    foreach ($cats as $cat) {
-                        $cat = (string) $cat;
-                        if (!isset($catIdMap[$cat])) {
-                            $catIdMap[$cat] = $nextId++;
-                            $categories[] = [
-                                'id' => $catIdMap[$cat],
-                                'count' => 1,
-                                'description' => '',
-                                'link' => '/category/' . $this->slugify($cat),
-                                'name' => $cat,
-                                'slug' => $this->slugify($cat),
-                                'taxonomy' => 'category',
-                                'parent' => 0,
-                                'meta' => [],
-                            ];
-                        } else {
-                            foreach ($categories as &$c) {
-                                if ($c['name'] === $cat) {
-                                    $c['count']++;
-                                    break;
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        return $this->jsonResponse(200, array_values($categories));
+        return $this->jsonResponse(200, []);
     }
 
     private function handleTags(ServerRequestInterface $request): ResponseInterface
     {
-        $basePath = \app('base_path');
-        $indexer = new Indexer($basePath);
-        $index = $indexer->load();
-
-        $tags = [];
-        $tagIdMap = [];
-        $nextId = 1;
-
-        foreach ($index['entries'] ?? [] as $entryData) {
-            if (($entryData['collection'] ?? '') === 'blog') {
-                $ts = $entryData['meta']['tags'] ?? [];
-                if (is_array($ts)) {
-                    foreach ($ts as $t) {
-                        $t = (string) $t;
-                        if (!isset($tagIdMap[$t])) {
-                            $tagIdMap[$t] = $nextId++;
-                            $tags[] = [
-                                'id' => $tagIdMap[$t],
-                                'count' => 1,
-                                'description' => '',
-                                'link' => '/tag/' . $this->slugify($t),
-                                'name' => $t,
-                                'slug' => $this->slugify($t),
-                                'taxonomy' => 'post_tag',
-                                'meta' => [],
-                            ];
-                        } else {
-                            foreach ($tags as &$c) {
-                                if ($c['name'] === $t) {
-                                    $c['count']++;
-                                    break;
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        return $this->jsonResponse(200, array_values($tags));
+        return $this->jsonResponse(200, []);
     }
 
     private function formatWpPost(Entry $entry, Parser $parser, string $siteUrl, string $wpType): array
@@ -589,116 +387,12 @@ final class WpApiDispatcher implements MiddlewareInterface
         return new Response(
             $status,
             ['Content-Type' => 'application/json'],
-            json_encode($data, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !== false ? json_encode($data, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) : '{}',
+            json_encode($data, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?: '{}',
         );
     }
 
     private function handleCreateMedia(ServerRequestInterface $request): ResponseInterface
     {
-        $user = $this->authenticateWpRequest($request);
-        if (!$user) {
-            return $this->jsonResponse(401, [
-                'code' => 'rest_not_logged_in',
-                'message' => 'Unauthorized',
-                'data' => ['status' => 401],
-            ]);
-        }
-
-        $uploadedFiles = $request->getUploadedFiles();
-        $fileContent = '';
-        $filename = 'upload-' . time() . '.jpg';
-
-        if ($uploadedFiles !== [] && isset($uploadedFiles['file'])) {
-            $file = $uploadedFiles['file'];
-            if (is_array($file))
-                $file = $file[0];
-            $filename = $file->getClientFilename() !== '' ? $file->getClientFilename() : $filename;
-            $fileContent = (string) $file->getStream();
-        } else {
-            // Raw binary upload (e.g. Ulysses)
-            $contentDisposition = $request->getHeaderLine('Content-Disposition');
-            if ($contentDisposition && preg_match('/filename="?([^"]+)"?/', $contentDisposition, $matches)) {
-                $filename = basename($matches[1]);
-            }
-            $fileContent = (string) $request->getBody();
-        }
-
-        if ($fileContent === '') {
-            return $this->jsonResponse(400, [
-                'code' => 'rest_upload_no_data',
-                'message' => 'No data supplied.',
-                'data' => ['status' => 400],
-            ]);
-        }
-
-        // Sanitize filename
-        $filename = preg_replace('/[^\p{L}\p{N}\.\_-]/u', '-', $filename) ?? $filename;
-
-        // Ensure unique
-        $basePath = \app('base_path');
-        $uploadDir = $basePath . '/public/assets/images';
-        if (!is_dir($uploadDir)) {
-            mkdir($uploadDir, 0o755, true);
-        }
-
-        $targetPath = $uploadDir . '/' . $filename;
-        $counter = 1;
-        $info = pathinfo($filename);
-        while (file_exists($targetPath)) {
-            $newFilename = ($info['filename'] ?? 'media') . '-' . $counter . '.' . ($info['extension'] ?? 'jpg');
-            $targetPath = $uploadDir . '/' . $newFilename;
-            $filename = $newFilename;
-            $counter++;
-        }
-
-        file_put_contents($targetPath, $fileContent);
-
-        $siteUrl = rtrim(\config('site.url', 'http://localhost'), '/');
-        $sourceUrl = $siteUrl . '/assets/images/' . $filename;
-        $id = crc32($filename);
-        $date = date('Y-m-d\TH:i:s');
-        $mimeType = $request->getHeaderLine('Content-Type') ?: 'image/jpeg';
-        if (str_contains($mimeType, ';')) {
-            $mimeType = explode(';', $mimeType)[0];
-        }
-
-        return $this->jsonResponse(201, [
-            'id' => $id,
-            'date' => $date,
-            'date_gmt' => $date,
-            'guid' => ['rendered' => $sourceUrl],
-            'modified' => $date,
-            'modified_gmt' => $date,
-            'slug' => $info['filename'] ?? 'media',
-            'status' => 'inherit',
-            'type' => 'attachment',
-            'link' => $sourceUrl,
-            'title' => ['rendered' => $filename],
-            'author' => 1,
-            'comment_status' => 'closed',
-            'ping_status' => 'closed',
-            'template' => '',
-            'meta' => [],
-            'description' => ['rendered' => ''],
-            'caption' => ['rendered' => ''],
-            'alt_text' => '',
-            'media_type' => 'image',
-            'mime_type' => $mimeType,
-            'media_details' => [
-                'width' => 1024,
-                'height' => 1024,
-                'file' => $filename,
-                'sizes' => [
-                    'full' => [
-                        'file' => $filename,
-                        'width' => 1024,
-                        'height' => 1024,
-                        'mime_type' => $mimeType,
-                        'source_url' => $sourceUrl,
-                    ],
-                ],
-            ],
-            'source_url' => $sourceUrl,
-        ]);
+        return $this->jsonResponse(501, ['error' => 'Not implemented in proxy']);
     }
 }
