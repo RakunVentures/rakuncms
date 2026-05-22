@@ -56,6 +56,16 @@ final class SitemapController
             }
         }
 
+        // Include llms.txt in the sitemap if it exists
+        $llmsPath = $basePath . '/public/llms.txt';
+        if (file_exists($llmsPath)) {
+            $xml .= "  <url>\n";
+            $xml .= "    <loc>" . htmlspecialchars($baseUrl . '/llms.txt') . "</loc>\n";
+            $xml .= "    <lastmod>" . date('Y-m-d', filemtime($llmsPath)) . "</lastmod>\n";
+            $xml .= "    <changefreq>weekly</changefreq>\n";
+            $xml .= "  </url>\n";
+        }
+
         $xml .= "</urlset>\n";
 
         return new Response(200, ['Content-Type' => 'application/xml; charset=UTF-8'], $xml);
