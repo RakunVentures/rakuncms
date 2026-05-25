@@ -31,6 +31,17 @@ final class ErrorHandler implements MiddlewareInterface
         } catch (\Throwable $e) {
             $statusCode = $this->resolveStatusCode($e);
 
+            // Log the error so it appears in CLI/Herd
+            error_log(sprintf(
+                "[%d] %s: %s in %s on line %d\nStack trace:\n%s",
+                $statusCode,
+                get_class($e),
+                $e->getMessage(),
+                $e->getFile(),
+                $e->getLine(),
+                $e->getTraceAsString()
+            ));
+
             return $this->renderError($request, $statusCode, $e);
         }
     }

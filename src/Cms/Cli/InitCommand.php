@@ -177,13 +177,16 @@ $app->pipe($app->container()->get(\Rkn\Cms\Middleware\CsrfProtection::class));
 $app->pipe(new \Rkn\Cms\Middleware\PageCacheReader($pageCache, $cacheEnabled));
 $app->pipe(new \Rkn\Cms\Middleware\AnalyticsMiddleware($basePath . '/storage'));
 $app->pipe(new \Rkn\Cms\Middleware\ApiAuthMiddleware());
+$app->pipe(new \Rkn\Cms\Middleware\LocaleDetector());
+
+// Wraps routers to capture and save successful responses
+$app->pipe(new \Rkn\Cms\Middleware\PageCacheWriter($pageCache, $cacheEnabled));
+
 $app->pipe(new \Rkn\Cms\Middleware\ContentApiDispatcher());
 $app->pipe(new \Rkn\Cms\Middleware\ApiDispatcher());
 $app->pipe(new \Rkn\Cms\Middleware\WpApiDispatcher());
-$app->pipe(new \Rkn\Cms\Middleware\LocaleDetector());
 $app->pipe(new \Rkn\Cms\Middleware\ContentRouter());
 $app->pipe(new \Rkn\Cms\Middleware\YoyoHandler());
-$app->pipe(new \Rkn\Cms\Middleware\PageCacheWriter($pageCache, $cacheEnabled));
 
 $app->run();
 PHP;
