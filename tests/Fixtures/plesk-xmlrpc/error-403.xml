@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<packet version="1.6.9.0">
+  <subscription>
+    <get>
+      <result>
+        <status>error</status>
+        <errcode>1013</errcode>
+        <errtext>Permission denied. The user does not have permission to perform this operation.</errtext>
+      </result>
+    </get>
+  </subscription>
+</packet>

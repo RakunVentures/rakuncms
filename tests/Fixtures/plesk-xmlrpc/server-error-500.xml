@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<packet version="1.6.9.0">
+  <system>
+    <error>
+      <status>error</status>
+      <errcode>500</errcode>
+      <errtext>Internal server error. Please try again later.</errtext>
+    </error>
+  </system>
+</packet>

@@ -48,6 +48,7 @@
         "symfony/console": "^7.0",
         "symfony/var-dumper": "^7.0",
         "symfony/yaml": "^7.0",
+        "symfony/process": "^7.0",
         "vlucas/phpdotenv": "^5.6",
         "psr/container": "^2.0",
         "psr/http-server-handler": "^1.0",
@@ -61,6 +62,9 @@
     "scripts": {
         "test": "pest",
         "analyse": "phpstan analyse src/"
+    },
+    "suggest": {
+        "phpseclib/phpseclib": "Pure-PHP SFTP fallback when system `rsync` binary is not available (^3.0)"
     },
     "minimum-stability": "stable",
     "prefer-stable": true,

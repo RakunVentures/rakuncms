@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<packet version="1.6.9.0">
+  <extension>
+    <call>
+      <result>
+        <status>ok</status>
+        <stdout>website</stdout>
+        <stderr></stderr>
+        <exitcode>0</exitcode>
+      </result>
+    </call>
+  </extension>
+</packet>

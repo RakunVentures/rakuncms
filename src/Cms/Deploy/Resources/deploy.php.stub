@@ -1,0 +1,534 @@
+<?php
+
+/**
+ * RakunCMS Remote Deploy Helper v2
+ *
+ * HMAC-SHA256 authenticated, zip-slip protected, atomic release system.
+ * PHP 8.0+ vanilla — no Composer, no external dependencies.
+ *
+ * Installed once at: <remote_path>/deploy.php
+ * DEPLOY_SECRET is loaded from: <remote_path>/shared/.env (NEVER hardcoded here)
+ *
+ * Endpoint: POST /deploy.php
+ * Required headers:
+ *   X-Rakun-Signature: sha256=<hmac_sha256(rawBody, DEPLOY_SECRET)>
+ *   X-Rakun-Timestamp: <unix_timestamp>
+ *   Content-Type: application/json
+ *
+ * Body JSON: {"action": "...", ...}
+ */
+
+declare(strict_types=1);
+
+// ─────────────────────────────────────────────────────────────────
+// Bootstrap
+// ─────────────────────────────────────────────────────────────────
+
+$basePath = __DIR__;
+$secret   = loadDeploySecret("{$basePath}/shared/.env");
+
+$rawBody   = file_get_contents('php://input') ?: '';
+$signature = $_SERVER['HTTP_X_RAKUN_SIGNATURE'] ?? '';
+$timestamp = (int) ($_SERVER['HTTP_X_RAKUN_TIMESTAMP'] ?? 0);
+
+// Cheap reject first: timestamp window ±300 seconds
+verifyTimestamp($timestamp);
+
+// Constant-time HMAC verification
+verifyHmac($rawBody, $signature, $secret);
+
+/** @var array<string, mixed>|null $payload */
+$payload = json_decode($rawBody, true);
+if (!is_array($payload)) {
+    respond(400, ['error' => 'invalid JSON body']);
+}
+
+$action = (string) ($payload['action'] ?? '');
+
+switch ($action) {
+    case 'activate':
+        handleActivate($payload, $basePath, $secret);
+        break;
+    case 'rollback':
+        handleRollback($payload, $basePath);
+        break;
+    case 'status':
+        handleStatus($basePath);
+        break;
+    case 'cleanup':
+        handleCleanup($payload, $basePath);
+        break;
+    case 'ping':
+        respond(200, ['ok' => true, 'version' => 2, 'php' => PHP_VERSION]);
+        break;
+    default:
+        respond(400, ['error' => "unknown action: {$action}"]);
+}
+
+// ─────────────────────────────────────────────────────────────────
+// Security functions
+// ─────────────────────────────────────────────────────────────────
+
+function loadDeploySecret(string $envFile): string
+{
+    if (!file_exists($envFile)) {
+        respond(503, ['error' => 'shared/.env not found — run deploy:install first']);
+    }
+
+    $lines = file($envFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+    if ($lines === false) {
+        respond(503, ['error' => 'Cannot read shared/.env']);
+    }
+
+    foreach ($lines as $line) {
+        $line = trim($line);
+        if (str_starts_with($line, '#') || !str_contains($line, '=')) {
+            continue;
+        }
+        [$key, $val] = explode('=', $line, 2);
+        if (trim($key) === 'DEPLOY_SECRET') {
+            $secret = trim($val, " \t\n\r\0\x0B\"'");
+            if ($secret === '') {
+                respond(503, ['error' => 'DEPLOY_SECRET is empty in shared/.env']);
+            }
+            return $secret;
+        }
+    }
+
+    respond(503, ['error' => 'DEPLOY_SECRET not set in shared/.env']);
+}
+
+function verifyTimestamp(int $timestamp): void
+{
+    $now = time();
+    if (abs($now - $timestamp) > 300) {
+        appendLog(__DIR__, 'timestamp_rejected', ['ts' => $timestamp, 'now' => $now]);
+        respond(403, ['error' => 'timestamp out of ±300s window']);
+    }
+}
+
+/**
+ * @param non-empty-string $secret
+ */
+function verifyHmac(string $rawBody, string $signature, string $secret): void
+{
+    if (!str_starts_with($signature, 'sha256=')) {
+        respond(403, ['error' => 'missing or malformed X-Rakun-Signature']);
+    }
+    $provided = substr($signature, 7);
+    $expected = hash_hmac('sha256', $rawBody, $secret);
+
+    if (!hash_equals($expected, $provided)) {
+        appendLog(__DIR__, 'hmac_rejected', []);
+        respond(403, ['error' => 'invalid signature']);
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────
+// Action handlers
+// ─────────────────────────────────────────────────────────────────
+
+/**
+ * @param array<string, mixed> $payload
+ * @param non-empty-string $secret
+ */
+function handleActivate(array $payload, string $basePath, string $secret): void
+{
+    $t0 = microtime(true);
+
+    $releaseId = (string) ($payload['release_id'] ?? '');
+    if (!validateReleaseId($releaseId)) {
+        respond(400, ['error' => 'invalid or missing release_id']);
+    }
+
+    $force = (bool) ($payload['force'] ?? false);
+
+    // Acquire remote lock
+    $lockFile = "{$basePath}/shared/lock.json";
+    if (!acquireLock($lockFile, $releaseId, $force)) {
+        respond(423, ['error' => 'another deploy is in progress', 'lock' => readLock($lockFile)]);
+    }
+
+    try {
+        $releasesDir = "{$basePath}/releases";
+        $zipFile     = "{$releasesDir}/{$releaseId}.zip";
+        $hmacFile    = "{$releasesDir}/{$releaseId}.zip.hmac";
+        $targetDir   = "{$releasesDir}/{$releaseId}";
+
+        // Verify ZIP and HMAC exist
+        if (!file_exists($zipFile)) {
+            respond(400, ['error' => "ZIP not found: releases/{$releaseId}.zip"]);
+        }
+        if (!file_exists($hmacFile)) {
+            respond(400, ['error' => "HMAC file not found: releases/{$releaseId}.zip.hmac"]);
+        }
+
+        // Verify ZIP HMAC integrity
+        $expectedHmac = trim((string) file_get_contents($hmacFile));
+        $actualHmac   = hash_hmac('sha256', (string) file_get_contents($zipFile), $secret);
+        if (!hash_equals($expectedHmac, $actualHmac)) {
+            respond(400, ['error' => 'ZIP HMAC verification failed — file may be corrupt']);
+        }
+
+        // Zip-slip protection
+        if (!is_dir($targetDir)) {
+            mkdir($targetDir, 0755, true);
+        }
+        $realTarget = realpath($targetDir);
+        if ($realTarget === false) {
+            respond(500, ['error' => 'cannot resolve release directory']);
+        }
+
+        $zip = new ZipArchive();
+        if ($zip->open($zipFile) !== true) {
+            respond(500, ['error' => 'cannot open ZIP file']);
+        }
+
+        for ($i = 0; $i < $zip->numFiles; $i++) {
+            $name = (string) $zip->getNameIndex($i);
+            if (str_contains($name, '..') || str_starts_with($name, '/')) {
+                $zip->close();
+                respond(400, ['error' => "malicious path in archive: {$name}"]);
+            }
+            $resolved = realpath("{$realTarget}/" . dirname($name));
+            if ($resolved !== false && !str_starts_with($resolved, $realTarget)) {
+                $zip->close();
+                respond(400, ['error' => "path traversal detected: {$name}"]);
+            }
+        }
+
+        $zip->extractTo($targetDir);
+        $zip->close();
+
+        // Verify integrity via manifest
+        $manifestFile = "{$targetDir}/manifest.json";
+        if (file_exists($manifestFile)) {
+            $manifestData = json_decode((string) file_get_contents($manifestFile), true);
+            if (is_array($manifestData) && isset($manifestData['files']) && is_array($manifestData['files'])) {
+                foreach ($manifestData['files'] as $entry) {
+                    $extractedPath = "{$targetDir}/{$entry['path']}";
+                    if (!file_exists($extractedPath)) {
+                        cleanupFailedRelease($targetDir);
+                        respond(400, ['error' => "manifest file missing after extract: {$entry['path']}"]);
+                    }
+                    $actualSha = hash_file('sha256', $extractedPath);
+                    if ($actualSha !== $entry['sha256']) {
+                        cleanupFailedRelease($targetDir);
+                        respond(400, ['error' => "sha256 mismatch after extract: {$entry['path']}"]);
+                    }
+                }
+            }
+        }
+
+        // Ensure shared directories exist
+        $sharedDir = "{$basePath}/shared";
+        foreach (['content', 'uploads', 'logs', 'cache'] as $dir) {
+            if (!is_dir("{$sharedDir}/{$dir}")) {
+                mkdir("{$sharedDir}/{$dir}", 0755, true);
+            }
+        }
+
+        // Link shared dirs into release (relative symlinks)
+        foreach (['content', 'uploads', 'cache'] as $dir) {
+            $linkPath = "{$targetDir}/{$dir}";
+            if (!file_exists($linkPath) && !is_link($linkPath)) {
+                @symlink("../../shared/{$dir}", $linkPath);
+            }
+        }
+
+        // Copy .env from shared
+        $sharedEnv = "{$sharedDir}/.env";
+        $releaseEnv = "{$targetDir}/.env";
+        if (file_exists($sharedEnv) && !file_exists($releaseEnv)) {
+            copy($sharedEnv, $releaseEnv);
+        }
+
+        // Read previous release for rollback info
+        $currentLink = "{$basePath}/current";
+        $previous = null;
+        if (is_link($currentLink)) {
+            $previous = basename((string) readlink($currentLink));
+        }
+
+        // Atomic symlink swap: create new symlink at current_new, then rename over current
+        $newLink = "{$basePath}/current_new";
+        if (is_link($newLink)) {
+            unlink($newLink);
+        }
+        symlink($targetDir, $newLink);
+        rename($newLink, $currentLink);
+
+        // Cleanup ZIP and HMAC
+        unlink($zipFile);
+        unlink($hmacFile);
+
+        $durationMs = (int) round((microtime(true) - $t0) * 1000);
+        appendLog($basePath, 'activate', ['release' => $releaseId, 'previous' => $previous, 'ms' => $durationMs]);
+
+        respond(200, [
+            'ok'          => true,
+            'release'     => $releaseId,
+            'previous'    => $previous,
+            'duration_ms' => $durationMs,
+        ]);
+    } finally {
+        releaseLock($lockFile);
+    }
+}
+
+/**
+ * @param array<string, mixed> $payload
+ */
+function handleRollback(array $payload, string $basePath): void
+{
+    $currentLink = "{$basePath}/current";
+
+    if (isset($payload['to']) && $payload['to'] !== '') {
+        $target = (string) $payload['to'];
+        if (!validateReleaseId($target)) {
+            respond(400, ['error' => 'invalid release id in to field']);
+        }
+        $targetDir = "{$basePath}/releases/{$target}";
+        if (!is_dir($targetDir)) {
+            respond(400, ['error' => "release not found: {$target}"]);
+        }
+    } else {
+        // Find penultimate release by mtime
+        $releases = listReleases($basePath);
+        if (count($releases) < 2) {
+            respond(400, ['error' => 'no previous release available for rollback']);
+        }
+        $target    = $releases[1];
+        $targetDir = "{$basePath}/releases/{$target}";
+    }
+
+    $currentBefore = is_link($currentLink) ? basename((string) readlink($currentLink)) : null;
+
+    $newLink = "{$basePath}/current_new";
+    if (is_link($newLink)) {
+        unlink($newLink);
+    }
+    symlink($targetDir, $newLink);
+    rename($newLink, $currentLink);
+
+    appendLog($basePath, 'rollback', ['to' => $target, 'from' => $currentBefore]);
+
+    respond(200, [
+        'ok'       => true,
+        'rolled_to' => $target,
+        'was'       => $currentBefore,
+    ]);
+}
+
+function handleStatus(string $basePath): void
+{
+    $currentLink = "{$basePath}/current";
+    $currentRelease = null;
+    $currentManifest = null;
+
+    if (is_link($currentLink)) {
+        $currentRelease = basename((string) readlink($currentLink));
+        $manifestPath = "{$basePath}/releases/{$currentRelease}/manifest.json";
+        if (file_exists($manifestPath)) {
+            $manifestData = json_decode((string) file_get_contents($manifestPath), true);
+            if (is_array($manifestData)) {
+                $currentManifest = $manifestData;
+            }
+        }
+    }
+
+    $releases = listReleases($basePath);
+    $diskUsage = 0;
+    $releasesDir = "{$basePath}/releases";
+    if (is_dir($releasesDir)) {
+        $diskUsage = (int) du_kb($releasesDir);
+    }
+
+    respond(200, [
+        'ok'           => true,
+        'current'      => $currentRelease,
+        'manifest'     => $currentManifest,
+        'releases'     => array_slice($releases, 0, 10),
+        'disk_usage_kb' => $diskUsage,
+        'php'          => PHP_VERSION,
+    ]);
+}
+
+/**
+ * @param array<string, mixed> $payload
+ */
+function handleCleanup(array $payload, string $basePath): void
+{
+    $keep = (int) ($payload['keep'] ?? 5);
+    if ($keep < 1) {
+        respond(400, ['error' => 'keep must be >= 1']);
+    }
+
+    $currentLink = "{$basePath}/current";
+    $currentRelease = is_link($currentLink) ? basename((string) readlink($currentLink)) : null;
+
+    $releases = listReleases($basePath);
+
+    $toDelete = array_slice($releases, $keep);
+    $deleted = [];
+
+    foreach ($toDelete as $release) {
+        // Never delete the currently active release
+        if ($release === $currentRelease) {
+            continue;
+        }
+        $releaseDir = "{$basePath}/releases/{$release}";
+        if (is_dir($releaseDir)) {
+            rmrf($releaseDir);
+            $deleted[] = $release;
+        }
+    }
+
+    appendLog($basePath, 'cleanup', ['kept' => $keep, 'deleted' => $deleted]);
+
+    respond(200, ['ok' => true, 'deleted' => $deleted, 'remaining' => count($releases) - count($deleted)]);
+}
+
+// ─────────────────────────────────────────────────────────────────
+// Lock helpers
+// ─────────────────────────────────────────────────────────────────
+
+function acquireLock(string $lockFile, string $releaseId, bool $force): bool
+{
+    $lockDir = dirname($lockFile);
+    if (!is_dir($lockDir)) {
+        mkdir($lockDir, 0755, true);
+    }
+
+    if (file_exists($lockFile)) {
+        $existing = json_decode((string) file_get_contents($lockFile), true);
+        if (is_array($existing)) {
+            $ttl      = (int) ($existing['ttl'] ?? 600);
+            $started  = (int) ($existing['started_at'] ?? 0);
+            $isExpired = (time() - $started) > $ttl;
+
+            if (!$isExpired && !$force) {
+                return false;
+            }
+        }
+    }
+
+    $lock = [
+        'release_id' => $releaseId,
+        'started_at' => time(),
+        'ttl'        => 600,
+        'host'       => php_uname('n'),
+    ];
+
+    file_put_contents($lockFile, json_encode($lock), LOCK_EX);
+    return true;
+}
+
+function releaseLock(string $lockFile): void
+{
+    if (file_exists($lockFile)) {
+        unlink($lockFile);
+    }
+}
+
+/** @return array<string, mixed>|null */
+function readLock(string $lockFile): ?array
+{
+    if (!file_exists($lockFile)) {
+        return null;
+    }
+    $data = json_decode((string) file_get_contents($lockFile), true);
+    return is_array($data) ? $data : null;
+}
+
+// ─────────────────────────────────────────────────────────────────
+// Utility functions
+// ─────────────────────────────────────────────────────────────────
+
+/** @return array<string> Sorted desc by mtime */
+function listReleases(string $basePath): array
+{
+    $releasesDir = "{$basePath}/releases";
+    if (!is_dir($releasesDir)) {
+        return [];
+    }
+
+    $dirs = [];
+    foreach (scandir($releasesDir) ?: [] as $item) {
+        if ($item === '.' || $item === '..') {
+            continue;
+        }
+        $path = "{$releasesDir}/{$item}";
+        if (is_dir($path) && validateReleaseId($item)) {
+            $dirs[$item] = filemtime($path);
+        }
+    }
+
+    arsort($dirs);
+    return array_keys($dirs);
+}
+
+function validateReleaseId(string $id): bool
+{
+    return $id !== '' && preg_match('/^[a-zA-Z0-9_\-]+$/', $id) === 1;
+}
+
+function cleanupFailedRelease(string $dir): void
+{
+    if (is_dir($dir)) {
+        rmrf($dir);
+    }
+}
+
+function rmrf(string $dir): void
+{
+    if (!is_dir($dir)) {
+        return;
+    }
+    foreach (scandir($dir) ?: [] as $item) {
+        if ($item === '.' || $item === '..') {
+            continue;
+        }
+        $path = "{$dir}/{$item}";
+        is_dir($path) && !is_link($path) ? rmrf($path) : unlink($path);
+    }
+    rmdir($dir);
+}
+
+function du_kb(string $dir): int
+{
+    $total = 0;
+    $iterator = new RecursiveIteratorIterator(
+        new RecursiveDirectoryIterator($dir, FilesystemIterator::SKIP_DOTS),
+    );
+    foreach ($iterator as $file) {
+        if ($file->isFile()) {
+            $total += $file->getSize();
+        }
+    }
+    return (int) round($total / 1024);
+}
+
+function appendLog(string $basePath, string $action, mixed $context): void
+{
+    $logDir = "{$basePath}/shared/logs";
+    if (!is_dir($logDir)) {
+        @mkdir($logDir, 0755, true);
+    }
+    $logFile = "{$logDir}/deploy.log";
+    $ts      = date('Y-m-d\TH:i:s\Z');
+    $line    = json_encode(['ts' => $ts, 'action' => $action, 'context' => $context]) . "\n";
+    file_put_contents($logFile, $line, FILE_APPEND | LOCK_EX);
+}
+
+/**
+ * @param array<string, mixed> $data
+ * @return never
+ */
+function respond(int $status, array $data): void
+{
+    http_response_code($status);
+    header('Content-Type: application/json');
+    echo json_encode($data);
+    exit;
+}
