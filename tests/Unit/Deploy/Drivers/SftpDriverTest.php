@@ -6,6 +6,7 @@ use Rkn\Cms\Deploy\DeployConfig;
 use Rkn\Cms\Deploy\DeployLock;
 use Rkn\Cms\Deploy\Drivers\SftpDriver;
 use Rkn\Cms\Deploy\Process\Runner;
+use Tests\Helpers\ContainerHelper;
 
 /**
  * Unit tests for SftpDriver.
@@ -111,34 +112,50 @@ describe('SftpDriver', function () {
     });
 
     it('deploy returns false (not exception) when strategy unavailable', function () {
-        // Only testable on a machine without rsync and without phpseclib
-        $which = (new Runner(sys_get_temp_dir()))->run(['which', 'rsync'])->withTimeout(5)->execute();
-        if ($which->isSuccess() && trim($which->stdout) !== '') {
-            $this->markTestSkipped('rsync is available in PATH; this test only runs without rsync');
-        }
-        if (class_exists('\phpseclib3\Net\SFTP')) {
-            $this->markTestSkipped('phpseclib3 is installed; this test only runs without it');
-        }
+        // Use an isolated empty PATH so `which rsync` always fails — pure unit test,
+        // no dependency on the host machine having rsync absent.
+        // phpseclib3 is not in composer.json require, so class_exists() returns false.
+        $emptyDir = sys_get_temp_dir() . '/rkn-empty-path-' . uniqid();
+        mkdir($emptyDir, 0755, true);
+
+        // Runner with empty PATH — Symfony Process overrides the PATH env variable,
+        // making `which rsync` return exit code 1 (not found).
+        $runner = (new Runner($this->basePath))->withEnv(['PATH' => $emptyDir]);
 
         $lock   = new DeployLock($this->lockDir, 1800);
-        $driver = new SftpDriver($this->basePath, null, $lock);
+        $driver = new SftpDriver($this->basePath, $runner, $lock);
         $config = makeSftpDeployConfig();
-        $logger = fn (string $m) => null;
+        $logged = [];
+        $logger = function (string $m) use (&$logged): void {
+            $logged[] = $m;
+        };
 
         $result = $driver->deploy($config, $logger);
+
+        // Cleanup empty dir
+        rmdir($emptyDir);
+
         expect($result)->toBeFalse();
+
+        // Verify the error was logged (not silently swallowed)
+        $errorMessages = array_filter($logged, fn (string $m) => str_contains($m, '<error>'));
+        expect($errorMessages)->not->toBeEmpty();
     });
 
 });
 
-describe('SftpDriver — Docker integration (skipped if unavailable)', function () {
+describe('SftpDriver — container integration (skipped if unavailable)', function () {
 
-    it('full deploy via rsync to Docker openssh-server', function () {
-        if (getenv('DOCKER_AVAILABLE') !== '1') {
-            $this->markTestSkipped('DOCKER_AVAILABLE != 1; skipping Docker integration test');
+    it('full deploy via rsync to container openssh-server', function () {
+        if (!ContainerHelper::isAvailable()) {
+            $this->markTestSkipped(
+                'apple/container system is not running. '
+                . 'Start it with: container system start'
+            );
         }
 
-        // Docker test would go here
+        // Full SFTP integration is covered by tests/Integration/Deploy/SftpDriverContainerTest.php
+        // This placeholder confirms the skip guard uses ContainerHelper::isAvailable().
         expect(true)->toBeTrue();
     });
 

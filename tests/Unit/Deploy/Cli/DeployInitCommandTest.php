@@ -55,7 +55,9 @@ function runDeployInit(array $inputs): array
     // Recursive cleanup
     array_map('unlink', glob("{$tmpDir}/config/*") ?: []);
     @rmdir("{$tmpDir}/config");
-    @unlink("{$tmpDir}/.env.example");
+    if (file_exists("{$tmpDir}/.env.example")) {
+        unlink("{$tmpDir}/.env.example");
+    }
     @rmdir($tmpDir);
 
     return [

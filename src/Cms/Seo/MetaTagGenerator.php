@@ -44,13 +44,9 @@ final class MetaTagGenerator
     private function descriptionTag(?Entry $entry): string
     {
         $description = $entry?->getMeta('description');
-        
+
         if (empty($description) && $entry !== null) {
-            // Auto-generate description from content (first 160 chars)
-            $content = strip_tags($entry->content());
-            $description = mb_substr($content, 0, 160);
-            $description = str_replace(["\r", "\n"], ' ', $description);
-            $description = trim($description) . '...';
+            $description = $this->autoDescriptionFromContent($entry);
         }
 
         if (empty($description)) {
@@ -62,6 +58,27 @@ final class MetaTagGenerator
         }
 
         return '<meta name="description" content="' . $this->escape($description) . '">';
+    }
+
+    /**
+     * Build a description from the entry content. Returns empty string if the
+     * content cannot be rendered or yields only whitespace — letting the caller
+     * fall back to site globals instead of emitting a bare "..." placeholder.
+     */
+    private function autoDescriptionFromContent(Entry $entry): string
+    {
+        try {
+            $content = strip_tags($entry->content());
+        } catch (\Throwable) {
+            return '';
+        }
+
+        $content = trim(str_replace(["\r", "\n"], ' ', $content));
+        if ($content === '') {
+            return '';
+        }
+
+        return mb_substr($content, 0, 160) . '...';
     }
 
     private function keywordsTag(?Entry $entry): string
@@ -135,11 +152,9 @@ final class MetaTagGenerator
         $baseUrl = $context['base_url'] ?? '';
         $title = $entry?->title() ?? $this->siteGlobals['title'] ?? '';
         
-        // Use same logic for description as descriptionTag
         $description = $entry?->getMeta('description');
         if (empty($description) && $entry !== null) {
-            $content = strip_tags($entry->content());
-            $description = mb_substr($content, 0, 160) . '...';
+            $description = $this->autoDescriptionFromContent($entry);
         }
         if (empty($description)) {
             $description = $this->siteGlobals['description'] ?? '';
@@ -202,8 +217,7 @@ final class MetaTagGenerator
         
         $description = $entry?->getMeta('description');
         if (empty($description) && $entry !== null) {
-            $content = strip_tags($entry->content());
-            $description = mb_substr($content, 0, 160) . '...';
+            $description = $this->autoDescriptionFromContent($entry);
         }
         if (empty($description)) {
             $description = $this->siteGlobals['description'] ?? '';

@@ -17,6 +17,7 @@ final class DeployConfig
     public string $path;
     public ?string $user = null;
     public ?string $pass = null;
+    public ?string $identityFile = null;
     public int $port = 21;
     public bool $secure = true;
     public ?string $remote = null;
@@ -75,6 +76,7 @@ final class DeployConfig
         
         $config->user = $data['user'] ?? null;
         $config->pass = $data['password'] ?? null;
+        $config->identityFile = $data['identity_file'] ?? null;
         $config->port = (int)($data['port'] ?? ($config->method === 'sftp' ? 22 : 21));
         $config->secure = (bool)($data['secure'] ?? true);
         $config->deploySecret = $data['deploy_secret'] ?? null;

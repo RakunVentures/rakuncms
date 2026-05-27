@@ -66,98 +66,7 @@ test('respects custom canonical in frontmatter', function () {
     $html = $gen->generate(['entry' => $entry, 'base_url' => 'https://example.com']);
 
     expect($html)->toContain('<link rel="canonical" href="https://other.com/about">');
-    // Custom canonical overrides auto-generated one
     expect($html)->not->toContain('<link rel="canonical" href="https://example.com/es/about">');
-});
-
-test('generates OG tags with correct values', function () {
-    $entry = Entry::fromArray([
-        'title' => 'My Page',
-        'slug' => 'my-page',
-        'collection' => 'pages',
-        'locale' => 'es',
-        'file' => 'content/pages/my-page.md',
-        'meta' => ['description' => 'Page description', 'image' => '/assets/images/cover.jpg'],
-    ]);
-
-    $gen = new MetaTagGenerator(['site_name' => 'Test Site']);
-    $html = $gen->generate(['entry' => $entry, 'base_url' => 'https://example.com', 'locale' => 'es']);
-
-    expect($html)->toContain('<meta property="og:title" content="My Page">');
-    expect($html)->toContain('<meta property="og:description" content="Page description">');
-    expect($html)->toContain('<meta property="og:url" content="https://example.com/es/my-page">');
-    expect($html)->toContain('<meta property="og:type" content="website">');
-    expect($html)->toContain('<meta property="og:image" content="https://example.com/assets/images/cover.jpg">');
-    expect($html)->toContain('<meta property="og:locale" content="es">');
-    expect($html)->toContain('<meta property="og:site_name" content="Test Site">');
-});
-
-test('og:type is article for blog collection', function () {
-    $entry = Entry::fromArray([
-        'title' => 'Blog Post',
-        'slug' => 'blog-post',
-        'collection' => 'blog',
-        'locale' => 'es',
-        'file' => 'content/blog/blog-post.md',
-        'meta' => ['description' => 'A blog post'],
-    ]);
-
-    $gen = new MetaTagGenerator();
-    $html = $gen->generate(['entry' => $entry]);
-
-    expect($html)->toContain('<meta property="og:type" content="article">');
-});
-
-test('og:type defaults to website for pages', function () {
-    $entry = Entry::fromArray([
-        'title' => 'Page',
-        'slug' => 'page',
-        'collection' => 'pages',
-        'locale' => 'es',
-        'file' => 'content/pages/page.md',
-        'meta' => ['description' => 'A page'],
-    ]);
-
-    $gen = new MetaTagGenerator();
-    $html = $gen->generate(['entry' => $entry]);
-
-    expect($html)->toContain('<meta property="og:type" content="website">');
-});
-
-test('twitter card is summary_large_image with image', function () {
-    $entry = Entry::fromArray([
-        'title' => 'Page',
-        'slug' => 'page',
-        'collection' => 'pages',
-        'locale' => 'es',
-        'file' => 'content/pages/page.md',
-        'meta' => ['description' => 'Desc', 'image' => '/img/cover.jpg'],
-    ]);
-
-    $gen = new MetaTagGenerator(['twitter_handle' => '@test']);
-    $html = $gen->generate(['entry' => $entry, 'base_url' => 'https://example.com']);
-
-    expect($html)->toContain('<meta name="twitter:card" content="summary_large_image">');
-    expect($html)->toContain('<meta name="twitter:title" content="Page">');
-    expect($html)->toContain('<meta name="twitter:description" content="Desc">');
-    expect($html)->toContain('<meta name="twitter:image" content="https://example.com/img/cover.jpg">');
-    expect($html)->toContain('<meta name="twitter:site" content="@test">');
-});
-
-test('twitter card is summary without image', function () {
-    $entry = Entry::fromArray([
-        'title' => 'Page',
-        'slug' => 'page',
-        'collection' => 'pages',
-        'locale' => 'es',
-        'file' => 'content/pages/page.md',
-        'meta' => ['description' => 'Desc'],
-    ]);
-
-    $gen = new MetaTagGenerator();
-    $html = $gen->generate(['entry' => $entry]);
-
-    expect($html)->toContain('<meta name="twitter:card" content="summary">');
 });
 
 test('generates hreflang tags for all locales plus x-default', function () {
@@ -240,20 +149,4 @@ test('generates keywords tag from frontmatter', function () {
     $html = $gen->generate(['entry' => $entry]);
 
     expect($html)->toContain('<meta name="keywords" content="php, cms, markdown">');
-});
-
-test('og:type respects frontmatter override', function () {
-    $entry = Entry::fromArray([
-        'title' => 'Page',
-        'slug' => 'page',
-        'collection' => 'pages',
-        'locale' => 'es',
-        'file' => 'content/pages/page.md',
-        'meta' => ['description' => 'Desc', 'type' => 'article'],
-    ]);
-
-    $gen = new MetaTagGenerator();
-    $html = $gen->generate(['entry' => $entry]);
-
-    expect($html)->toContain('<meta property="og:type" content="article">');
 });

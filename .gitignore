@@ -13,6 +13,7 @@
 /storage/rates/*
 !/storage/rates/.gitkeep
 .phpunit.result.cache
+.phpunit.cache/
 .php-cs-fixer.cache
 
 # Entorno y secretos

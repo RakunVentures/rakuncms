@@ -187,6 +187,7 @@ $app->pipe(new \Rkn\Cms\Middleware\ApiDispatcher());
 $app->pipe(new \Rkn\Cms\Middleware\WpApiDispatcher());
 $app->pipe(new \Rkn\Cms\Middleware\ContentRouter());
 $app->pipe(new \Rkn\Cms\Middleware\YoyoHandler());
+$app->pipe(new \Rkn\Cms\Middleware\NotFoundMiddleware());
 
 $app->run();
 PHP;

@@ -233,14 +233,6 @@ final class DeployCheckCommand extends Command
 
     private function findBasePath(): string
     {
-        try {
-            $app = \Rkn\Framework\Application::getInstance();
-            if ($app !== null) {
-                return $app->getBasePath();
-            }
-        } catch (\Throwable) {
-        }
-
         return getcwd() ?: dirname(__DIR__, 3);
     }
 }

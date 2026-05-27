@@ -6,6 +6,7 @@ use Rkn\Cms\Deploy\ArtifactBuilder;
 use Rkn\Cms\Deploy\DeployConfig;
 use Rkn\Cms\Deploy\DeployLock;
 use Rkn\Cms\Deploy\Drivers\FtpDriver;
+use Tests\Helpers\ContainerHelper;
 
 /**
  * Unit tests for FtpDriver.
@@ -205,14 +206,18 @@ describe('FtpDriver — unit (pure PHP, no FTP server)', function () {
 
 });
 
-describe('FtpDriver — Docker integration (skipped if unavailable)', function () {
+describe('FtpDriver — container integration (skipped if unavailable)', function () {
 
-    it('full deploy to Docker vsftpd server', function () {
-        if (getenv('DOCKER_AVAILABLE') !== '1') {
-            $this->markTestSkipped('DOCKER_AVAILABLE != 1; skipping Docker FTP integration test');
+    it('full deploy to container FTP server', function () {
+        if (!ContainerHelper::isAvailable()) {
+            $this->markTestSkipped(
+                'apple/container system is not running. '
+                . 'Start it with: container system start'
+            );
         }
 
-        // Docker-based FTP test would go here
+        // Full FTP integration is covered by tests/Integration/Deploy/FtpDriverContainerTest.php
+        // This placeholder confirms the skip guard uses ContainerHelper::isAvailable().
         expect(true)->toBeTrue();
     });
 

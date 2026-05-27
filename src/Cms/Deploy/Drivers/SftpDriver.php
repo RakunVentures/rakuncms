@@ -93,6 +93,9 @@ final class SftpDriver implements TransportInterface
             }
 
             return $this->deployViaPhpseclib($config, $releaseId, $logger);
+        } catch (RuntimeException $e) {
+            $logger("<error>SFTP deploy error: {$e->getMessage()}</error>");
+            return false;
         } finally {
             $lock->release($config->environment);
         }
@@ -153,10 +156,9 @@ final class SftpDriver implements TransportInterface
     {
         $user     = (string) ($config->user ?? '');
         $host     = $config->host;
-        $port     = $config->port;
         $path     = $config->path;
         $target   = "{$user}@{$host}:{$path}/releases/{$releaseId}/";
-        $sshCmd   = "ssh -p {$port} -o BatchMode=yes -o StrictHostKeyChecking=accept-new";
+        $sshCmd   = $this->buildRsyncShellCommand($config);
 
         $runner = $this->getRunner();
 
@@ -176,12 +178,9 @@ final class SftpDriver implements TransportInterface
 
         // Create shared directories and activate symlinks via SSH
         $sshCommands = $this->buildSshActivationCommands($path, $releaseId);
-        $sshResult = $runner->run([
-            'ssh', '-p', (string) $port,
-            '-o', 'BatchMode=yes',
-            "{$user}@{$host}",
-            $sshCommands,
-        ])->withTimeout(30)->execute();
+        $sshResult = $runner->run($this->buildSshCommand($config, $sshCommands))
+            ->withTimeout(30)
+            ->execute();
 
         if (!$sshResult->isSuccess()) {
             $logger("<error>SSH activation failed:\n{$sshResult->stderr}</error>");
@@ -209,19 +208,13 @@ final class SftpDriver implements TransportInterface
 
     private function rollbackViaRsync(DeployConfig $config, callable $logger): bool
     {
-        $user   = (string) ($config->user ?? '');
-        $host   = $config->host;
-        $port   = $config->port;
         $path   = $config->path;
         $runner = $this->getRunner();
 
         // Find the penultimate release by mtime on the remote
-        $lsResult = $runner->run([
-            'ssh', '-p', (string) $port,
-            '-o', 'BatchMode=yes',
-            "{$user}@{$host}",
-            "ls -1dt {$path}/releases/*/",
-        ])->withTimeout(15)->execute();
+        $lsResult = $runner->run($this->buildSshCommand($config, "ls -1dt {$path}/releases/*/"))
+            ->withTimeout(15)
+            ->execute();
 
         if (!$lsResult->isSuccess()) {
             $logger('<error>Cannot list remote releases for rollback</error>');
@@ -238,12 +231,10 @@ final class SftpDriver implements TransportInterface
 
         $previousDir = $dirs[1]; // Second newest = penultimate
 
-        $swapResult = $runner->run([
-            'ssh', '-p', (string) $port,
-            '-o', 'BatchMode=yes',
-            "{$user}@{$host}",
+        $swapResult = $runner->run($this->buildSshCommand(
+            $config,
             "ln -sfn {$previousDir} {$path}/current_new && mv -Tf {$path}/current_new {$path}/current",
-        ])->withTimeout(15)->execute();
+        ))->withTimeout(15)->execute();
 
         if (!$swapResult->isSuccess()) {
             $logger("<error>Rollback symlink swap failed:\n{$swapResult->stderr}</error>");
@@ -322,15 +313,11 @@ final class SftpDriver implements TransportInterface
     private function checkSshConnectivity(DeployConfig $config): array
     {
         $runner = $this->getRunner();
-        $result = $runner->run([
-            'ssh',
-            '-p', (string) $config->port,
-            '-o', 'BatchMode=yes',
-            '-o', 'ConnectTimeout=10',
-            '-o', 'StrictHostKeyChecking=accept-new',
-            "{$config->user}@{$config->host}",
-            'echo ok',
-        ])->withTimeout(15)->execute();
+        $cmd = array_merge(
+            $this->buildSshBaseArgs($config, extraOpts: ['ConnectTimeout=10']),
+            ["{$config->user}@{$config->host}", 'echo ok'],
+        );
+        $result = $runner->run($cmd)->withTimeout(15)->execute();
 
         if (!$result->isSuccess() || trim($result->stdout) !== 'ok') {
             return [
@@ -348,13 +335,10 @@ final class SftpDriver implements TransportInterface
     private function checkRemoteWritable(DeployConfig $config): array
     {
         $runner = $this->getRunner();
-        $result = $runner->run([
-            'ssh',
-            '-p', (string) $config->port,
-            '-o', 'BatchMode=yes',
-            "{$config->user}@{$config->host}",
+        $result = $runner->run($this->buildSshCommand(
+            $config,
             "test -w {$config->path} && echo writable || echo not-writable",
-        ])->withTimeout(10)->execute();
+        ))->withTimeout(10)->execute();
 
         if (!$result->isSuccess() || trim($result->stdout) !== 'writable') {
             return ["Remote path {$config->path} is not writable on {$config->host}"];
@@ -386,6 +370,79 @@ final class SftpDriver implements TransportInterface
             $args[] = "--exclude={$exclude}";
         }
         return $args;
+    }
+
+    /**
+     * Build the base `ssh` argv (without the remote target/command yet).
+     * Honors $config->identityFile by injecting -i <path>.
+     *
+     * @param array<string> $extraOpts Additional -o options (each "Key=value")
+     * @return array<string>
+     */
+    private function buildSshBaseArgs(DeployConfig $config, array $extraOpts = []): array
+    {
+        $args = [
+            'ssh',
+            '-p', (string) $config->port,
+            '-o', 'BatchMode=yes',
+            '-o', 'StrictHostKeyChecking=accept-new',
+            '-o', 'UserKnownHostsFile=/dev/null',
+        ];
+
+        foreach ($extraOpts as $opt) {
+            $args[] = '-o';
+            $args[] = $opt;
+        }
+
+        if ($config->identityFile !== null && $config->identityFile !== '') {
+            $args[] = '-i';
+            $args[] = $config->identityFile;
+            $args[] = '-o';
+            $args[] = 'IdentitiesOnly=yes';
+        }
+
+        return $args;
+    }
+
+    /**
+     * Build a full `ssh ... user@host <cmd>` argv ready for Runner.
+     *
+     * @return array<string>
+     */
+    private function buildSshCommand(DeployConfig $config, string $remoteCommand): array
+    {
+        $user = (string) ($config->user ?? '');
+        return array_merge(
+            $this->buildSshBaseArgs($config),
+            ["{$user}@{$config->host}", $remoteCommand],
+        );
+    }
+
+    /**
+     * Build the `-e "ssh ..."` shell string for rsync.
+     *
+     * rsync invokes this through /bin/sh, so the value must be a single
+     * shell-safe token. We only inject paths we control (identityFile
+     * passed by caller; numeric port), so direct interpolation is safe.
+     */
+    private function buildRsyncShellCommand(DeployConfig $config): string
+    {
+        $parts = [
+            'ssh',
+            '-p', (string) $config->port,
+            '-o', 'BatchMode=yes',
+            '-o', 'StrictHostKeyChecking=accept-new',
+            '-o', 'UserKnownHostsFile=/dev/null',
+        ];
+
+        if ($config->identityFile !== null && $config->identityFile !== '') {
+            $parts[] = '-i';
+            $parts[] = escapeshellarg($config->identityFile);
+            $parts[] = '-o';
+            $parts[] = 'IdentitiesOnly=yes';
+        }
+
+        return implode(' ', $parts);
     }
 
     private function getRunner(): Runner
