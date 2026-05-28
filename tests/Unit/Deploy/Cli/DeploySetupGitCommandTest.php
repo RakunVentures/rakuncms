@@ -11,7 +11,16 @@ use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Tester\CommandTester;
 use Symfony\Component\Yaml\Yaml;
 
-$fixturesDir = dirname(__DIR__, 3) . '/Fixtures/plesk-xmlrpc';
+if (!function_exists('cliBody')) {
+    function cliBody(string $stdout, int $code = 0, string $stderr = ''): string
+    {
+        return (string) json_encode([
+            'code' => $code,
+            'stdout' => $stdout,
+            'stderr' => $stderr,
+        ]);
+    }
+}
 
 /**
  * Build a test Application with an optional injected Inspector.
@@ -132,12 +141,12 @@ describe('DeploySetupGitCommand — failure scenarios', function (): void {
     });
 });
 
-describe('DeploySetupGitCommand — with FakeTransport', function () use ($fixturesDir): void {
-    it('completes successfully when Plesk returns no git repositories (graceful degradation)', function () use ($fixturesDir): void {
-        // FakeTransport returns empty list → getGitInfo() returns null.
+describe('DeploySetupGitCommand — with FakeTransport', function (): void {
+    it('completes successfully when Plesk returns no git repositories (graceful degradation)', function (): void {
+        // CLI gateway returns empty git list → getGitInfo() returns null.
         // Command should still succeed (with a warning about no repo found).
         $transport = new FakeTransport();
-        $transport->queueResponse(200, (string) file_get_contents("{$fixturesDir}/git-list-empty.xml"));
+        $transport->queueResponse(200, cliBody('No Git repositories were found for domain example.com.'));
 
         $client = new Client('https://plesk.test:8443', 'test-key', false, 30, $transport);
         $inspector = new Inspector($client);
@@ -164,14 +173,18 @@ describe('DeploySetupGitCommand — with FakeTransport', function () use ($fixtu
         expect($result['display'])->toContain('No Git repository found');
     });
 
-    it('persists webhook_url in deploy.yaml when Inspector returns git info', function () use ($fixturesDir): void {
-        // getGitInfo() makes TWO XML-RPC calls:
-        //   1. extensionCall git --list  → FakeTransport must return git-list-with-repo.xml (stdout: "website")
-        //   2. extensionCall git --info  → FakeTransport must return git-info-with-webhook.xml
-        // Without both queued responses, the second call exhausts the queue and getGitInfo() returns null.
+    it('persists webhook_url in deploy.yaml when Inspector returns git info', function (): void {
+        // getGitInfo() makes TWO CLI gateway calls:
+        //   1. cliCall('extension', ['--call','git','--list',...]) → stdout with repo name
+        //   2. cliCall('extension', ['--call','git','--info',...])  → stdout with webhook URL
         $transport = new FakeTransport();
-        $transport->queueResponse(200, (string) file_get_contents("{$fixturesDir}/git-list-with-repo.xml"));
-        $transport->queueResponse(200, (string) file_get_contents("{$fixturesDir}/git-info-with-webhook.xml"));
+        $transport->queueResponse(200, cliBody("website.git\n"));
+        $transport->queueResponse(200, cliBody(
+            "Repository name:   website.git\n"
+            . "Active branch:     main\n"
+            . "Webhook URL:       https://plesk.example.com:8443/modules/git/webhook/abc123token\n"
+            . "Deploy mode:       automatic\n"
+        ));
 
         $client = new Client('https://plesk.test:8443', 'test-key', false, 30, $transport);
         $inspector = new Inspector($client);

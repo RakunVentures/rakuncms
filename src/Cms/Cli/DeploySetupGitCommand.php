@@ -77,7 +77,8 @@ final class DeploySetupGitCommand extends Command
                 $io->error('PLESK_API_KEY is not set. Cannot connect to Plesk.');
                 return Command::FAILURE;
             }
-            $client = new Client($config->host, $apiKey, $config->pleskVerifySsl);
+            $pleskHost = $config->pleskHost ?? $config->host;
+            $client = new Client($pleskHost, $apiKey, $config->pleskVerifySsl);
             $inspector = new Inspector($client);
         }
 
@@ -118,7 +119,8 @@ final class DeploySetupGitCommand extends Command
 
         if ($gitInfo !== null && isset($gitInfo['deploy_path']) && $gitInfo['deploy_path'] !== null) {
             // Build SSH URL from host and deploy_path
-            $remoteUrl = "ssh://{$config->host}{$gitInfo['deploy_path']}";
+            $sshHost = $config->pleskHost ?? $config->host;
+            $remoteUrl = "ssh://{$sshHost}{$gitInfo['deploy_path']}";
 
             if ($remoteExistsResult->isSuccess()) {
                 $io->writeln("Updating existing remote '{$remoteName}' to {$remoteUrl}");

@@ -81,13 +81,12 @@ final class ArtifactBuilder
 
         $zip->close();
 
-        // Write HMAC of ZIP alongside it (only if secret provided)
+        // Write HMAC of ZIP alongside it (streamed, never loads full file in memory)
         if ($deploySecret !== null && $deploySecret !== '') {
-            $zipContents = file_get_contents($zipPath);
-            if ($zipContents === false) {
-                throw new RuntimeException("Cannot read ZIP for HMAC: {$zipPath}");
+            $hmac = hash_hmac_file('sha256', $zipPath, $deploySecret);
+            if ($hmac === false) {
+                throw new RuntimeException("Cannot compute HMAC for ZIP: {$zipPath}");
             }
-            $hmac = hash_hmac('sha256', $zipContents, $deploySecret);
             file_put_contents("{$zipPath}.hmac", $hmac);
         }
 
@@ -102,7 +101,19 @@ final class ArtifactBuilder
      */
     private function collectFiles(string $rootPath, array $exclude): array
     {
-        $defaultExclude = ['.git', '.DS_Store', 'cache/pages', 'cache/templates', 'tests'];
+        $defaultExclude = [
+            '.git',
+            '.DS_Store',
+            'cache/pages',
+            'cache/templates',
+            'tests',
+            'vendor/rkn/cms/.git',
+            'vendor/rkn/cms/vendor',
+            'vendor/rkn/cms/tests',
+            'vendor/rkn/cms/docs',
+            'vendor/rkn/cms/node_modules',
+            'vendor/rkn/cms/.github',
+        ];
         $allExclude = array_merge($defaultExclude, $exclude);
 
         // Normalize to real path so getRealPath() comparisons are reliable on macOS

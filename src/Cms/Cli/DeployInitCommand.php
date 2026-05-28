@@ -95,7 +95,7 @@ final class DeployInitCommand extends Command
         if ($discovery['has_shell'] === false) {
             if ($io->confirm('Shell access is disabled. Enable it via API?', true)) {
                 try {
-                    $provisioner->enableShell($domain);
+                    $provisioner->enableShellAccess($domain);
                     $io->success('Shell access enabled.');
                     $discovery['has_shell'] = true;
                 } catch (PleskApiException $e) {
@@ -110,17 +110,6 @@ final class DeployInitCommand extends Command
                     $gitInfo = $provisioner->createGitRepo($domain);
                     $discovery['git'] = $gitInfo;
                     $io->success("Git repository '{$gitInfo['repo_name']}' created.");
-
-                    if ($discovery['has_shell'] === true) {
-                        if ($io->confirm("Configure 'composer install --no-dev' as deploy action?", true)) {
-                            $provisioner->setDeployActions(
-                                $domain,
-                                $gitInfo['repo_name'],
-                                'composer install --no-dev --optimize-autoloader',
-                            );
-                            $io->success('Deploy actions configured.');
-                        }
-                    }
                 } catch (PleskApiException $e) {
                     $io->warning("Could not create Git repo: {$e->getMessage()}");
                 }

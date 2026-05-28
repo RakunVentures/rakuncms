@@ -213,6 +213,7 @@ final class DeployCommand extends Command
     {
         return match ($config->method) {
             'git' => new GitDriver($basePath),
+            'github-pull' => new \Rkn\Cms\Deploy\Drivers\GitHubPullDriver($basePath),
             'ftp' => new \Rkn\Cms\Deploy\Drivers\FtpDriver($basePath),
             'sftp' => new \Rkn\Cms\Deploy\Drivers\SftpDriver($basePath),
             default => null,

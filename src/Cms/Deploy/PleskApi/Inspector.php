@@ -7,41 +7,137 @@ namespace Rkn\Cms\Deploy\PleskApi;
 use Rkn\Cms\Deploy\PleskApiException;
 
 /**
- * Discovers Plesk server capabilities for a domain using XML-RPC.
+ * Discovers Plesk server capabilities for a domain using REST + CLI gateway.
  *
- * REST v2 does not expose Git info, PHP version, shell access, or document root.
- * All discovery is done via XML-RPC (see D1 in deploy-plesk-api.md).
+ * Mapping (Phase 1 — deploy-plesk-api.md §6 sprint API-2):
+ *   getDocumentRoot  → GET /domains, GET /domains/{id}  (REST native)
+ *   hasShellAccess   → cliCall('domain', ['--info', $domain])
+ *   getPhpInfo       → cliCall('domain', ['--info', $domain])  (shared stdout, cached)
+ *   getGitInfo       → cliCall('extension', ['--call', 'git', '--list', '-domain', $domain])
+ *                      + cliCall('extension', ['--call', 'git', '--info', '-domain', X, '-repo', Y])
  *
- * Each method is independently try/caught so that a partial failure in one
- * discovery sub-call does not abort the entire discovery operation.
+ * Each method is independently try/caught so that a partial failure (e.g. git extension
+ * not installed) does not abort the entire discovery operation.
  */
 final class Inspector
 {
+    /** @var array<string, ?array<mixed>> Cached GET /domains body, keyed by 'all'. */
+    private array $domainListCache = [];
+
+    /** @var array<string, ?int> domain name → Plesk domain id (or null when not found) */
+    private array $domainIdCache = [];
+
+    /** @var array<int, array<string, mixed>> Plesk domain id → GET /domains/{id} body */
+    private array $domainDetailCache = [];
+
+    /** @var array<string, string> domain name → stdout from `domain --info` */
+    private array $domainInfoStdoutCache = [];
+
     public function __construct(
         private readonly Client $client,
     ) {}
 
     /**
-     * Check whether shell access is enabled for the subscription hosting the domain.
+     * Get the document root path for a domain.
+     *
+     * Falls back to '/httpdocs' if the information cannot be retrieved.
+     */
+    public function getDocumentRoot(string $domain): string
+    {
+        try {
+            $detail = $this->fetchDomainDetail($domain);
+            if ($detail === null) {
+                return $this->parseDocRootFromInfoStdout($domain) ?? '/httpdocs';
+            }
+
+            foreach (['www_root', 'docroot', 'document_root'] as $key) {
+                if (isset($detail[$key]) && is_string($detail[$key]) && $detail[$key] !== '') {
+                    return $detail[$key];
+                }
+            }
+
+            $hosting = $detail['hosting'] ?? null;
+            if (is_array($hosting)) {
+                foreach (['www_root', 'docroot', 'document_root'] as $key) {
+                    if (isset($hosting[$key]) && is_string($hosting[$key]) && $hosting[$key] !== '') {
+                        return $hosting[$key];
+                    }
+                }
+            }
+
+            return $this->parseDocRootFromInfoStdout($domain) ?? '/httpdocs';
+        } catch (PleskApiException) {
+            return $this->parseDocRootFromInfoStdout($domain) ?? '/httpdocs';
+        } catch (\Throwable) {
+            return '/httpdocs';
+        }
+    }
+
+    /**
+     * Check whether shell access is enabled for the domain.
      *
      * Returns:
-     *   true  — shell is set to a real shell (e.g. /bin/bash)
-     *   false — shell is /sbin/nologin, /bin/false, or similar
-     *   null  — information could not be determined (XML-RPC unavailable, domain not found, etc.)
+     *   true  — shell is set to a real shell (/bin/bash, /bin/sh, etc.)
+     *   false — shell is /sbin/nologin, /bin/false, forbidden, or similar
+     *   null  — information could not be determined
      */
     public function hasShellAccess(string $domain): ?bool
     {
         try {
-            $xml = XmlRpcEncoder::subscriptionGet($domain);
-            $data = $this->client->xmlRpcCall($xml);
-            $shell = $this->extractSubscriptionProperty($data, 'shell');
+            $stdout = $this->getDomainInfoStdout($domain);
+            if ($stdout === null) {
+                return null;
+            }
 
+            $shell = $this->parseStdoutField($stdout, [
+                "SSH access to the server shell under the subscription's system user",
+                'SSH access',
+                'Shell access',
+                'Shell',
+            ]);
             if ($shell === null) {
                 return null;
             }
 
-            $disabledShells = ['/sbin/nologin', '/bin/false', 'false', 'none', ''];
-            return !in_array(strtolower($shell), $disabledShells, true);
+            $shellLower = strtolower(trim($shell));
+            $disabled = ['/sbin/nologin', '/bin/false', 'false', 'none', 'forbidden', 'disabled', ''];
+
+            return !in_array($shellLower, $disabled, true);
+        } catch (PleskApiException) {
+            return null;
+        } catch (\Throwable) {
+            return null;
+        }
+    }
+
+    /**
+     * Get PHP configuration for the domain.
+     *
+     * @return array{version: string, handler: string}|null
+     */
+    public function getPhpInfo(string $domain): ?array
+    {
+        try {
+            $stdout = $this->getDomainInfoStdout($domain);
+            if ($stdout === null) {
+                return null;
+            }
+
+            $version = $this->parseStdoutField($stdout, ['PHP version', 'PHP']);
+            $handler = $this->parseStdoutField($stdout, ['PHP handler', 'PHP handler type']);
+
+            if ($version === null && $handler === null) {
+                return null;
+            }
+
+            if ($version !== null && preg_match('/(\d+\.\d+(?:\.\d+)?)/', $version, $m)) {
+                $version = $m[1];
+            }
+
+            return [
+                'version' => $version ?? 'unknown',
+                'handler' => $handler !== null ? strtolower($handler) : 'unknown',
+            ];
         } catch (PleskApiException) {
             return null;
         } catch (\Throwable) {
@@ -52,45 +148,40 @@ final class Inspector
     /**
      * Get Git repository information for the domain.
      *
-     * Returns an array with keys:
-     *   repo_name, webhook_url, active_branch, deploy_path
-     * Or null if no Git repository exists or the extension is unavailable.
-     *
      * @return array{repo_name: string, webhook_url: ?string, active_branch: ?string, deploy_path: ?string}|null
      */
     public function getGitInfo(string $domain): ?array
     {
         try {
-            // Step 1: list repos to find the primary repo name
-            $listXml = XmlRpcEncoder::extensionCall('git', ['cmd' => '--list', 'domain' => $domain]);
-            $listData = $this->client->xmlRpcCall($listXml);
-            $stdout = $this->extractExtensionStdout($listData);
-
-            if ($stdout === null || trim($stdout) === '') {
-                return null;
-            }
-
-            $repos = array_filter(array_map('trim', explode("\n", $stdout)));
-            if (empty($repos)) {
-                return null;
-            }
-
-            $repoName = (string) reset($repos);
-
-            // Step 2: get detailed info for the first repo
-            $infoXml = XmlRpcEncoder::extensionCall('git', [
-                'cmd' => '--info',
-                'domain' => $domain,
-                'name' => $repoName,
+            $listResult = $this->client->cliCall('extension', [
+                '--call', 'git',
+                '--list',
+                '-domain', $domain,
             ]);
-            $infoData = $this->client->xmlRpcCall($infoXml);
-            $infoStdout = $this->extractExtensionStdout($infoData) ?? '';
+
+            if (!$listResult->isSuccess()) {
+                return null;
+            }
+
+            $repoName = $this->parseFirstRepoName($listResult->stdout);
+            if ($repoName === null) {
+                return null;
+            }
+
+            $infoResult = $this->client->cliCall('extension', [
+                '--call', 'git',
+                '--info',
+                '-domain', $domain,
+                '-repo', $repoName,
+            ]);
+
+            $infoStdout = $infoResult->isSuccess() ? $infoResult->stdout : '';
 
             return [
                 'repo_name' => $repoName,
-                'webhook_url' => $this->parseGitInfoField($infoStdout, 'Webhook URL'),
-                'active_branch' => $this->parseGitInfoField($infoStdout, 'Active branch'),
-                'deploy_path' => $this->parseGitInfoField($infoStdout, 'Deploy path'),
+                'webhook_url' => $this->parseStdoutField($infoStdout, ['Webhook URL', 'Webhook']),
+                'active_branch' => $this->parseStdoutField($infoStdout, ['Active branch', 'Branch']),
+                'deploy_path' => $this->parseStdoutField($infoStdout, ['Deploy path', 'Deployment path']),
             ];
         } catch (PleskApiException) {
             return null;
@@ -100,56 +191,117 @@ final class Inspector
     }
 
     /**
-     * Get the document root path for a domain.
+     * Get the Plesk-generated SSH deploy public key for a domain.
      *
-     * Falls back to '/httpdocs' if the information cannot be retrieved.
+     * Plesk generates a per-domain RSA keypair the first time `--get-public-key` is called
+     * for that domain (or when a pull repo with remote SSH URL is created). The returned
+     * value is the public key in OpenSSH format, ready to be uploaded as a deploy key to
+     * GitHub/GitLab/Bitbucket. The corresponding private key never leaves the server.
+     *
+     * Stdout shape:
+     *   The domain "xyz.rkn.mx" public key is: ssh-rsa AAAAB3NzaC1y...
      */
-    public function getDocumentRoot(string $domain): string
+    public function getGitDeployPublicKey(string $domain): ?string
     {
         try {
-            $xml = XmlRpcEncoder::domainGet($domain);
-            $data = $this->client->xmlRpcCall($xml);
-            $root = $this->extractDomainProperty($data, 'www_root');
+            $result = $this->client->cliCall('extension', [
+                '--call', 'git',
+                '--get-public-key',
+                '-domain', $domain,
+            ]);
 
-            return $root !== null && $root !== '' ? $root : '/httpdocs';
+            if (!$result->isSuccess()) {
+                return null;
+            }
+
+            // Capture algorithm + base64 blob + optional comment
+            if (preg_match('/(ssh-(?:rsa|ed25519|dss|ecdsa)\s+\S+(?:\s+\S+)?)/i', $result->stdout, $m)) {
+                return trim($m[1]);
+            }
+
+            return null;
         } catch (PleskApiException) {
-            return '/httpdocs';
+            return null;
         } catch (\Throwable) {
-            return '/httpdocs';
+            return null;
         }
     }
 
     /**
-     * Get PHP configuration for the domain.
+     * Get detailed configuration for a specific repository.
      *
-     * Returns an array with keys:
-     *   version (e.g. "8.2"), handler (e.g. "fpm")
-     * Or null if the information is unavailable.
+     * Differs from getGitInfo() in two ways:
+     *   - Takes an explicit repo name (no auto-discovery of the first repo)
+     *   - Returns a typed GitRepoInfo DTO with all fields including remote URL,
+     *     repository type (push/pull), and post-deploy action flags — needed for
+     *     the GitHub-pull pipeline.
      *
-     * @return array{version: string, handler: string}|null
+     * Uses the `-name` flag (the modern Plesk Git extension flag; `-repo` was
+     * the legacy name and is no longer accepted on 18.0.78+).
      */
-    public function getPhpInfo(string $domain): ?array
+    public function getGitRepoInfo(string $domain, string $repoName): ?GitRepoInfo
     {
         try {
-            $xml = XmlRpcEncoder::domainGet($domain);
-            $data = $this->client->xmlRpcCall($xml);
-            $handlerId = $this->extractDomainProperty($data, 'php_handler_id');
+            $result = $this->client->cliCall('extension', [
+                '--call', 'git',
+                '--info',
+                '-domain', $domain,
+                '-name', $repoName,
+            ]);
 
-            if ($handlerId === null || $handlerId === '') {
+            if (!$result->isSuccess()) {
                 return null;
             }
 
-            // Handler IDs follow the pattern "plesk-phpXY-handler"
-            // e.g. "plesk-php82-fpm" → version="8.2", handler="fpm"
-            //      "plesk-php74-fpm" → version="7.4", handler="fpm"
-            if (preg_match('/plesk-php(\d)(\d+)-(\w+)/', $handlerId, $m)) {
-                return [
-                    'version' => "{$m[1]}.{$m[2]}",
-                    'handler' => $m[3],
-                ];
+            $stdout = $result->stdout;
+
+            return new GitRepoInfo(
+                domain: $this->parseStdoutField($stdout, ['Domain name']) ?? $domain,
+                repoName: $this->parseStdoutField($stdout, ['Repository name']) ?? $repoName,
+                deploymentPath: $this->parseStdoutField($stdout, ['Deployment path', 'Deploy path']),
+                deploymentMode: $this->parseStdoutField($stdout, ['Deployment mode']),
+                activeBranch: $this->parseStdoutField($stdout, ['Active branch', 'Branch']),
+                repositoryType: strtolower($this->parseStdoutField($stdout, ['Repository type']) ?? 'push'),
+                remoteUrl: $this->parseStdoutField($stdout, ['Remote URL']),
+                webhookUrl: $this->parseStdoutField($stdout, ['Webhook URL']),
+                skipSslVerification: $this->parseFlagEnabled($stdout, ['Skip SSL verification']),
+                runPostDeployActions: $this->parseFlagEnabled($stdout, ['Run Post-Deploy Actions']),
+            );
+        } catch (PleskApiException) {
+            return null;
+        } catch (\Throwable) {
+            return null;
+        }
+    }
+
+    /**
+     * Read the last commit SHA Plesk has pulled into the deployment path for a repo.
+     *
+     * Used to poll Plesk after triggering a GitHub-pull deploy: when the returned SHA
+     * matches the SHA the developer just pushed to GitHub, the new release is live.
+     *
+     * Stdout shape on success (Plesk 18):
+     *   The last commit ID is: <40-char-sha>
+     */
+    public function getGitLastCommit(string $domain, string $repoName): ?string
+    {
+        try {
+            $result = $this->client->cliCall('extension', [
+                '--call', 'git',
+                '--get-last-commit',
+                '-domain', $domain,
+                '-name', $repoName,
+            ]);
+
+            if (!$result->isSuccess()) {
+                return null;
             }
 
-            return ['version' => $handlerId, 'handler' => 'unknown'];
+            if (preg_match('/\b([0-9a-f]{7,40})\b/i', $result->stdout, $m)) {
+                return strtolower($m[1]);
+            }
+
+            return null;
         } catch (PleskApiException) {
             return null;
         } catch (\Throwable) {
@@ -160,8 +312,8 @@ final class Inspector
     /**
      * Run full discovery for a domain.
      *
-     * Calls all four discovery methods independently. A failure in one
-     * does NOT abort the rest — the result is degraded but structured.
+     * Calls all four discovery methods independently with 500ms spacing between calls
+     * to avoid tripping Plesk's bruteforce rate-limit on rapid-fire requests.
      *
      * @return array{
      *   domain: string,
@@ -174,27 +326,30 @@ final class Inspector
      */
     public function discover(string $domain): array
     {
+        $docRoot = '/httpdocs';
+        try {
+            $docRoot = $this->getDocumentRoot($domain);
+        } catch (\Throwable) {
+        }
+        usleep(500_000);
+
         $hasShell = null;
         try {
             $hasShell = $this->hasShellAccess($domain);
         } catch (\Throwable) {
         }
-
-        $git = null;
-        try {
-            $git = $this->getGitInfo($domain);
-        } catch (\Throwable) {
-        }
+        usleep(500_000);
 
         $phpInfo = null;
         try {
             $phpInfo = $this->getPhpInfo($domain);
         } catch (\Throwable) {
         }
+        usleep(500_000);
 
-        $docRoot = '/httpdocs';
+        $git = null;
         try {
-            $docRoot = $this->getDocumentRoot($domain);
+            $git = $this->getGitInfo($domain);
         } catch (\Throwable) {
         }
 
@@ -209,76 +364,167 @@ final class Inspector
     }
 
     // -------------------------------------------------------------------------
-    // Private XML extraction helpers
+    // Internal helpers (REST + CLI)
     // -------------------------------------------------------------------------
 
     /**
-     * Extract a hosting vrt_hst property value from a subscription/get response.
-     *
-     * @param array<mixed> $data
+     * Resolve the Plesk numeric domain id from its name. Cached per Inspector instance.
      */
-    private function extractSubscriptionProperty(array $data, string $propertyName): ?string
+    public function findDomainId(string $domain): ?int
     {
-        // Path: subscription.get.result.data.hosting.vrt_hst.property[]
-        $result = $data['subscription']['get']['result'] ?? null;
-        if (!is_array($result)) {
-            return null;
+        if (array_key_exists($domain, $this->domainIdCache)) {
+            return $this->domainIdCache[$domain];
         }
 
-        // Handle multiple results (array of results)
-        $resultItem = isset($result[0]) ? $result[0] : $result;
-        $properties = $resultItem['data']['hosting']['vrt_hst']['property'] ?? null;
-
-        return $this->findPropertyValue($properties, $propertyName);
-    }
-
-    /**
-     * Extract a hosting vrt_hst property value from a domain/get response.
-     *
-     * @param array<mixed> $data
-     */
-    private function extractDomainProperty(array $data, string $propertyName): ?string
-    {
-        $result = $data['domain']['get']['result'] ?? null;
-        if (!is_array($result)) {
-            return null;
+        $list = $this->fetchDomainList();
+        if ($list === null) {
+            return $this->domainIdCache[$domain] = null;
         }
 
-        $resultItem = isset($result[0]) ? $result[0] : $result;
-        $properties = $resultItem['data']['hosting']['vrt_hst']['property'] ?? null;
-
-        return $this->findPropertyValue($properties, $propertyName);
-    }
-
-    /**
-     * Find a value in a Plesk property list.
-     * Handles both single-property (associative) and multi-property (indexed) formats.
-     *
-     * @param mixed $properties
-     */
-    private function findPropertyValue(mixed $properties, string $propertyName): ?string
-    {
-        if (!is_array($properties)) {
-            return null;
-        }
-
-        // Single property (not wrapped in numeric index)
-        if (isset($properties['name'])) {
-            $name = XmlRpcDecoder::extractText($properties, 'name');
-            if ($name === $propertyName) {
-                return XmlRpcDecoder::extractText($properties, 'value');
-            }
-            return null;
-        }
-
-        // Multiple properties (numerically indexed)
-        foreach ($properties as $prop) {
-            if (!is_array($prop)) {
+        $needle = strtolower($domain);
+        foreach ($list as $item) {
+            if (!is_array($item)) {
                 continue;
             }
-            $name = XmlRpcDecoder::extractText($prop, 'name');
-            if ($name === $propertyName) {
-                return XmlRpcDecoder::extractText($prop, 'value');
+
+            $name = $item['name'] ?? null;
+            if (!is_string($name)) {
+                continue;
+            }
+
+            if (strtolower($name) !== $needle) {
+                continue;
+            }
+
+            $id = $item['id'] ?? null;
+            if (is_int($id)) {
+                return $this->domainIdCache[$domain] = $id;
+            }
+            if (is_string($id) && ctype_digit($id)) {
+                return $this->domainIdCache[$domain] = (int) $id;
+            }
+        }
+
+        return $this->domainIdCache[$domain] = null;
+    }
+
+    /**
+     * @return array<int, array<string, mixed>>|null
+     */
+    private function fetchDomainList(): ?array
+    {
+        if (array_key_exists('all', $this->domainListCache)) {
+            $cached = $this->domainListCache['all'];
+            return $cached === null ? null : $this->castDomainList($cached);
+        }
+
+        try {
+            $body = $this->client->restGet('domains');
+        } catch (PleskApiException) {
+            return ($this->domainListCache['all'] = null);
+        }
+
+        $this->domainListCache['all'] = $body;
+        return $this->castDomainList($body);
+    }
+
+    /**
+     * Plesk returns the domains either as a flat array or wrapped in {data: [...]}.
+     *
+     * @param array<mixed> $body
+     * @return array<int, array<string, mixed>>
+     */
+    private function castDomainList(array $body): array
+    {
+        if (isset($body['data']) && is_array($body['data'])) {
+            $body = $body['data'];
+        }
+
+        $result = [];
+        foreach ($body as $item) {
+            if (is_array($item)) {
+                /** @var array<string, mixed> $item */
+                $result[] = $item;
+            }
+        }
+
+        return $result;
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    private function fetchDomainDetail(string $domain): ?array
+    {
+        $id = $this->findDomainId($domain);
+        if ($id === null) {
+            return null;
+        }
+
+        if (isset($this->domainDetailCache[$id])) {
+            return $this->domainDetailCache[$id];
+        }
+
+        try {
+            $body = $this->client->restGet("domains/{$id}");
+        } catch (PleskApiException) {
+            return null;
+        }
+
+        if (isset($body['data']) && is_array($body['data'])) {
+            $body = $body['data'];
+        }
+
+        /** @var array<string, mixed> $body */
+        return $this->domainDetailCache[$id] = $body;
+    }
+
+    /**
+     * Fetch and cache the stdout from `plesk bin domain --info <name>` via CLI gateway.
+     */
+    private function getDomainInfoStdout(string $domain): ?string
+    {
+        if (array_key_exists($domain, $this->domainInfoStdoutCache)) {
+            return $this->domainInfoStdoutCache[$domain];
+        }
+
+        try {
+            $result = $this->client->cliCall('domain', ['--info', $domain]);
+        } catch (PleskApiException) {
+            return null;
+        }
+
+        if (!$result->isSuccess()) {
+            return null;
+        }
+
+        return $this->domainInfoStdoutCache[$domain] = $result->stdout;
+    }
+
+    private function parseDocRootFromInfoStdout(string $domain): ?string
+    {
+        $stdout = $this->getDomainInfoStdout($domain);
+        if ($stdout === null) {
+            return null;
+        }
+
+        return $this->parseStdoutField($stdout, ['--WWW-Root--', 'Document root', 'Doc root', 'Hosting root', 'WWW root']);
+    }
+
+    /**
+     * Parse a "Field name: value" line from CLI stdout.
+     *
+     * @param array<int, string> $fieldAliases  Names to try in order; first match wins.
+     */
+    private function parseStdoutField(string $stdout, array $fieldAliases): ?string
+    {
+        foreach ($fieldAliases as $field) {
+            $pattern = '/^[ \t]*' . preg_quote($field, '/') . '[ \t]*:[ \t]*(.+?)[ \t]*$/mi';
+            if (preg_match($pattern, $stdout, $m)) {
+                $value = trim($m[1]);
+                if ($value !== '') {
+                    return $value;
+                }
             }
         }
 
@@ -286,29 +532,50 @@ final class Inspector
     }
 
     /**
-     * Extract stdout from an extension/call result.
+     * Parse a Plesk-style "enabled"/"disabled" flag from CLI stdout.
      *
-     * @param array<mixed> $data
+     * @param array<int, string> $fieldAliases
      */
-    private function extractExtensionStdout(array $data): ?string
+    private function parseFlagEnabled(string $stdout, array $fieldAliases): bool
     {
-        $result = $data['extension']['call']['result'] ?? null;
-        if (!is_array($result)) {
+        $value = $this->parseStdoutField($stdout, $fieldAliases);
+        if ($value === null) {
+            return false;
+        }
+
+        return in_array(strtolower(trim($value)), ['enabled', 'true', 'yes', 'on', '1'], true);
+    }
+
+    private function parseFirstRepoName(string $stdout): ?string
+    {
+        $stdoutLower = strtolower($stdout);
+        if (
+            str_contains($stdoutLower, 'no repositories')
+            || str_contains($stdoutLower, 'no git repositories')
+            || trim($stdout) === ''
+        ) {
             return null;
         }
 
-        return XmlRpcDecoder::extractText($result, 'stdout');
-    }
+        foreach (explode("\n", $stdout) as $line) {
+            $line = trim($line);
+            if ($line === '' || str_starts_with($line, '#')) {
+                continue;
+            }
 
-    /**
-     * Parse a key-value field from Git info stdout output.
-     * Format: "Field Name: value"
-     */
-    private function parseGitInfoField(string $stdout, string $fieldName): ?string
-    {
-        if (preg_match('/^' . preg_quote($fieldName, '/') . ':\s+(.+)$/m', $stdout, $matches)) {
-            return trim($matches[1]);
+            if (preg_match('/^([A-Za-z0-9._\/-]+\.git)\b/', $line, $m)) {
+                return $m[1];
+            }
+
+            if (preg_match('/^Repository\s*name\s*:\s*(.+)$/i', $line, $m)) {
+                return trim($m[1]);
+            }
+
+            if (preg_match('/^[A-Za-z0-9._\/-]+$/', $line)) {
+                return $line;
+            }
         }
+
         return null;
     }
 }

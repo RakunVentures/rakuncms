@@ -1,0 +1,9 @@
+Domain name:        noshell.example.com
+Domain ID:          42
+Status:             enabled
+Hosting type:       virtual
+SSH access:         /sbin/nologin
+FTP login:          noshell
+Document root:      /var/www/vhosts/noshell.example.com/httpdocs
+PHP version:        7.4.33
+PHP handler:        FastCGI

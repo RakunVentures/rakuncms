@@ -7,9 +7,8 @@ namespace Rkn\Cms\Deploy;
 /**
  * Thrown when a REST v2 endpoint returns 404.
  *
- * This typically signals that the feature is not available via REST v2
- * and the consumer should use XML-RPC instead. Consumers are responsible
- * for catching this and routing to the appropriate protocol — the Client
- * does NOT auto-fallback (by design, per D1 in deploy-plesk-api.md).
+ * The endpoint is not exposed by this Plesk installation/version. Consumers
+ * should either pick a different REST endpoint, fall back to the CLI gateway
+ * (POST /api/v2/cli/{id}/call), or report a clear "feature not available" error.
  */
 final class PleskEndpointNotFoundException extends PleskApiException {}

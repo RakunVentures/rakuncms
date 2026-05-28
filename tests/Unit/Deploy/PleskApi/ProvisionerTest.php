@@ -6,204 +6,160 @@ use Rkn\Cms\Deploy\PleskApi\Client;
 use Rkn\Cms\Deploy\PleskApi\FakeTransport;
 use Rkn\Cms\Deploy\PleskApi\Inspector;
 use Rkn\Cms\Deploy\PleskApi\Provisioner;
+use Rkn\Cms\Deploy\PleskApiException;
 
-$fixturesDir = __DIR__ . '/../../../Fixtures/plesk-xmlrpc';
+$fixturesDir = __DIR__ . '/../../../Fixtures/plesk-rest';
 
-/**
- * Build a Provisioner with a FakeTransport.
- * xmlResponses are queued in order.
- */
-function makeProvisioner(array $xmlFiles): array
+if (!function_exists('cliBody')) {
+    function cliBody(string $stdout, int $code = 0, string $stderr = ''): string
+    {
+        return (string) json_encode([
+            'code' => $code,
+            'stdout' => $stdout,
+            'stderr' => $stderr,
+        ]);
+    }
+}
+
+function makeProvisioner(): array
 {
     $transport = new FakeTransport();
-    foreach ($xmlFiles as $xmlFile) {
-        $content = is_string($xmlFile) ? file_get_contents($xmlFile) : false;
-        $transport->queueResponse(200, $content ?: '');
-    }
-    $client = new Client('https://plesk.test:8443', 'key', transport: $transport);
+    $client = new Client(
+        'https://plesk.test:8443',
+        'key',
+        transport: $transport,
+        sleeper: static fn (int $s) => null,
+    );
     $inspector = new Inspector($client);
-    $provisioner = new Provisioner($client, $inspector);
-    return [$provisioner, $transport];
+    return [new Provisioner($client, $inspector), $transport];
 }
 
-/**
- * Build a simple OK XML-RPC response for mutation calls (enableShell, createGitRepo, etc.).
- */
-function okExtensionXml(): string
-{
-    return <<<XML
-        <?xml version="1.0" encoding="UTF-8"?>
-        <packet version="1.6.9.0">
-          <extension>
-            <call>
-              <result>
-                <status>ok</status>
-                <stdout></stdout>
-                <stderr></stderr>
-                <exitcode>0</exitcode>
-              </result>
-            </call>
-          </extension>
-        </packet>
-        XML;
-}
+describe('Provisioner::enableShellAccess()', function () use ($fixturesDir): void {
+    it('is a no-op when shell is already /bin/bash', function () use ($fixturesDir): void {
+        [$provisioner, $transport] = makeProvisioner();
+        $stdout = (string) file_get_contents("{$fixturesDir}/cli-domain-info-bash.txt");
 
-function okDomainSetXml(): string
-{
-    return <<<XML
-        <?xml version="1.0" encoding="UTF-8"?>
-        <packet version="1.6.9.0">
-          <domain>
-            <set>
-              <result>
-                <status>ok</status>
-              </result>
-            </set>
-          </domain>
-        </packet>
-        XML;
-}
+        $transport->queueResponse(200, cliBody($stdout));
 
-describe('Provisioner::enableShell()', function () use ($fixturesDir): void {
-    it('returns true immediately when shell is already enabled (idempotent)', function () use ($fixturesDir): void {
-        $transport = new FakeTransport();
-        // hasShellAccess → subscription-info-success.xml (shell = /bin/bash → true)
-        $transport->queueResponse(200, file_get_contents("{$fixturesDir}/subscription-info-success.xml") ?: '');
-        // No further calls should be made
-        $client = new Client('https://plesk.test:8443', 'key', transport: $transport);
-        $inspector = new Inspector($client);
-        $provisioner = new Provisioner($client, $inspector);
-
-        $result = $provisioner->enableShell('example.com');
-
-        expect($result)->toBeTrue();
-        // Only 1 call was made (the inspection), no mutation
+        expect($provisioner->enableShellAccess('xyz.rkn.mx'))->toBeTrue();
         expect($transport->requestCount())->toBe(1);
     });
 
-    it('makes mutation call when shell is disabled', function () use ($fixturesDir): void {
-        $transport = new FakeTransport();
-        // hasShellAccess → no-shell (returns false)
-        $transport->queueResponse(200, file_get_contents("{$fixturesDir}/subscription-info-no-shell.xml") ?: '');
-        // domain/set call for enabling shell
-        $transport->queueResponse(200, okDomainSetXml());
-        $client = new Client('https://plesk.test:8443', 'key', transport: $transport);
-        $inspector = new Inspector($client);
-        $provisioner = new Provisioner($client, $inspector);
+    it('invokes subscription --update-php when shell is disabled', function () use ($fixturesDir): void {
+        [$provisioner, $transport] = makeProvisioner();
+        $stdoutDisabled = (string) file_get_contents("{$fixturesDir}/cli-domain-info-noshell.txt");
 
-        $result = $provisioner->enableShell('noshell.com');
+        $transport->queueResponse(200, cliBody($stdoutDisabled));
+        $transport->queueResponse(200, cliBody(''));
 
-        expect($result)->toBeTrue();
+        expect($provisioner->enableShellAccess('noshell.example.com'))->toBeTrue();
         expect($transport->requestCount())->toBe(2);
+
+        $mutating = $transport->recorded()[1];
+        expect($mutating['url'])->toContain('/api/v2/cli/subscription/call');
+        $body = json_decode($mutating['body'], true);
+        expect($body['params'])->toBe(['--update-php', 'noshell.example.com', '-shell', '/bin/bash']);
     });
 
-    it('attempts mutation when shell state is unknown (null)', function () use ($fixturesDir): void {
-        $transport = new FakeTransport();
-        // hasShellAccess → domain/set response returned to subscription/get → can't find shell → returns null
-        // then the mutation call → also gets a domain/set response
-        $transport->queueResponse(200, okDomainSetXml());  // consumed by hasShellAccess (returns null)
-        $transport->queueResponse(200, okDomainSetXml());  // consumed by enableShell mutation
-        $client = new Client('https://plesk.test:8443', 'key', transport: $transport);
-        $inspector = new Inspector($client);
-        $provisioner = new Provisioner($client, $inspector);
+    it('throws PleskApiException when CLI exits non-zero', function () use ($fixturesDir): void {
+        [$provisioner, $transport] = makeProvisioner();
+        $stdoutDisabled = (string) file_get_contents("{$fixturesDir}/cli-domain-info-noshell.txt");
 
-        $result = $provisioner->enableShell('unknown.com');
+        $transport->queueResponse(200, cliBody($stdoutDisabled));
+        $transport->queueResponse(200, cliBody('', 2, 'subscription not found'));
 
-        expect($result)->toBeTrue();
-        expect($transport->requestCount())->toBe(2);
-    });
-
-    it('is idempotent: calling twice when shell is already enabled makes only 1 API call each time', function () use ($fixturesDir): void {
-        $transport = new FakeTransport();
-        // Two inspection calls, each returning shell=enabled
-        $transport->queueResponse(200, file_get_contents("{$fixturesDir}/subscription-info-success.xml") ?: '');
-        $transport->queueResponse(200, file_get_contents("{$fixturesDir}/subscription-info-success.xml") ?: '');
-        $client = new Client('https://plesk.test:8443', 'key', transport: $transport);
-        $inspector = new Inspector($client);
-        $provisioner = new Provisioner($client, $inspector);
-
-        $provisioner->enableShell('example.com');
-        $provisioner->enableShell('example.com');
-
-        // 2 calls total (1 inspection each), 0 mutations
-        expect($transport->requestCount())->toBe(2);
+        expect(fn () => $provisioner->enableShellAccess('noshell.example.com'))
+            ->toThrow(PleskApiException::class);
     });
 });
 
 describe('Provisioner::createGitRepo()', function () use ($fixturesDir): void {
-    it('returns existing repo info when repo already exists (idempotent)', function () use ($fixturesDir): void {
-        $transport = new FakeTransport();
-        // getGitInfo: list → repo found, info → full info
-        $transport->queueResponse(200, file_get_contents("{$fixturesDir}/git-list-with-repo.xml") ?: '');
-        $transport->queueResponse(200, file_get_contents("{$fixturesDir}/git-info-with-webhook.xml") ?: '');
-        $client = new Client('https://plesk.test:8443', 'key', transport: $transport);
-        $inspector = new Inspector($client);
-        $provisioner = new Provisioner($client, $inspector);
+    it('returns existing repo info when name matches', function () use ($fixturesDir): void {
+        [$provisioner, $transport] = makeProvisioner();
+        $listStdout = (string) file_get_contents("{$fixturesDir}/cli-git-list-one.txt");
+        $infoStdout = (string) file_get_contents("{$fixturesDir}/cli-git-info.txt");
 
-        $info = $provisioner->createGitRepo('example.com', 'website');
+        $transport->queueResponse(200, cliBody($listStdout));
+        $transport->queueResponse(200, cliBody($infoStdout));
 
-        expect($info['repo_name'])->toBe('website');
-        // No create call was made
+        $info = $provisioner->createGitRepo('xyz.rkn.mx', 'rakuncms.git');
+
+        expect($info['repo_name'])->toBe('rakuncms.git');
+        expect($info['active_branch'])->toBe('main');
         expect($transport->requestCount())->toBe(2);
     });
 
-    it('creates repo when none exists', function () use ($fixturesDir): void {
-        $transport = new FakeTransport();
-        // getGitInfo (list) → empty → null
-        $transport->queueResponse(200, file_get_contents("{$fixturesDir}/git-list-empty.xml") ?: '');
-        // create call
-        $transport->queueResponse(200, okExtensionXml());
-        // update deploy-mode call
-        $transport->queueResponse(200, okExtensionXml());
-        // getGitInfo after creation (list) → now has repo
-        $transport->queueResponse(200, file_get_contents("{$fixturesDir}/git-list-with-repo.xml") ?: '');
-        // getGitInfo after creation (info)
-        $transport->queueResponse(200, file_get_contents("{$fixturesDir}/git-info-with-webhook.xml") ?: '');
-        $client = new Client('https://plesk.test:8443', 'key', transport: $transport);
-        $inspector = new Inspector($client);
-        $provisioner = new Provisioner($client, $inspector);
+    it('creates a new repo when none exists', function () use ($fixturesDir): void {
+        [$provisioner, $transport] = makeProvisioner();
+        $emptyStdout = (string) file_get_contents("{$fixturesDir}/cli-git-list-empty.txt");
+        $listStdout = (string) file_get_contents("{$fixturesDir}/cli-git-list-one.txt");
+        $infoStdout = (string) file_get_contents("{$fixturesDir}/cli-git-info.txt");
 
-        $info = $provisioner->createGitRepo('example.com', 'website');
+        $transport->queueResponse(200, cliBody($emptyStdout));   // Inspector::getGitInfo list (empty)
+        $transport->queueResponse(200, cliBody(''));              // create-repo CLI call
+        $transport->queueResponse(200, cliBody($listStdout));    // Inspector::getGitInfo list (after create)
+        $transport->queueResponse(200, cliBody($infoStdout));    // Inspector::getGitInfo info
 
-        expect($info['repo_name'])->toBe('website');
-        // 5 calls: check + create + update-mode + re-check list + re-check info
-        expect($transport->requestCount())->toBe(5);
-    });
+        $info = $provisioner->createGitRepo(
+            'xyz.rkn.mx',
+            'rakuncms.git',
+            '/var/www/vhosts/xyz.rkn.mx/httpdocs',
+        );
 
-    it('returns minimal info when post-creation getGitInfo returns null', function () use ($fixturesDir): void {
-        $transport = new FakeTransport();
-        // getGitInfo (initial check) → empty
-        $transport->queueResponse(200, file_get_contents("{$fixturesDir}/git-list-empty.xml") ?: '');
-        // create
-        $transport->queueResponse(200, okExtensionXml());
-        // deploy-mode update
-        $transport->queueResponse(200, okExtensionXml());
-        // getGitInfo after (empty again — simulates discovery not yet available)
-        $transport->queueResponse(200, file_get_contents("{$fixturesDir}/git-list-empty.xml") ?: '');
-        $client = new Client('https://plesk.test:8443', 'key', transport: $transport);
-        $inspector = new Inspector($client);
-        $provisioner = new Provisioner($client, $inspector);
+        expect($info['repo_name'])->toBe('rakuncms.git');
 
-        $info = $provisioner->createGitRepo('example.com', 'website', '/httpdocs');
-
-        // Fallback minimal info is returned
-        expect($info['repo_name'])->toBe('website');
-        expect($info['deploy_path'])->toBe('/httpdocs');
+        $create = $transport->recorded()[1];
+        expect($create['url'])->toContain('/api/v2/cli/extension/call');
+        $createBody = json_decode($create['body'], true);
+        expect($createBody['params'])->toBe([
+            '--call', 'git',
+            '--create-repo',
+            '-domain', 'xyz.rkn.mx',
+            '-repo', 'rakuncms.git',
+            '-deploy-mode', 'automatic',
+            '-deploy-path', '/var/www/vhosts/xyz.rkn.mx/httpdocs',
+        ]);
     });
 });
 
-describe('Provisioner::setDeployActions()', function () use ($fixturesDir): void {
-    it('returns true on successful set', function () use ($fixturesDir): void {
-        $transport = new FakeTransport();
-        // setDeployActions only makes one call (the update)
-        $transport->queueResponse(200, okExtensionXml());
-        $client = new Client('https://plesk.test:8443', 'key', transport: $transport);
-        $inspector = new Inspector($client);
-        $provisioner = new Provisioner($client, $inspector);
+describe('Provisioner::createFtpSubaccount()', function (): void {
+    it('returns existing user when login already exists for the domain', function (): void {
+        [$provisioner, $transport] = makeProvisioner();
+        $transport->queueResponse(200, (string) json_encode([
+            ['login' => 'deploy', 'domain_id' => 13, 'home' => '/httpdocs'],
+        ]));
 
-        $result = $provisioner->setDeployActions('example.com', 'website', 'composer install');
+        $user = $provisioner->createFtpSubaccount(13, 'deploy', 'irrelevant', '/httpdocs');
 
-        expect($result)->toBeTrue();
+        expect($user['created'])->toBeFalse();
+        expect($user['login'])->toBe('deploy');
         expect($transport->requestCount())->toBe(1);
+    });
+
+    it('creates a new user via POST /ftpusers when login is absent', function (): void {
+        [$provisioner, $transport] = makeProvisioner();
+        $transport->queueResponse(200, '[]');
+        $transport->queueResponse(201, (string) json_encode([
+            'login' => 'deploy',
+            'home' => '/httpdocs',
+            'id' => 99,
+        ]));
+
+        $user = $provisioner->createFtpSubaccount(13, 'deploy', 's3cret!', '/httpdocs');
+
+        expect($user['created'])->toBeTrue();
+        expect($user['login'])->toBe('deploy');
+
+        $create = $transport->recorded()[1];
+        expect($create['method'])->toBe('POST');
+        expect($create['url'])->toContain('/api/v2/ftpusers');
+        $body = json_decode($create['body'], true);
+        expect($body)->toBe([
+            'name' => 'deploy',
+            'password' => 's3cret!',
+            'home' => '/httpdocs',
+            'parent_domain' => ['id' => 13],
+            'permissions' => ['read' => true, 'write' => true],
+        ]);
     });
 });

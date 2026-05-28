@@ -78,7 +78,8 @@ final class DeployCheckCommand extends Command
 
         // ---- Connect ----
 
-        $io->writeln("Connecting to {$config->host} for domain {$config->domain}…");
+        $pleskHost = $config->pleskHost ?? $config->host;
+        $io->writeln("Connecting to {$pleskHost} for domain {$config->domain}…");
 
         if ($this->injectedInspector !== null) {
             // Pre-wired inspector (e.g. from tests with FakeTransport) — skip credential check
@@ -97,7 +98,7 @@ final class DeployCheckCommand extends Command
                 return Command::FAILURE;
             }
 
-            $client = new Client($config->host, $apiKey, $config->pleskVerifySsl);
+            $client = new Client($pleskHost, $apiKey, $config->pleskVerifySsl);
             $inspector = new Inspector($client);
         }
 

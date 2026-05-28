@@ -24,6 +24,13 @@ if (!$autoloaded) {
     exit(1);
 }
 
+if (class_exists(\Dotenv\Dotenv::class)) {
+    $cwd = getcwd();
+    if (is_string($cwd) && file_exists("{$cwd}/.env")) {
+        \Dotenv\Dotenv::createImmutable($cwd)->safeLoad();
+    }
+}
+
 use Symfony\Component\Console\Application;
 
 $application = new Application('RakunCMS', '0.1.0');
@@ -47,6 +54,7 @@ $application->addCommand(new \Rkn\Cms\Cli\DeployCheckCommand());
 $application->addCommand(new \Rkn\Cms\Cli\DeployInstallCommand());
 $application->addCommand(new \Rkn\Cms\Cli\DeployCommand());
 $application->addCommand(new \Rkn\Cms\Cli\DeploySetupGitCommand());
+$application->addCommand(new \Rkn\Cms\Cli\DeploySetupGithubCommand());
 $application->addCommand(new \Rkn\Cms\Cli\DeployRollbackCommand());
 $application->addCommand(new \Rkn\Cms\Cli\DeployStatusCommand());
 $application->addCommand(new \Rkn\Cms\Cli\DeployDiffCommand());

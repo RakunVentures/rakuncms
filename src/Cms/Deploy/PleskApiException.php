@@ -11,10 +11,10 @@ use RuntimeException;
  *
  * Hierarchy:
  *   PleskApiException
- *   ├── PleskAuthException          (401/403 responses)
- *   ├── PleskEndpointNotFoundException  (404 — consumer should try XML-RPC instead)
- *   ├── PleskTransportException     (timeouts, DNS failures, SSL errors)
- *   └── PleskResponseException      (5xx, malformed JSON/XML)
+ *   ├── PleskAuthException              (401/403 responses)
+ *   ├── PleskEndpointNotFoundException  (404 — endpoint absent in this Plesk version)
+ *   ├── PleskTransportException         (timeouts, DNS failures, SSL errors)
+ *   └── PleskResponseException          (5xx, malformed JSON, body decode error)
  */
 class PleskApiException extends RuntimeException
 {

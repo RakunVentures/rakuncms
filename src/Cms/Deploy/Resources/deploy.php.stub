@@ -149,6 +149,9 @@ function handleActivate(array $payload, string $basePath, string $secret): void
         respond(423, ['error' => 'another deploy is in progress', 'lock' => readLock($lockFile)]);
     }
 
+    // PHP exit() does NOT execute finally blocks — use shutdown function instead.
+    register_shutdown_function('releaseLock', $lockFile);
+
     try {
         $releasesDir = "{$basePath}/releases";
         $zipFile     = "{$releasesDir}/{$releaseId}.zip";
@@ -163,10 +166,10 @@ function handleActivate(array $payload, string $basePath, string $secret): void
             respond(400, ['error' => "HMAC file not found: releases/{$releaseId}.zip.hmac"]);
         }
 
-        // Verify ZIP HMAC integrity
+        // Verify ZIP HMAC integrity (streamed, never loads full file in memory)
         $expectedHmac = trim((string) file_get_contents($hmacFile));
-        $actualHmac   = hash_hmac('sha256', (string) file_get_contents($zipFile), $secret);
-        if (!hash_equals($expectedHmac, $actualHmac)) {
+        $actualHmac   = hash_hmac_file('sha256', $zipFile, $secret);
+        if ($actualHmac === false || !hash_equals($expectedHmac, $actualHmac)) {
             respond(400, ['error' => 'ZIP HMAC verification failed — file may be corrupt']);
         }
 

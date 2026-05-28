@@ -1,0 +1,5 @@
+Repository name:   rakuncms.git
+Active branch:     main
+Deploy path:       /var/www/vhosts/xyz.rkn.mx/httpdocs
+Webhook URL:       https://plesk.rakun.mx:8443/modules/git/public/web-hook.php?token=abc123
+Deploy mode:       automatic

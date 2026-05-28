@@ -1,0 +1,13 @@
+Domain name:        xyz.rkn.mx
+Domain ID:          13
+Domain GUID:        7ce8b3a4-2f4c-4d6c-9d2a-90f4b2c5a3d1
+Status:             enabled
+Hosting type:       virtual
+SSH access:         /bin/bash
+FTP login:          rknmx
+Document root:      /var/www/vhosts/xyz.rkn.mx/httpdocs
+Hosting root:       /var/www/vhosts/xyz.rkn.mx
+PHP version:        8.2.15
+PHP handler:        FPM
+Webserver:          nginx
+Cert status:        valid (Let's Encrypt)

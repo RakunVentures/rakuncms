@@ -40,8 +40,18 @@ final class DeployConfig
     public ?string $rollbackTo = null;
 
     /** Plesk-specific config block */
+    public ?string $pleskHost = null;
     public ?string $pleskApiKey = null;
     public bool $pleskVerifySsl = true;
+
+    /** GitHub-pull pipeline fields (method=github-pull) */
+    public ?string $githubOwner = null;
+    public ?string $githubRepo = null;
+    public ?string $githubToken = null;
+    public ?string $pleskRepoName = null;
+    public bool $pleskDeployAsync = false;
+    public int $pleskDeployPollTimeout = 180;
+    public int $pleskDeployPollInterval = 3;
 
     public static function load(string $basePath, string $environment): self
     {
@@ -92,11 +102,35 @@ final class DeployConfig
             $config->verifySsl = (bool) ($data['verify_ssl'] ?? true);
         }
 
-        // Load Plesk block if present
+        if ($config->method === 'github-pull') {
+            $config->remote = $data['remote'] ?? 'origin';
+            $config->sourceBranch = $data['source_branch'] ?? 'main';
+            $config->targetBranch = $data['target_branch'] ?? $config->sourceBranch;
+            $config->healthUrl = $data['health_url'] ?? null;
+            $config->verifySsl = (bool) ($data['verify_ssl'] ?? true);
+
+            $github = is_array($data['github'] ?? null) ? $data['github'] : [];
+            $config->githubOwner = $github['owner'] ?? null;
+            $config->githubRepo = $github['repo'] ?? null;
+            $config->githubToken = $github['token'] ?? null;
+
+            $plesk = is_array($data['plesk'] ?? null) ? $data['plesk'] : [];
+            $config->pleskRepoName = $plesk['repo_name'] ?? null;
+            $config->pleskDeployAsync = (bool) ($plesk['deploy_async'] ?? false);
+            $config->pleskDeployPollTimeout = (int) ($plesk['deploy_poll_timeout'] ?? 180);
+            $config->pleskDeployPollInterval = (int) ($plesk['deploy_poll_interval'] ?? 3);
+        }
+
+        // Load Plesk block if present (panel host, not deploy host)
         if (isset($data['plesk']) && is_array($data['plesk'])) {
-            $config->host = $data['plesk']['host'] ?? $config->host;
+            $config->pleskHost = $data['plesk']['host'] ?? null;
             $config->pleskApiKey = $data['plesk']['api_key'] ?? null;
             $config->pleskVerifySsl = (bool) ($data['plesk']['verify_ssl'] ?? true);
+        }
+
+        // For FTP/SFTP methods, default deploy host to the domain itself if not specified
+        if (in_array($config->method, ['ftp', 'sftp'], true) && $config->host === '') {
+            $config->host = $config->domain;
         }
 
         // Load discovery snapshot if present (used by deploy:check)

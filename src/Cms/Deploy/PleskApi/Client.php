@@ -10,34 +10,84 @@ use Rkn\Cms\Deploy\PleskResponseException;
 use Rkn\Cms\Deploy\PleskTransportException;
 
 /**
- * Dual-protocol Plesk API client: REST v2 + XML-RPC.
+ * REST-only Plesk API client.
  *
- * Design decision (D1 in deploy-plesk-api.md):
- *   There is NO automatic fallback from REST to XML-RPC. Each consumer
- *   (Inspector, Provisioner) explicitly calls the correct method based on
- *   what the Plesk REST v2 specification actually exposes. This avoids
- *   "try REST, catch 404, retry as XML-RPC" ambiguity.
+ * Three public operations:
+ *   - restGet/restPost:  native REST v2 resources (domains, ftpusers, extensions, server, auth/keys)
+ *   - cliCall:           CLI gateway (POST /api/v2/cli/{id}/call) — covers everything REST v2 does not expose natively
  *
- * REST v2 base:   https://{host}:8443/api/v2/
- * XML-RPC base:   https://{host}:8443/enterprise/control/agent.php
- * Auth header:    X-API-Key (both protocols accept the same key)
+ * Authentication:
+ *   - Default: X-API-Key header with the REST API key.
+ *   - Alternative: Basic Auth (admin:password) for the initial key-creation flow only.
+ *     Use {@see Client::withBasicAuth()} to obtain a transient client bound to admin credentials.
+ *
+ * Rate-limit handling (D7):
+ *   Plesk's bruteforce protection silently returns 401 with empty body for ~300s after 5
+ *   failed auth attempts. New API keys also exhibit a ~5-8s propagation delay during which
+ *   they return 401 empty. Both cases are transient. The client retries up to 3 times with
+ *   exponential backoff (2/4/8s) on 401-empty before throwing PleskAuthException.
+ *
+ * Host normalization:
+ *   The {host} parameter may be a bare hostname or a full URL with optional port.
+ *   No port is forced — let the server's reverse proxy decide.
  */
 final class Client
 {
     private readonly HttpTransport $transport;
+    /** @var \Closure(int): void */
+    private readonly \Closure $sleeper;
 
+    /**
+     * @param \Closure(int): void|null $sleeper Custom sleeper for tests; defaults to PHP's sleep().
+     */
     public function __construct(
         private readonly string $host,
         private readonly string $apiKey,
         private readonly bool $verifySsl = true,
         private readonly int $timeout = 30,
         ?HttpTransport $transport = null,
+        ?\Closure $sleeper = null,
+        private readonly ?string $basicAuthHeader = null,
     ) {
         $this->transport = $transport ?? new CurlTransport($this->verifySsl, $this->timeout);
+        $this->sleeper = $sleeper ?? static function (int $seconds): void {
+            if ($seconds > 0) {
+                sleep($seconds);
+            }
+        };
+    }
+
+    /**
+     * Construct a transient client that authenticates with Basic Auth (admin user + password).
+     *
+     * Intended ONLY for the initial flow that calls POST /api/v2/auth/keys to mint a REST
+     * API key. Once the key is obtained, the caller MUST switch back to the X-API-Key-based
+     * client and discard admin credentials.
+     */
+    public static function withBasicAuth(
+        string $host,
+        string $user,
+        string $password,
+        bool $verifySsl = true,
+        int $timeout = 30,
+        ?HttpTransport $transport = null,
+        ?\Closure $sleeper = null,
+    ): self {
+        $header = 'Basic ' . base64_encode("{$user}:{$password}");
+
+        return new self(
+            host: $host,
+            apiKey: '',
+            verifySsl: $verifySsl,
+            timeout: $timeout,
+            transport: $transport,
+            sleeper: $sleeper,
+            basicAuthHeader: $header,
+        );
     }
 
     // -------------------------------------------------------------------------
-    // REST v2
+    // Public operations
     // -------------------------------------------------------------------------
 
     /**
@@ -46,7 +96,7 @@ final class Client
      * @param array<string, string|int> $params Query parameters
      * @return array<mixed>
      *
-     * @throws PleskAuthException            on 401/403
+     * @throws PleskAuthException            on 401/403 (after retry exhaustion)
      * @throws PleskEndpointNotFoundException on 404
      * @throws PleskResponseException        on 5xx or malformed JSON
      * @throws PleskTransportException       on network failure
@@ -54,12 +104,13 @@ final class Client
     public function restGet(string $endpoint, array $params = []): array
     {
         $url = $this->buildRestUrl($endpoint, $params);
-        $response = $this->transport->send('GET', $url, $this->restHeaders());
+        $response = $this->sendWithAuthRetry('GET', $url, $this->jsonHeaders());
+
         return $this->decodeRestResponse($response);
     }
 
     /**
-     * Execute a REST v2 POST request.
+     * Execute a REST v2 POST request with a JSON body.
      *
      * @param array<mixed> $body JSON-serializable payload
      * @return array<mixed>
@@ -73,46 +124,74 @@ final class Client
     {
         $url = $this->buildRestUrl($endpoint);
         $encoded = json_encode($body, JSON_THROW_ON_ERROR);
-        $response = $this->transport->send('POST', $url, $this->restHeaders(), $encoded);
+        $response = $this->sendWithAuthRetry('POST', $url, $this->jsonHeaders(), $encoded);
+
         return $this->decodeRestResponse($response);
     }
 
-    // -------------------------------------------------------------------------
-    // XML-RPC
-    // -------------------------------------------------------------------------
-
     /**
-     * Execute an XML-RPC packet against the Plesk agent endpoint.
+     * Execute a Plesk CLI utility through the REST gateway.
      *
-     * @param string $packetXml Complete <packet version="1.6.9.0">...</packet> document
-     * @return array<mixed> Decoded representation of the XML response
+     * @param string $commandId  CLI command id (e.g. "domain", "extension", "subscription"). See
+     *                           GET /api/v2/cli/commands for the full list.
+     * @param array<int, string> $params Positional CLI arguments (e.g. ['--info', 'xyz.rkn.mx']).
      *
      * @throws PleskAuthException
+     * @throws PleskEndpointNotFoundException If the commandId is unknown to this Plesk version
      * @throws PleskResponseException
      * @throws PleskTransportException
      */
-    public function xmlRpcCall(string $packetXml): array
+    public function cliCall(string $commandId, array $params): CliResult
     {
-        $url = $this->normalizedHost() . '/enterprise/control/agent.php';
+        $url = $this->buildRestUrl('cli/' . rawurlencode($commandId) . '/call');
+        $encoded = json_encode(['params' => array_values($params)], JSON_THROW_ON_ERROR);
+        $response = $this->sendWithAuthRetry('POST', $url, $this->jsonHeaders(), $encoded);
 
-        $headers = [
-            'Content-Type' => 'text/xml',
-            'HTTP_AUTH_LOGIN' => '',
-            'HTTP_AUTH_PASSWD' => '',
-            'KEY' => $this->apiKey,
-        ];
+        $decoded = $this->decodeRestResponse($response);
 
-        $response = $this->transport->send('POST', $url, $headers, $packetXml);
-        return $this->decodeXmlRpcResponse($response);
+        $code = isset($decoded['code']) && is_int($decoded['code']) ? $decoded['code'] : -1;
+        $stdout = isset($decoded['stdout']) && is_string($decoded['stdout']) ? $decoded['stdout'] : '';
+        $stderr = isset($decoded['stderr']) && is_string($decoded['stderr']) ? $decoded['stderr'] : '';
+
+        return new CliResult($code, $stdout, $stderr);
     }
-
-    // -------------------------------------------------------------------------
-    // Helpers
-    // -------------------------------------------------------------------------
 
     public function getHost(): string
     {
         return $this->host;
+    }
+
+    // -------------------------------------------------------------------------
+    // Internal: retry + transport
+    // -------------------------------------------------------------------------
+
+    /**
+     * Send a request and retry on 401-empty-body (Plesk rate-limit / key propagation window).
+     *
+     * @param array<string, string> $headers
+     */
+    private function sendWithAuthRetry(
+        string $method,
+        string $url,
+        array $headers,
+        string $body = '',
+    ): HttpResponse {
+        $attempts = 3;
+        $response = null;
+
+        for ($i = 0; $i < $attempts; $i++) {
+            $response = $this->transport->send($method, $url, $headers, $body);
+
+            if ($response->statusCode !== 401 || $response->body !== '') {
+                return $response;
+            }
+
+            if ($i < $attempts - 1) {
+                ($this->sleeper)(2 ** ($i + 1));
+            }
+        }
+
+        return $response;
     }
 
     /** @param array<string, string|int> $params */
@@ -128,18 +207,31 @@ final class Client
     }
 
     /** @return array<string, string> */
-    private function restHeaders(): array
+    private function jsonHeaders(): array
     {
-        return [
-            'X-API-Key' => $this->apiKey,
+        $headers = [
             'Accept' => 'application/json',
             'Content-Type' => 'application/json',
         ];
+
+        if ($this->basicAuthHeader !== null) {
+            $headers['Authorization'] = $this->basicAuthHeader;
+        } else {
+            $headers['X-API-Key'] = $this->apiKey;
+        }
+
+        return $headers;
     }
 
     private function normalizedHost(): string
     {
-        return rtrim($this->host, '/');
+        $host = rtrim($this->host, '/');
+
+        if (parse_url($host, PHP_URL_SCHEME) === null) {
+            $host = 'https://' . $host;
+        }
+
+        return $host;
     }
 
     /**
@@ -154,25 +246,40 @@ final class Client
         $this->assertNotTransportError($response);
 
         if ($response->statusCode === 401 || $response->statusCode === 403) {
-            $msg = $this->extractErrorMessage($response->body) ?? 'Unauthorized';
-            throw new PleskAuthException("Plesk auth error ({$response->statusCode}): {$msg}", $response->statusCode);
+            $msg = $this->extractErrorMessage($response->body);
+            if ($msg === null) {
+                $msg = $response->body === ''
+                    ? 'Unauthorized (empty body — possible rate-limit or key propagation window)'
+                    : 'Unauthorized';
+            }
+            throw new PleskAuthException(
+                "Plesk auth error ({$response->statusCode}): {$msg}",
+                $response->statusCode,
+            );
         }
 
         if ($response->statusCode === 404) {
+            $msg = $this->extractErrorMessage($response->body) ?? 'Endpoint not found';
             throw new PleskEndpointNotFoundException(
-                "Plesk REST v2 endpoint not found (404). Consider using xmlRpcCall() for this operation.",
+                "Plesk REST v2 endpoint not found (404): {$msg}",
                 404,
             );
         }
 
         if ($response->statusCode >= 500) {
             $msg = $this->extractErrorMessage($response->body) ?? 'Internal server error';
-            throw new PleskResponseException("Plesk server error ({$response->statusCode}): {$msg}", $response->statusCode);
+            throw new PleskResponseException(
+                "Plesk server error ({$response->statusCode}): {$msg}",
+                $response->statusCode,
+            );
         }
 
         if ($response->statusCode >= 400) {
             $msg = $this->extractErrorMessage($response->body) ?? 'Bad request';
-            throw new PleskResponseException("Plesk API error ({$response->statusCode}): {$msg}", $response->statusCode);
+            throw new PleskResponseException(
+                "Plesk API error ({$response->statusCode}): {$msg}",
+                $response->statusCode,
+            );
         }
 
         if ($response->body === '') {
@@ -181,50 +288,16 @@ final class Client
 
         $decoded = json_decode($response->body, true);
         if (json_last_error() !== JSON_ERROR_NONE) {
-            throw new PleskResponseException('Plesk REST response is not valid JSON: ' . json_last_error_msg());
+            throw new PleskResponseException(
+                'Plesk REST response is not valid JSON: ' . json_last_error_msg(),
+            );
         }
 
         return is_array($decoded) ? $decoded : [];
     }
 
-    /**
-     * @return array<mixed>
-     * @throws PleskAuthException
-     * @throws PleskResponseException
-     */
-    private function decodeXmlRpcResponse(HttpResponse $response): array
-    {
-        $this->assertNotTransportError($response);
-
-        if ($response->statusCode === 401 || $response->statusCode === 403) {
-            throw new PleskAuthException(
-                "Plesk XML-RPC auth error ({$response->statusCode})",
-                $response->statusCode,
-            );
-        }
-
-        if ($response->statusCode >= 500) {
-            throw new PleskResponseException(
-                "Plesk XML-RPC server error ({$response->statusCode})",
-                $response->statusCode,
-            );
-        }
-
-        if ($response->body === '') {
-            throw new PleskResponseException('Plesk XML-RPC response is empty');
-        }
-
-        try {
-            return XmlRpcDecoder::parse($response->body);
-        } catch (\InvalidArgumentException $e) {
-            throw new PleskResponseException('Plesk XML-RPC response parse error: ' . $e->getMessage(), 0, $e);
-        }
-    }
-
     private function assertNotTransportError(HttpResponse $response): void
     {
-        // Status 0 means cURL received nothing (transport-level failure already thrown by CurlTransport).
-        // This guard handles edge cases in FakeTransport-based tests.
         if ($response->statusCode === 0) {
             throw new PleskTransportException('Plesk API returned no HTTP status (transport error)');
         }

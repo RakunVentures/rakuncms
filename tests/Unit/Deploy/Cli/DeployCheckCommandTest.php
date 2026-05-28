@@ -19,7 +19,43 @@ function makeDeployCheckApp(?Inspector $inspector = null): Application
     return $app;
 }
 
-$fixturesDir = __DIR__ . '/../../../Fixtures/plesk-xmlrpc';
+if (!function_exists('cliBody')) {
+    function cliBody(string $stdout, int $code = 0, string $stderr = ''): string
+    {
+        return (string) json_encode([
+            'code' => $code,
+            'stdout' => $stdout,
+            'stderr' => $stderr,
+        ]);
+    }
+}
+
+/**
+ * Build the JSON body for a REST GET /domains list with a single matching domain.
+ */
+function fakeDomainsListBody(string $name, int $id): string
+{
+    return (string) json_encode([
+        ['id' => $id, 'name' => $name],
+    ]);
+}
+
+function fakeDomainDetailBody(string $wwwRoot): string
+{
+    return (string) json_encode(['www_root' => $wwwRoot]);
+}
+
+function fakeDomainInfoStdout(string $shell, string $phpVersion, string $phpHandler, string $docRoot): string
+{
+    return <<<EOT
+Domain name:        example.com
+SSH access:         {$shell}
+Document root:      {$docRoot}
+PHP version:        {$phpVersion}
+PHP handler:        {$phpHandler}
+
+EOT;
+}
 
 /**
  * Set up a temporary deploy.yaml and run deploy:check.
@@ -165,9 +201,8 @@ describe('DeployCheckCommand — failure scenarios', function (): void {
     });
 });
 
-describe('DeployCheckCommand — drift detection', function () use ($fixturesDir): void {
-    it('reports DRIFT when has_shell changes from true to false', function () use ($fixturesDir): void {
-        // Stored snapshot: has_shell=true, doc_root from example.com fixture
+describe('DeployCheckCommand — drift detection', function (): void {
+    it('reports DRIFT when has_shell changes from true to false', function (): void {
         $config = [
             'production' => [
                 'plesk' => [
@@ -185,16 +220,21 @@ describe('DeployCheckCommand — drift detection', function () use ($fixturesDir
             ],
         ];
 
-        // Wire a FakeTransport with queued responses matching what discover() will call:
-        // 1. hasShellAccess → subscription-info-no-shell.xml (returns /sbin/nologin → false)
-        // 2. getGitInfo (--list) → git-list-empty.xml (no repos → null)
-        // 3. getPhpInfo → domain-get-php-fpm.xml (php82-fpm)
-        // 4. getDocumentRoot → domain-get-php-fpm.xml (www_root)
+        // discover() flow against the new REST-only Inspector:
+        //   1. getDocumentRoot → restGet('domains')        (find id)
+        //   2. getDocumentRoot → restGet('domains/{id}')   (www_root)
+        //   3. hasShellAccess  → cliCall('domain --info')  (cached for getPhpInfo)
+        //   4. getGitInfo      → cliCall('extension --list')
         $transport = new FakeTransport();
-        $transport->queueResponse(200, (string) file_get_contents("{$fixturesDir}/subscription-info-no-shell.xml"));
-        $transport->queueResponse(200, (string) file_get_contents("{$fixturesDir}/git-list-empty.xml"));
-        $transport->queueResponse(200, (string) file_get_contents("{$fixturesDir}/domain-get-php-fpm.xml"));
-        $transport->queueResponse(200, (string) file_get_contents("{$fixturesDir}/domain-get-php-fpm.xml"));
+        $transport->queueResponse(200, fakeDomainsListBody('example.com', 13));
+        $transport->queueResponse(200, fakeDomainDetailBody('/var/www/vhosts/example.com/httpdocs'));
+        $transport->queueResponse(200, cliBody(fakeDomainInfoStdout(
+            '/sbin/nologin',
+            '8.2.15',
+            'FPM',
+            '/var/www/vhosts/example.com/httpdocs',
+        )));
+        $transport->queueResponse(200, cliBody('No Git repositories were found for domain example.com.'));
 
         $client = new Client('https://plesk.test:8443', 'test-key', false, 30, $transport);
         $inspector = new Inspector($client);
@@ -206,8 +246,7 @@ describe('DeployCheckCommand — drift detection', function () use ($fixturesDir
         expect($result['display'])->toContain('has_shell');
     });
 
-    it('reports OK when all fields match the stored snapshot', function () use ($fixturesDir): void {
-        // Stored snapshot matches what the fixtures will return
+    it('reports OK when all fields match the stored snapshot', function (): void {
         $config = [
             'production' => [
                 'plesk' => [
@@ -217,19 +256,24 @@ describe('DeployCheckCommand — drift detection', function () use ($fixturesDir
                 ],
                 'domain' => 'example.com',
                 'discovered' => [
-                    'has_shell' => true,      // subscription-info-success.xml returns /bin/bash → true
+                    'has_shell' => true,
                     'doc_root' => '/var/www/vhosts/example.com/httpdocs',
-                    'git' => null,            // git-list-empty.xml → no repos
-                    'php' => ['version' => '8.2', 'handler' => 'fpm'],
+                    'git' => null,
+                    'php' => ['version' => '8.2.15', 'handler' => 'fpm'],
                 ],
             ],
         ];
 
         $transport = new FakeTransport();
-        $transport->queueResponse(200, (string) file_get_contents("{$fixturesDir}/subscription-info-success.xml"));
-        $transport->queueResponse(200, (string) file_get_contents("{$fixturesDir}/git-list-empty.xml"));
-        $transport->queueResponse(200, (string) file_get_contents("{$fixturesDir}/domain-get-php-fpm.xml"));
-        $transport->queueResponse(200, (string) file_get_contents("{$fixturesDir}/domain-get-php-fpm.xml"));
+        $transport->queueResponse(200, fakeDomainsListBody('example.com', 13));
+        $transport->queueResponse(200, fakeDomainDetailBody('/var/www/vhosts/example.com/httpdocs'));
+        $transport->queueResponse(200, cliBody(fakeDomainInfoStdout(
+            '/bin/bash',
+            '8.2.15',
+            'FPM',
+            '/var/www/vhosts/example.com/httpdocs',
+        )));
+        $transport->queueResponse(200, cliBody('No Git repositories were found for domain example.com.'));
 
         $client = new Client('https://plesk.test:8443', 'test-key', false, 30, $transport);
         $inspector = new Inspector($client);
