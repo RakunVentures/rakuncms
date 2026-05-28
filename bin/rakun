@@ -6,8 +6,8 @@ declare(strict_types=1);
 // When used as a dependency, vendor is in the project root
 // When used standalone, vendor is in the same directory
 $autoloadPaths = [
-    __DIR__ . '/../../../vendor/autoload.php', // as dependency: project/vendor/rkn/cms/bin/rakun
-    __DIR__ . '/../vendor/autoload.php',        // standalone
+    __DIR__ . '/../../../autoload.php',   // as dependency: project/vendor/rkn/cms/bin → project/vendor/autoload.php
+    __DIR__ . '/../vendor/autoload.php',  // standalone clone
 ];
 
 $autoloaded = false;
