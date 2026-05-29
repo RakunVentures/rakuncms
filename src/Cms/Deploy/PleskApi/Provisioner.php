@@ -138,7 +138,9 @@ final class Provisioner
             $needsUpdate = $existing->remoteUrl !== $remoteUrl
                 || $existing->activeBranch !== $branch
                 || $existing->deploymentPath !== $deploymentPath
-                || strtolower((string) $existing->deploymentMode) !== strtolower($deploymentMode);
+                || strtolower((string) $existing->deploymentMode) !== strtolower($deploymentMode)
+                || $existing->skipSslVerification !== $skipSslVerification
+                || $this->actionsDiffer($existing->actions, $actions);
         }
 
         if (!$needsCreate && !$needsUpdate) {
@@ -188,6 +190,45 @@ final class Provisioner
         }
 
         return $info;
+    }
+
+    /**
+     * Decide whether the registered post-deploy actions differ from the requested set.
+     *
+     * Comparison is order-sensitive and trims whitespace per entry. Returns:
+     *   - false when both sides are null (caller didn't care, server unparsed).
+     *   - false when the user-requested set is null (no override requested).
+     *   - true  when the server returned null but the user requested a non-empty set
+     *     (we cannot prove equivalence, so we force an update — safer than silent drift).
+     *   - true  when normalized entry lists differ in count or content.
+     *
+     * @param array<int, string>|null $existing
+     * @param array<int, string>|null $requested
+     */
+    private function actionsDiffer(?array $existing, ?array $requested): bool
+    {
+        if ($requested === null) {
+            return false;
+        }
+
+        $normalize = static function (array $arr): array {
+            $out = [];
+            foreach ($arr as $line) {
+                $trimmed = trim((string) $line);
+                if ($trimmed !== '') {
+                    $out[] = $trimmed;
+                }
+            }
+            return $out;
+        };
+
+        $req = $normalize($requested);
+
+        if ($existing === null) {
+            return $req !== [];
+        }
+
+        return $normalize($existing) !== $req;
     }
 
     /**

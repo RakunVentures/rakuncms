@@ -18,9 +18,23 @@ namespace Rkn\Cms\Deploy\PleskApi;
  *   Webhook URL: https://plesk.host:8443/modules/git/public/web-hook.php?uuid=...
  *   Skip SSL verification: disabled
  *   Run Post-Deploy Actions: enabled
+ *   Actions: composer install...
+ *            rm -rf cache/*
+ *
+ * The Plesk `--info` output sometimes prints `Actions:` followed by one or
+ * more indented lines (one per registered post-deploy action). The Inspector
+ * extracts and normalizes those lines into the {@see $actions} array. When
+ * Plesk does not surface the actions at all (older extension versions,
+ * unreadable output), {@see $actions} is {@code null} — distinct from "no
+ * actions registered" which is an empty array.
  */
 final readonly class GitRepoInfo
 {
+    /**
+     * @param array<int, string>|null $actions Registered post-deploy actions
+     *        (one entry per shell command). {@code null} when the value
+     *        could not be parsed from Plesk's output.
+     */
     public function __construct(
         public string $domain,
         public string $repoName,
@@ -32,6 +46,7 @@ final readonly class GitRepoInfo
         public ?string $webhookUrl,
         public bool $skipSslVerification,
         public bool $runPostDeployActions,
+        public ?array $actions = null,
     ) {}
 
     public function isPullRepo(): bool

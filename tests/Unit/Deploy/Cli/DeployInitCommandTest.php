@@ -34,7 +34,9 @@ function runDeployInit(array $inputs): array
     $originalDir = getcwd();
     chdir($tmpDir);
 
-    $exitCode = $tester->execute([], ['interactive' => true]);
+    // Tests cover the legacy manual-key flow; the auto-provision flow needs a
+    // live Plesk (POST /auth/keys + IP discovery) and lives in the sandbox suite.
+    $exitCode = $tester->execute(['--manual-key' => true], ['interactive' => true]);
 
     chdir($originalDir ?: '/');
 

@@ -298,6 +298,13 @@ final class DeploySetupGithubCommand extends Command
     }
 
     /**
+     * Split user-provided actions on newlines so each entry is a single-line
+     * shell command. Plesk runs every line in `-actions` as its own `bash -c`
+     * invocation, so a multi-line bash block (e.g. `{ cmd1\ncmd2 }`) within a
+     * single entry gets sliced across independent shells and silently fails
+     * (the opening `{` is a syntax error in its own shell). To compound
+     * commands, use `;` or `&&` inline; do not break across lines.
+     *
      * @return array<int, string>|null
      */
     private function normalizeActions(?string $postDeploy): ?array
@@ -319,17 +326,39 @@ final class DeploySetupGithubCommand extends Command
     /**
      * Default post-deploy actions run by Plesk after each pull from GitHub.
      *
-     * Plesk executes these with CWD = deployment path. Without them, vendor/
-     * never gets installed and the site 500s on the first request. We pick
-     * a Composer install profile suited for production (no dev deps, optimized
-     * autoloader, classmap-authoritative, non-interactive).
+     * Plesk joins these with newlines via Provisioner::createGitPullRepo and
+     * then runs each line in its own shell. Three consequences shape the format:
+     *
+     *   - Each entry MUST be a complete single-line shell command. Multi-line
+     *     bash blocks ({ ... }, heredocs) inside one entry break silently.
+     *   - To chain operations, use `;` or `&&` within one entry — not `\n`.
+     *   - **Plesk's post-action shell has an EMPTY PATH**: no /usr/bin, no /bin,
+     *     no PHP, no composer. Without an explicit `export PATH=…` and absolute
+     *     PHPBIN discovery, `composer install` reports `command not found`,
+     *     vendor/ stays stale, and the next request 500s. Every entry therefore
+     *     rebuilds the PATH and resolves the newest Plesk-managed PHP binary
+     *     in-line.
+     *
+     * CWD on each invocation equals the deployment path, so relative paths
+     * (cache/, vendor/, public/…) resolve correctly. We append both stdout
+     * and stderr from every action to `public/deploy.txt` so post-mortems
+     * (and our own E2E checks) can see exactly what Plesk just ran.
+     *
+     * Without the cache-clear step, `cache/content-index.php` keeps the
+     * pre-deploy snapshot and any new content (pages, locales, slugs) 404s
+     * until the cache file is manually removed.
      *
      * @return array<int, string>
      */
     private function defaultPostDeployActions(): array
     {
+        $path = 'export PATH=/usr/local/bin:/usr/bin:/bin';
+        $phpbin = 'PHPBIN=$(/bin/ls -1 /opt/plesk/php/*/bin/php 2>/dev/null | /usr/bin/sort -V | /usr/bin/tail -1)';
+        $log = '>> public/deploy.txt 2>&1';
+
         return [
-            'composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader --classmap-authoritative',
+            "{$path}; {$phpbin}; /bin/date {$log}; \"\$PHPBIN\" /usr/bin/composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader --classmap-authoritative {$log}",
+            "{$path}; /bin/rm -rf cache/pages/* cache/templates/* cache/content-index.php cache/sitemap*.xml {$log}; /bin/echo 'cache cleared' {$log}",
         ];
     }
 

@@ -266,6 +266,7 @@ final class Inspector
                 webhookUrl: $this->parseStdoutField($stdout, ['Webhook URL']),
                 skipSslVerification: $this->parseFlagEnabled($stdout, ['Skip SSL verification']),
                 runPostDeployActions: $this->parseFlagEnabled($stdout, ['Run Post-Deploy Actions']),
+                actions: $this->parseActionsBlock($stdout),
             );
         } catch (PleskApiException) {
             return null;
@@ -544,6 +545,70 @@ final class Inspector
         }
 
         return in_array(strtolower(trim($value)), ['enabled', 'true', 'yes', 'on', '1'], true);
+    }
+
+    /**
+     * Parse the multi-line "Actions:" block from `extension --call git --info` stdout.
+     *
+     * Plesk renders post-deploy actions as a label line followed by one or more
+     * continuation lines that are indented (leading spaces or tabs). Example:
+     *
+     *   Actions: composer install --no-dev --optimize-autoloader
+     *            rm -rf cache/pages/* cache/templates/* cache/content-index.php
+     *   Skip SSL verification: disabled
+     *
+     * Returns:
+     *   - array<int, string>  → registered actions (one entry per line, trimmed)
+     *   - empty array         → label found but value blank ("Actions:" with nothing)
+     *   - null                → label not present in stdout (older Plesk extension)
+     *
+     * Used by {@see Provisioner::createGitPullRepo} to decide whether a re-run
+     * with a changed {@code --post-deploy} payload needs to push an update.
+     */
+    private function parseActionsBlock(string $stdout): ?array
+    {
+        $lines = preg_split('/\r?\n/', $stdout) ?: [];
+        $found = false;
+        $collected = [];
+        $firstAfterLabelIndent = null;
+
+        foreach ($lines as $line) {
+            if (!$found) {
+                if (preg_match('/^[ \t]*(?:Actions|Post-Deploy Actions|Post-deploy actions)[ \t]*:[ \t]*(.*)$/i', $line, $m)) {
+                    $found = true;
+                    $first = trim($m[1]);
+                    if ($first !== '') {
+                        $collected[] = $first;
+                    }
+                }
+                continue;
+            }
+
+            // Stop on a new top-level "Field: value" line (zero-indent, has a colon).
+            if (preg_match('/^[A-Za-z][A-Za-z0-9 _-]*:[ \t]/', $line)) {
+                break;
+            }
+
+            $trimmed = rtrim($line);
+            if ($trimmed === '') {
+                if ($collected !== []) {
+                    break;
+                }
+                continue;
+            }
+
+            // Continuation lines are indented; once we leave indentation we stop.
+            if (!preg_match('/^[ \t]+/', $line)) {
+                break;
+            }
+
+            $value = trim($trimmed);
+            if ($value !== '') {
+                $collected[] = $value;
+            }
+        }
+
+        return $found ? $collected : null;
     }
 
     private function parseFirstRepoName(string $stdout): ?string

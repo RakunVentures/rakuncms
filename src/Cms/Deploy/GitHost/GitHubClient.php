@@ -24,12 +24,17 @@ namespace Rkn\Cms\Deploy\GitHost;
  */
 final class GitHubClient
 {
+    private readonly HttpTransport $transport;
+
     public function __construct(
         private readonly string $token,
         private readonly string $apiBaseUrl = 'https://api.github.com',
-        private readonly int $timeout = 30,
-        private readonly bool $verifySsl = true,
-    ) {}
+        int $timeout = 30,
+        bool $verifySsl = true,
+        ?HttpTransport $transport = null,
+    ) {
+        $this->transport = $transport ?? new CurlTransport($verifySsl, $timeout);
+    }
 
     // -------------------------------------------------------------------------
     // Repository
@@ -42,13 +47,13 @@ final class GitHubClient
     {
         $response = $this->request('GET', "/repos/{$owner}/{$repo}");
 
-        if ($response['status'] === 404) {
+        if ($response->statusCode === 404) {
             return null;
         }
 
         $this->assertSuccess($response, "Failed to fetch repo {$owner}/{$repo}");
 
-        return $this->decode($response['body']);
+        return $this->decode($response->body);
     }
 
     public function ensureRepoExists(string $owner, string $repo): bool
@@ -68,7 +73,7 @@ final class GitHubClient
         $response = $this->request('GET', "/repos/{$owner}/{$repo}/keys");
         $this->assertSuccess($response, "Failed to list deploy keys for {$owner}/{$repo}");
 
-        $decoded = $this->decode($response['body']);
+        $decoded = $this->decode($response->body);
         $out = [];
         foreach ($decoded as $item) {
             if (is_array($item)) {
@@ -100,14 +105,14 @@ final class GitHubClient
 
         $this->assertSuccess($response, "Failed to add deploy key '{$title}' to {$owner}/{$repo}");
 
-        return $this->decode($response['body']);
+        return $this->decode($response->body);
     }
 
     public function removeDeployKey(string $owner, string $repo, int $keyId): void
     {
         $response = $this->request('DELETE', "/repos/{$owner}/{$repo}/keys/{$keyId}");
 
-        if ($response['status'] !== 204 && $response['status'] !== 404) {
+        if ($response->statusCode !== 204 && $response->statusCode !== 404) {
             $this->assertSuccess($response, "Failed to remove deploy key {$keyId} from {$owner}/{$repo}");
         }
     }
@@ -151,7 +156,7 @@ final class GitHubClient
         $response = $this->request('GET', "/repos/{$owner}/{$repo}/hooks");
         $this->assertSuccess($response, "Failed to list webhooks for {$owner}/{$repo}");
 
-        $decoded = $this->decode($response['body']);
+        $decoded = $this->decode($response->body);
         $out = [];
         foreach ($decoded as $item) {
             if (is_array($item)) {
@@ -193,14 +198,14 @@ final class GitHubClient
 
         $this->assertSuccess($response, "Failed to add webhook to {$owner}/{$repo}");
 
-        return $this->decode($response['body']);
+        return $this->decode($response->body);
     }
 
     public function removeWebhook(string $owner, string $repo, int $hookId): void
     {
         $response = $this->request('DELETE', "/repos/{$owner}/{$repo}/hooks/{$hookId}");
 
-        if ($response['status'] !== 204 && $response['status'] !== 404) {
+        if ($response->statusCode !== 204 && $response->statusCode !== 404) {
             $this->assertSuccess($response, "Failed to remove webhook {$hookId} from {$owner}/{$repo}");
         }
     }
@@ -246,84 +251,37 @@ final class GitHubClient
 
     /**
      * @param array<mixed>|null $jsonBody
-     * @return array{status: int, body: string, headers: array<string, string>}
      */
-    private function request(string $method, string $path, ?array $jsonBody = null): array
+    private function request(string $method, string $path, ?array $jsonBody = null): HttpResponse
     {
         $url = $this->apiBaseUrl . '/' . ltrim($path, '/');
 
-        $ch = curl_init($url);
-        if ($ch === false) {
-            throw new GitHubApiException('Failed to initialize cURL for GitHub request');
-        }
-
         $headers = [
-            'Accept: application/vnd.github+json',
-            'Authorization: Bearer ' . $this->token,
-            'User-Agent: rakuncms-deploy',
-            'X-GitHub-Api-Version: 2022-11-28',
+            'Accept' => 'application/vnd.github+json',
+            'Authorization' => 'Bearer ' . $this->token,
+            'User-Agent' => 'rakuncms-deploy',
+            'X-GitHub-Api-Version' => '2022-11-28',
         ];
 
-        $options = [
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_CUSTOMREQUEST  => $method,
-            CURLOPT_HTTPHEADER     => $headers,
-            CURLOPT_SSL_VERIFYPEER => $this->verifySsl,
-            CURLOPT_SSL_VERIFYHOST => $this->verifySsl ? 2 : 0,
-            CURLOPT_TIMEOUT        => $this->timeout,
-            CURLOPT_CONNECTTIMEOUT => min($this->timeout, 10),
-            CURLOPT_HEADER         => true,
-        ];
-
+        $body = '';
         if ($jsonBody !== null) {
-            $encoded = json_encode($jsonBody, JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES);
-            $options[CURLOPT_POSTFIELDS] = $encoded;
-            $headers[] = 'Content-Type: application/json';
-            $options[CURLOPT_HTTPHEADER] = $headers;
+            $body = json_encode($jsonBody, JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES);
+            $headers['Content-Type'] = 'application/json';
         }
 
-        curl_setopt_array($ch, $options);
-
-        $raw = curl_exec($ch);
-        $errno = curl_errno($ch);
-        $error = curl_error($ch);
-        $status = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        $headerSize = (int) curl_getinfo($ch, CURLINFO_HEADER_SIZE);
-        curl_close($ch);
-
-        if ($raw === false || $errno !== CURLE_OK) {
-            throw new GitHubApiException("GitHub cURL request failed (errno {$errno}): {$error}");
-        }
-
-        $rawString = (string) $raw;
-        $rawHeaders = substr($rawString, 0, $headerSize);
-        $body = substr($rawString, $headerSize);
-
-        $parsedHeaders = [];
-        foreach (explode("\r\n", $rawHeaders) as $line) {
-            if (!str_contains($line, ':')) {
-                continue;
-            }
-            [$name, $value] = explode(':', $line, 2);
-            $parsedHeaders[trim(strtolower($name))] = trim($value);
-        }
-
-        return ['status' => $status, 'body' => $body, 'headers' => $parsedHeaders];
+        return $this->transport->send($method, $url, $headers, $body);
     }
 
-    /**
-     * @param array{status: int, body: string, headers: array<string, string>} $response
-     */
-    private function assertSuccess(array $response, string $context): void
+    private function assertSuccess(HttpResponse $response, string $context): void
     {
-        if ($response['status'] >= 200 && $response['status'] < 300) {
+        if ($response->statusCode >= 200 && $response->statusCode < 300) {
             return;
         }
 
-        $msg = $this->extractErrorMessage($response['body']);
+        $msg = $this->extractErrorMessage($response->body);
         $detail = $msg !== null ? ": {$msg}" : '';
         throw new GitHubApiException(
-            "{$context} (HTTP {$response['status']}){$detail}",
+            "{$context} (HTTP {$response->statusCode}){$detail}",
         );
     }
 

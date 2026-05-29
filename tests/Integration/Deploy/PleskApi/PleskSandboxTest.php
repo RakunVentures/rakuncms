@@ -4,11 +4,15 @@ declare(strict_types=1);
 
 use Rkn\Cms\Deploy\PleskApi\Client;
 use Rkn\Cms\Deploy\PleskApi\Inspector;
-use Rkn\Cms\Deploy\PleskEndpointNotFoundException;
-use Rkn\Cms\Deploy\PleskTransportException;
 
 /**
- * Live integration test against a real Plesk Obsidian sandbox.
+ * Live integration test against a real Plesk Obsidian sandbox (REST-only).
+ *
+ * Since #24-#26 we no longer have an XML-RPC fallback path, so the previous
+ * skip-on-PleskTransportException / skip-on-PleskEndpointNotFoundException
+ * pattern (which covered "REST v2 disabled, retry over XML-RPC") is gone.
+ * The test suite now fails loudly when REST cannot reach the sandbox —
+ * that is the contract for Plesk Obsidian 18.0.78+.
  *
  * SKIP CONDITION: All three env vars MUST be set or the entire file is skipped.
  *   PLESK_TEST_HOST     — e.g. plesk.example.com  (no scheme, no port)
@@ -54,19 +58,9 @@ it('PleskSandbox: Client can reach Plesk and authenticate (REST server endpoint)
         timeout: 15,
     );
 
-    try {
-        $response = $client->restGet('server/ip');
-    } catch (PleskEndpointNotFoundException $e) {
-        $this->markTestSkipped(
-            'Plesk REST v2 endpoint /api/v2/server/ip not available on this installation. '
-            . 'REST v2 may be disabled or this Plesk version exposes different endpoints.'
-        );
-    } catch (PleskTransportException $e) {
-        $this->markTestSkipped(
-            'Plesk REST v2 unreachable (transport error): ' . $e->getMessage()
-            . '. Server may be filtering /api/v2/* or rate-limiting this IP.'
-        );
-    }
+    // REST is the only supported transport on Plesk 18.0.78+ — failure here
+    // means the sandbox is misconfigured, not that we should silently skip.
+    $response = $client->restGet('server/ip');
 
     expect($response)->toBeArray();
 });
