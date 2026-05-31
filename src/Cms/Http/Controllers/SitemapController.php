@@ -17,8 +17,19 @@ final class SitemapController
     public function handle(): ResponseInterface
     {
         $basePath = \app('base_path');
-        $baseUrl = rtrim(\config('site.base_url', ''), '/');
-        $locales = \config('site.locales', ['es', 'en']);
+        // Support both config layouts: per-section files (site.yaml -> site.base_url)
+        // and the monolithic rakun.yaml (rakun.site.base_url). Without the fallback,
+        // a monolithic layout yields an empty base and emits invalid relative <loc>
+        // URLs. Mirrors the dual fallback in SeoExtension/LocaleDetector/Indexer.
+        $baseUrl = rtrim(
+            \config('site.base_url')
+                ?? \config('site.url')
+                ?? \config('rakun.site.base_url')
+                ?? \config('rakun.site.url')
+                ?? '',
+            '/'
+        );
+        $locales = \config('site.locales') ?? \config('rakun.site.locales') ?? ['es', 'en'];
 
         $indexer = new Indexer($basePath);
         $index = $indexer->load();

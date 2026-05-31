@@ -17,10 +17,20 @@ final class RssController
     public function handle(): ResponseInterface
     {
         $basePath = \app('base_path');
-        $baseUrl = rtrim(\config('site.base_url', ''), '/');
-        $siteTitle = \config('site.title', 'RakunCMS');
-        $siteDescription = \config('site.description', '');
-        $defaultLocale = \config('site.default_locale', 'es');
+        // Dual config layout: per-section site.yaml or monolithic rakun.yaml.
+        // Without the fallback a monolithic layout yields an empty base and emits
+        // invalid relative links in the feed. Mirrors SeoExtension/SitemapController.
+        $baseUrl = rtrim(
+            \config('site.base_url')
+                ?? \config('site.url')
+                ?? \config('rakun.site.base_url')
+                ?? \config('rakun.site.url')
+                ?? '',
+            '/'
+        );
+        $siteTitle = \config('site.title') ?? \config('rakun.site.title') ?? 'RakunCMS';
+        $siteDescription = \config('site.description') ?? \config('rakun.site.description') ?? '';
+        $defaultLocale = \config('site.default_locale') ?? \config('rakun.site.default_locale') ?? 'es';
 
         $indexer = new Indexer($basePath);
         $index = $indexer->load();

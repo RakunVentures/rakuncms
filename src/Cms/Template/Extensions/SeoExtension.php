@@ -106,12 +106,21 @@ final class SeoExtension extends AbstractExtension
         }
 
         try {
-            $baseUrl = \config('site.url', '');
+            // Support both config layouts: per-section files (site.yaml -> site.url)
+            // and the monolithic rakun.yaml (rakun.site.url). Mirrors the dual
+            // fallback already used by LocaleDetector, ApiAuthMiddleware and Indexer.
+            $baseUrl = \config('site.url')
+                ?? \config('site.base_url')
+                ?? \config('rakun.site.url')
+                ?? \config('rakun.site.base_url')
+                ?? '';
         } catch (\Throwable) {
         }
 
         try {
-            $locales = \config('site.locales', ['es']);
+            $locales = \config('site.locales')
+                ?? \config('rakun.site.locales')
+                ?? ['es'];
         } catch (\Throwable) {
         }
 
@@ -156,7 +165,9 @@ final class SeoExtension extends AbstractExtension
     private function getSeoConfig(): array
     {
         try {
-            return \config('seo', []);
+            // Dual fallback: per-section seo.yaml or monolithic rakun.yaml (rakun.seo).
+            $seo = \config('seo') ?? \config('rakun.seo') ?? [];
+            return is_array($seo) ? $seo : [];
         } catch (\Throwable) {
             return [];
         }
@@ -167,11 +178,24 @@ final class SeoExtension extends AbstractExtension
      */
     private function getSiteGlobals(): array
     {
+        $site = [];
+
         try {
             $globals = \app('globals');
-            return $globals['site'] ?? [];
+            $site = $globals['site'] ?? [];
         } catch (\Throwable) {
-            return [];
         }
+
+        // Fall back to the config site section (dual layout) so meta description,
+        // title and OG tags still resolve when template globals are not populated.
+        if (!is_array($site) || $site === []) {
+            try {
+                $site = \config('site') ?? \config('rakun.site') ?? [];
+            } catch (\Throwable) {
+                $site = [];
+            }
+        }
+
+        return is_array($site) ? $site : [];
     }
 }
