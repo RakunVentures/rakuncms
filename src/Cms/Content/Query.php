@@ -14,6 +14,7 @@ final class Query
 
     private ?string $collectionFilter = null;
     private ?string $localeFilter = null;
+    private ?string $sectionFilter = null;
 
     /** @var list<array{field: string, operator: string, value: mixed}> */
     private array $conditions = [];
@@ -44,6 +45,60 @@ final class Query
         $clone = clone $this;
         $clone->localeFilter = $locale;
         return $clone;
+    }
+
+    /**
+     * Filter entries to a single section path (relative to collection root).
+     * Pass an empty string to match root-level entries only.
+     */
+    public function section(string $section): self
+    {
+        $clone = clone $this;
+        $clone->sectionFilter = $section;
+        return $clone;
+    }
+
+    /**
+     * Enumerate sections declared for a collection (typically set via .collection() first).
+     * Returns ordered list of section descriptors with locale-resolved titles.
+     *
+     * @return list<array{section: string, title: string, titles: array<string, string>, order: int, icon: ?string, meta: array<string, mixed>}>
+     */
+    public function sections(?string $locale = null): array
+    {
+        if ($this->collectionFilter === null) {
+            return [];
+        }
+
+        $sectionsIndex = $this->indices['sections'][$this->collectionFilter] ?? [];
+        if (!is_array($sectionsIndex)) {
+            return [];
+        }
+
+        $resolvedLocale = $locale ?? $this->localeFilter;
+
+        $result = [];
+        foreach ($sectionsIndex as $descriptor) {
+            if (!is_array($descriptor)) {
+                continue;
+            }
+            $title = $descriptor['title'] ?? '';
+            if ($resolvedLocale !== null && isset($descriptor['titles'][$resolvedLocale])) {
+                $title = $descriptor['titles'][$resolvedLocale];
+            }
+            $result[] = [
+                'section' => (string) ($descriptor['section'] ?? ''),
+                'title' => (string) $title,
+                'titles' => is_array($descriptor['titles'] ?? null) ? $descriptor['titles'] : [],
+                'order' => (int) ($descriptor['order'] ?? 0),
+                'icon' => isset($descriptor['icon']) ? (string) $descriptor['icon'] : null,
+                'meta' => is_array($descriptor['meta'] ?? null) ? $descriptor['meta'] : [],
+            ];
+        }
+
+        usort($result, fn (array $a, array $b) => $a['order'] <=> $b['order']);
+
+        return $result;
     }
 
     public function where(string $field, string $operator, mixed $value): self
@@ -147,13 +202,15 @@ final class Query
             return Entry::fromArray($this->entries[$entryKey]);
         }
 
-        // Fallback: search through entries
+        // Fallback: search through entries (also covers root-only slug matches)
         foreach ($this->entries as $data) {
             if ($data['collection'] !== $collection || $data['locale'] !== $locale) {
                 continue;
             }
+            $section = (string) ($data['section'] ?? '');
             $entrySlug = $data['slugs'][$locale] ?? $data['slug'];
-            if ($entrySlug === $slug) {
+            $fullSlug = $section !== '' ? $section . '/' . $entrySlug : $entrySlug;
+            if ($fullSlug === $slug || $entrySlug === $slug) {
                 return Entry::fromArray($data);
             }
         }
@@ -166,25 +223,29 @@ final class Query
      */
     private function resolveKeys(): array
     {
-        // Start with all entries or filtered set
-        if ($this->collectionFilter !== null && $this->localeFilter !== null) {
-            // Intersect collection + locale indices
-            /** @var list<string> $collKeys */
-            $collKeys = $this->indices['by_collection'][$this->collectionFilter] ?? [];
-            /** @var list<string> $localeKeys */
-            $localeKeys = $this->indices['by_locale'][$this->localeFilter] ?? [];
-            return array_values(array_intersect($collKeys, $localeKeys));
-        }
+        $sets = [];
 
         if ($this->collectionFilter !== null) {
-            return $this->indices['by_collection'][$this->collectionFilter] ?? [];
+            $sets[] = $this->indices['by_collection'][$this->collectionFilter] ?? [];
         }
-
         if ($this->localeFilter !== null) {
-            return $this->indices['by_locale'][$this->localeFilter] ?? [];
+            $sets[] = $this->indices['by_locale'][$this->localeFilter] ?? [];
+        }
+        if ($this->sectionFilter !== null && $this->collectionFilter !== null) {
+            $sectionKey = $this->collectionFilter . ':' . $this->sectionFilter;
+            $sets[] = $this->indices['by_section'][$sectionKey] ?? [];
         }
 
-        return array_keys($this->entries);
+        if ($sets === []) {
+            return array_keys($this->entries);
+        }
+
+        $result = array_shift($sets);
+        foreach ($sets as $set) {
+            $result = array_intersect($result, $set);
+        }
+
+        return array_values($result);
     }
 
     /**

@@ -23,7 +23,7 @@ final class Indexer
     /**
      * Load the index from cache, or build it if missing.
      *
-     * @return array{entries: array<string, array<string, mixed>>, indices: array<string, array<string, list<string>>>, meta: array<string, mixed>}
+     * @return array{entries: array<string, array<string, mixed>>, indices: array<string, mixed>, meta: array<string, mixed>}
      */
     public function load(): array
     {
@@ -38,7 +38,7 @@ final class Indexer
     /**
      * Full rebuild of the content index.
      *
-     * @return array{entries: array<string, array<string, mixed>>, indices: array<string, array<string, list<string>>>, meta: array<string, mixed>}
+     * @return array{entries: array<string, array<string, mixed>>, indices: array<string, mixed>, meta: array<string, mixed>}
      */
     public function rebuild(): array
     {
@@ -49,6 +49,8 @@ final class Indexer
             'by_collection' => [],
             'by_locale' => [],
             'by_locale_slug' => [],
+            'by_section' => [],
+            'sections' => [],
         ];
 
         if (!is_dir($this->contentPath)) {
@@ -63,42 +65,33 @@ final class Indexer
                 continue;
             }
 
-            $files = [];
-            if (is_dir($collectionPath)) {
-                $directory = new \RecursiveDirectoryIterator($collectionPath, \FilesystemIterator::SKIP_DOTS);
-                $iterator = new \RecursiveIteratorIterator($directory, \RecursiveIteratorIterator::LEAVES_ONLY);
-                /** @var \SplFileInfo $fileInfo */
-                foreach ($iterator as $fileInfo) {
-                    if ($fileInfo->getExtension() === 'md') {
-                        $files[] = $fileInfo->getPathname();
-                    }
-                }
-            }
+            $indices['sections'][$collectionName] = $this->discoverSections($collectionPath);
+
+            $files = $this->collectMarkdownFiles($collectionPath);
             $scheduleChecker = new ScheduleChecker(dirname($this->contentPath));
+
             foreach ($files as $file) {
-                $entry = $this->indexFile($file, $collectionName);
+                $entry = $this->indexFile($file, $collectionName, $collectionPath);
                 if ($entry === null || $entry['draft']) {
                     continue;
                 }
 
-                // Skip entries with future publish_date
                 if (!$scheduleChecker->shouldPublish($entry)) {
                     continue;
                 }
 
-                $key = $collectionName . '/' . basename($file, '.md');
+                $key = $this->buildEntryKey($collectionName, $entry['section'], basename($file, '.md'));
                 $entries[$key] = $entry;
 
-                // Build indices
                 $indices['by_collection'][$collectionName][] = $key;
                 $indices['by_locale'][$entry['locale']][] = $key;
 
-                // Locale+slug lookup
-                $localeSlugKey = $entry['locale'] . ':' . ($entry['slugs'][$entry['locale']] ?? $entry['slug']);
-                $indices['by_locale_slug'][$localeSlugKey] = $key;
+                $sectionKey = $collectionName . ':' . $entry['section'];
+                $indices['by_section'][$sectionKey][] = $key;
 
-                // Also index by collection+locale+slug
-                $collLocaleSlug = $collectionName . ':' . $entry['locale'] . ':' . ($entry['slugs'][$entry['locale']] ?? $entry['slug']);
+                $localeSlug = $entry['slugs'][$entry['locale']] ?? $entry['slug'];
+                $fullSlug = $entry['section'] !== '' ? $entry['section'] . '/' . $localeSlug : $localeSlug;
+                $collLocaleSlug = $collectionName . ':' . $entry['locale'] . ':' . $fullSlug;
                 $indices['by_locale_slug'][$collLocaleSlug] = $key;
 
                 if (!empty($entry['tags'])) {
@@ -127,7 +120,6 @@ final class Indexer
 
         foreach ($dirs as $dir) {
             $name = basename($dir);
-            // Skip special directories
             if (str_starts_with($name, '_')) {
                 continue;
             }
@@ -138,11 +130,142 @@ final class Indexer
     }
 
     /**
+     * Walk a collection directory and return absolute paths of all .md files.
+     * Skips files or directory segments starting with "_".
+     *
+     * @return list<string>
+     */
+    private function collectMarkdownFiles(string $collectionPath): array
+    {
+        $files = [];
+        $directory = new \RecursiveDirectoryIterator($collectionPath, \FilesystemIterator::SKIP_DOTS);
+        $filter = new \RecursiveCallbackFilterIterator($directory, function (\SplFileInfo $current) {
+            $name = $current->getFilename();
+            return !str_starts_with($name, '_');
+        });
+        $iterator = new \RecursiveIteratorIterator($filter, \RecursiveIteratorIterator::LEAVES_ONLY);
+
+        /** @var \SplFileInfo $fileInfo */
+        foreach ($iterator as $fileInfo) {
+            if ($fileInfo->getExtension() === 'md') {
+                $files[] = $fileInfo->getPathname();
+            }
+        }
+
+        sort($files);
+        return $files;
+    }
+
+    /**
+     * Discover sections by walking subdirectories and reading optional _section.yaml manifests.
+     * Returns map keyed by section path (relative to collection root).
+     *
+     * @return array<string, array{section: string, title: string, titles: array<string, string>, order: int, icon: ?string, meta: array<string, mixed>}>
+     */
+    private function discoverSections(string $collectionPath): array
+    {
+        $sections = [];
+        $directory = new \RecursiveDirectoryIterator($collectionPath, \FilesystemIterator::SKIP_DOTS);
+        $filter = new \RecursiveCallbackFilterIterator($directory, function (\SplFileInfo $current) {
+            if ($current->isDir()) {
+                return !str_starts_with($current->getFilename(), '_');
+            }
+            return true;
+        });
+        $iterator = new \RecursiveIteratorIterator($filter, \RecursiveIteratorIterator::SELF_FIRST);
+
+        $autoOrder = 0;
+        /** @var \SplFileInfo $entryInfo */
+        foreach ($iterator as $entryInfo) {
+            if (!$entryInfo->isDir()) {
+                continue;
+            }
+
+            $sectionPath = $this->relativeSectionPath($entryInfo->getPathname(), $collectionPath);
+            if ($sectionPath === '') {
+                continue;
+            }
+
+            $manifestFile = $entryInfo->getPathname() . '/_section.yaml';
+            $manifest = [];
+            if (is_file($manifestFile)) {
+                $parsed = Yaml::parseFile($manifestFile);
+                if (is_array($parsed)) {
+                    $manifest = $parsed;
+                }
+            }
+
+            $bareName = basename($sectionPath);
+            $cleanName = preg_replace('/^\d+[-_.]/', '', $bareName) ?? $bareName;
+
+            $titles = [];
+            if (isset($manifest['titles']) && is_array($manifest['titles'])) {
+                foreach ($manifest['titles'] as $loc => $title) {
+                    if (is_string($loc) && is_string($title)) {
+                        $titles[$loc] = $title;
+                    }
+                }
+            }
+
+            $title = isset($manifest['title']) && is_string($manifest['title'])
+                ? $manifest['title']
+                : ucwords(str_replace(['-', '_'], ' ', $cleanName));
+
+            $order = isset($manifest['order']) && is_numeric($manifest['order'])
+                ? (int) $manifest['order']
+                : $this->extractOrder($bareName);
+            if ($order === 0 && !isset($manifest['order'])) {
+                $autoOrder++;
+                $order = $autoOrder * 10;
+            }
+
+            $icon = isset($manifest['icon']) && is_string($manifest['icon']) ? $manifest['icon'] : null;
+
+            $sections[$sectionPath] = [
+                'section' => $sectionPath,
+                'title' => $title,
+                'titles' => $titles,
+                'order' => $order,
+                'icon' => $icon,
+                'meta' => $manifest,
+            ];
+        }
+
+        uasort($sections, fn (array $a, array $b) => $a['order'] <=> $b['order']);
+
+        return $sections;
+    }
+
+    /**
+     * Compute relative section path (forward-slash form) from a directory under the collection root.
+     */
+    private function relativeSectionPath(string $absolutePath, string $collectionPath): string
+    {
+        $absolutePath = rtrim($absolutePath, '/');
+        $collectionPath = rtrim($collectionPath, '/');
+        if ($absolutePath === $collectionPath) {
+            return '';
+        }
+        if (!str_starts_with($absolutePath, $collectionPath . '/')) {
+            return '';
+        }
+        return substr($absolutePath, strlen($collectionPath) + 1);
+    }
+
+    private function buildEntryKey(string $collectionName, string $section, string $basename): string
+    {
+        if ($section === '') {
+            return $collectionName . '/' . $basename;
+        }
+        return $collectionName . '/' . $section . '/' . $basename;
+    }
+
+    /**
      * Index a single .md file, extracting only frontmatter.
      *
      * @return array<string, mixed>|null
      */
-    private function indexFile(string $filePath, string $collectionName): ?array
+    private function indexFile(string $filePath, string $collectionName, string $collectionPath): ?array
     {
         $content = file_get_contents($filePath);
         if ($content === false) {
@@ -152,34 +275,21 @@ final class Indexer
         $document = YamlFrontMatter::parse($content);
         $matter = $document->matter();
 
-        // Determine locale from filename: slug.en.md -> en, slug.md -> default
         $basename = basename($filePath, '.md');
         $locale = $this->detectLocale($basename);
         $slug = $this->extractSlug($basename);
         $order = $this->extractOrder($basename);
 
+        $section = $this->relativeSectionPath(dirname($filePath), $collectionPath);
+
         $actualSlug = $matter['slugs'][$locale] ?? $matter['slug'] ?? $slug;
-        $urlPath = '';
-        if ($collectionName === 'pages') {
-            if (in_array($actualSlug, ['index', 'home', 'inicio', ''], true)) {
-                $urlPath = '/';
-            } else {
-                $urlPath = '/' . $actualSlug;
-            }
-        } else {
-            $urlPath = '/' . $collectionName . '/' . $actualSlug;
-        }
-        
-        if ($urlPath === '/') {
-            $urlPath = '/' . $locale . '/';
-        } elseif ($locale !== $this->defaultLocale) {
-            $urlPath = '/' . $locale . $urlPath;
-        }
+        $urlPath = $this->buildUrlPath($collectionName, $section, $actualSlug, $locale);
 
         return [
             'title' => $matter['title'] ?? ucfirst($slug),
             'slug' => $matter['slug'] ?? $slug,
             'url' => $urlPath,
+            'section' => $section,
             'collection' => $collectionName,
             'locale' => $locale,
             'file' => $this->relativePath($filePath),
@@ -195,18 +305,38 @@ final class Indexer
     }
 
     /**
+     * Build a public URL for the entry, honoring default locale, pages collection and nested sections.
+     */
+    private function buildUrlPath(string $collectionName, string $section, string $slug, string $locale): string
+    {
+        if ($collectionName === 'pages') {
+            if (in_array($slug, ['index', 'home', 'inicio', ''], true) && $section === '') {
+                return $locale === $this->defaultLocale ? '/' : '/' . $locale . '/';
+            }
+            $path = '/' . ($section !== '' ? $section . '/' : '') . $slug;
+        } else {
+            $sectionPart = $section !== '' ? $section . '/' : '';
+            $path = '/' . $collectionName . '/' . $sectionPart . $slug;
+        }
+
+        if ($locale !== $this->defaultLocale) {
+            $path = '/' . $locale . $path;
+        }
+
+        return $path;
+    }
+
+    /**
      * Detect locale from filename suffix.
      * Examples: "about.en" -> "en", "about" -> default locale
      */
     private function detectLocale(string $basename): string
     {
-        // Remove order prefix first
         $name = preg_replace('/^\d+\./', '', $basename);
         if ($name === null) {
             $name = $basename;
         }
 
-        // Check for locale suffix
         $parts = explode('.', $name);
         if (count($parts) >= 2) {
             $possibleLocale = end($parts);
@@ -223,7 +353,6 @@ final class Indexer
      */
     private function resolveDefaultLocale(string $basePath): string
     {
-        // Try Application container first
         try {
             if (function_exists('config')) {
                 $locale = \config('rakun.site.default_locale', null) ?? \config('site.default_locale', 'es');
@@ -234,7 +363,6 @@ final class Indexer
         } catch (\Throwable) {
         }
 
-        // Fallback: read config file directly
         $configFile = $basePath . '/config/rakun.yaml';
         if (file_exists($configFile)) {
             $config = Yaml::parseFile($configFile);
@@ -251,13 +379,11 @@ final class Indexer
      */
     private function extractSlug(string $basename): string
     {
-        // Remove order prefix: "01.about" -> "about"
         $name = preg_replace('/^\d+\./', '', $basename);
         if ($name === null) {
             $name = $basename;
         }
 
-        // Remove locale suffix: "about.en" -> "about"
         $parts = explode('.', $name);
         if (count($parts) >= 2) {
             $possibleLocale = end($parts);
@@ -271,11 +397,11 @@ final class Indexer
     }
 
     /**
-     * Extract order number from filename prefix.
+     * Extract order number from filename prefix (supports "01.x", "01-x", "01_x").
      */
     private function extractOrder(string $basename): int
     {
-        if (preg_match('/^(\d+)\./', $basename, $matches)) {
+        if (preg_match('/^(\d+)[-_.]/', $basename, $matches)) {
             return (int) $matches[1];
         }
         return 0;
@@ -283,7 +409,6 @@ final class Indexer
 
     private function relativePath(string $filePath): string
     {
-        // Make path relative to project root
         $contentParent = dirname($this->contentPath);
         if (str_starts_with($filePath, $contentParent)) {
             return ltrim(substr($filePath, strlen($contentParent)), '/');
@@ -293,8 +418,8 @@ final class Indexer
 
     /**
      * @param array<string, array<string, mixed>> $entries
-     * @param array<string, array<string, list<string>|string>> $indices
-     * @return array{entries: array<string, array<string, mixed>>, indices: array<string, array<string, list<string>|string>>, meta: array<string, mixed>}
+     * @param array<string, mixed> $indices
+     * @return array{entries: array<string, array<string, mixed>>, indices: array<string, mixed>, meta: array<string, mixed>}
      */
     private function save(array $entries, array $indices): array
     {

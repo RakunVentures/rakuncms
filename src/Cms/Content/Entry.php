@@ -27,6 +27,8 @@ final class Entry
         private array $slugs = [],
         private int $mtime = 0,
         private array $tags = [],
+        private string $section = '',
+        private ?string $storedUrl = null,
     ) {
     }
 
@@ -51,6 +53,8 @@ final class Entry
             slugs: $data['slugs'] ?? [],
             mtime: (int) ($data['mtime'] ?? 0),
             tags: $data['tags'] ?? [],
+            section: (string) ($data['section'] ?? ''),
+            storedUrl: isset($data['url']) ? (string) $data['url'] : null,
         );
     }
 
@@ -59,7 +63,7 @@ final class Entry
      */
     public function toArray(): array
     {
-        return [
+        $data = [
             'title' => $this->title,
             'slug' => $this->slug,
             'collection' => $this->collection,
@@ -74,6 +78,13 @@ final class Entry
             'mtime' => $this->mtime,
             'tags' => $this->tags,
         ];
+        if ($this->section !== '') {
+            $data['section'] = $this->section;
+        }
+        if ($this->storedUrl !== null) {
+            $data['url'] = $this->storedUrl;
+        }
+        return $data;
     }
 
     public function title(): string { return $this->title; }
@@ -86,6 +97,7 @@ final class Entry
     public function order(): int { return $this->order; }
     public function isDraft(): bool { return $this->draft; }
     public function mtime(): int { return $this->mtime; }
+    public function section(): string { return $this->section; }
 
     /** @return list<string> */
     public function tags(): array { return $this->tags; }
@@ -149,6 +161,10 @@ final class Entry
      */
     public function url(): string
     {
+        if ($this->storedUrl !== null) {
+            return $this->storedUrl;
+        }
+
         $locale = $this->locale;
         $slug = $this->slugForLocale($locale);
 

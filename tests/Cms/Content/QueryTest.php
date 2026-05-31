@@ -12,6 +12,7 @@ beforeEach(function () {
                 'slug' => 'home',
                 'collection' => 'pages',
                 'locale' => 'es',
+                'section' => '',
                 'file' => 'content/pages/home.md',
                 'order' => 1,
                 'template' => 'pages/home',
@@ -26,6 +27,7 @@ beforeEach(function () {
                 'slug' => 'nosotros',
                 'collection' => 'pages',
                 'locale' => 'es',
+                'section' => '',
                 'file' => 'content/pages/about.md',
                 'order' => 2,
                 'template' => 'pages/about',
@@ -40,6 +42,7 @@ beforeEach(function () {
                 'slug' => 'about',
                 'collection' => 'pages',
                 'locale' => 'en',
+                'section' => '',
                 'file' => 'content/pages/about.en.md',
                 'order' => 2,
                 'template' => 'pages/about',
@@ -54,6 +57,7 @@ beforeEach(function () {
                 'slug' => 'coco',
                 'collection' => 'habitaciones',
                 'locale' => 'es',
+                'section' => '',
                 'file' => 'content/habitaciones/01.coco.md',
                 'order' => 1,
                 'template' => null,
@@ -68,6 +72,7 @@ beforeEach(function () {
                 'slug' => 'cereza',
                 'collection' => 'habitaciones',
                 'locale' => 'es',
+                'section' => '',
                 'file' => 'content/habitaciones/02.cereza.md',
                 'order' => 2,
                 'template' => null,
@@ -95,6 +100,14 @@ beforeEach(function () {
             ],
             'by_tag' => [],
             'by_date' => [],
+            'by_section' => [
+                'pages:' => ['pages/home', 'pages/about', 'pages/about.en'],
+                'habitaciones:' => ['habitaciones/01.coco', 'habitaciones/02.cereza'],
+            ],
+            'sections' => [
+                'pages' => [],
+                'habitaciones' => [],
+            ],
         ],
         'meta' => [
             'built_at' => time(),
@@ -194,4 +207,148 @@ test('where filters by condition', function () {
     expect(count($results))->toBeGreaterThanOrEqual(1);
     $titles = array_map(fn ($e) => $e->title(), $results);
     expect($titles)->toContain('Coco');
+});
+
+test('section() filters to entries inside a section path', function () {
+    $index = $this->index;
+    $index['entries']['docs/getting-started/intro'] = [
+        'title' => 'Intro',
+        'slug' => 'intro',
+        'collection' => 'docs',
+        'locale' => 'en',
+        'section' => 'getting-started',
+        'file' => 'content/docs/getting-started/intro.md',
+        'order' => 0,
+        'template' => null,
+        'date' => null,
+        'draft' => false,
+        'meta' => [],
+        'slugs' => [],
+        'mtime' => 5000,
+        'tags' => [],
+        'url' => '/docs/getting-started/intro',
+    ];
+    $index['entries']['docs/advanced/scaling'] = [
+        'title' => 'Scaling',
+        'slug' => 'scaling',
+        'collection' => 'docs',
+        'locale' => 'en',
+        'section' => 'advanced',
+        'file' => 'content/docs/advanced/scaling.md',
+        'order' => 0,
+        'template' => null,
+        'date' => null,
+        'draft' => false,
+        'meta' => [],
+        'slugs' => [],
+        'mtime' => 5001,
+        'tags' => [],
+        'url' => '/docs/advanced/scaling',
+    ];
+    $index['indices']['by_collection']['docs'] = ['docs/getting-started/intro', 'docs/advanced/scaling'];
+    $index['indices']['by_locale']['en'][] = 'docs/getting-started/intro';
+    $index['indices']['by_locale']['en'][] = 'docs/advanced/scaling';
+    $index['indices']['by_section']['docs:getting-started'] = ['docs/getting-started/intro'];
+    $index['indices']['by_section']['docs:advanced'] = ['docs/advanced/scaling'];
+
+    $query = new Query($index);
+    $results = $query->collection('docs')->section('getting-started')->get();
+
+    expect($results)->toHaveCount(1);
+    expect($results[0]->slug())->toBe('intro');
+    expect($results[0]->section())->toBe('getting-started');
+});
+
+test('sections() returns ordered descriptors with locale-resolved title', function () {
+    $index = $this->index;
+    $index['indices']['sections']['docs'] = [
+        'getting-started' => [
+            'section' => 'getting-started',
+            'title' => 'Getting Started',
+            'titles' => ['es' => 'Primeros Pasos', 'fr' => 'Premiers Pas'],
+            'order' => 10,
+            'icon' => null,
+            'meta' => [],
+        ],
+        'advanced' => [
+            'section' => 'advanced',
+            'title' => 'Advanced',
+            'titles' => ['es' => 'Avanzado'],
+            'order' => 30,
+            'icon' => null,
+            'meta' => [],
+        ],
+        'core-concepts' => [
+            'section' => 'core-concepts',
+            'title' => 'Core Concepts',
+            'titles' => ['es' => 'Conceptos Centrales'],
+            'order' => 20,
+            'icon' => null,
+            'meta' => [],
+        ],
+    ];
+
+    $query = new Query($index);
+    $sections = $query->collection('docs')->sections('es');
+
+    expect($sections)->toHaveCount(3);
+    expect($sections[0]['section'])->toBe('getting-started');
+    expect($sections[0]['title'])->toBe('Primeros Pasos');
+    expect($sections[1]['section'])->toBe('core-concepts');
+    expect($sections[1]['title'])->toBe('Conceptos Centrales');
+    expect($sections[2]['section'])->toBe('advanced');
+    expect($sections[2]['title'])->toBe('Avanzado');
+});
+
+test('sections() falls back to default title when locale missing', function () {
+    $index = $this->index;
+    $index['indices']['sections']['docs'] = [
+        'advanced' => [
+            'section' => 'advanced',
+            'title' => 'Advanced',
+            'titles' => ['es' => 'Avanzado'],
+            'order' => 1,
+            'icon' => null,
+            'meta' => [],
+        ],
+    ];
+
+    $query = new Query($index);
+    $sections = $query->collection('docs')->sections('de');
+
+    expect($sections[0]['title'])->toBe('Advanced');
+});
+
+test('sections() returns empty list when no collection set', function () {
+    $query = new Query($this->index);
+    expect($query->sections('en'))->toBe([]);
+});
+
+test('findBySlug resolves nested slug via section path', function () {
+    $index = $this->index;
+    $index['entries']['docs/getting-started/intro'] = [
+        'title' => 'Intro',
+        'slug' => 'intro',
+        'collection' => 'docs',
+        'locale' => 'en',
+        'section' => 'getting-started',
+        'file' => 'content/docs/getting-started/intro.md',
+        'order' => 0,
+        'template' => null,
+        'date' => null,
+        'draft' => false,
+        'meta' => [],
+        'slugs' => [],
+        'mtime' => 5000,
+        'tags' => [],
+        'url' => '/docs/getting-started/intro',
+    ];
+    $index['indices']['by_locale_slug']['docs:en:getting-started/intro'] = 'docs/getting-started/intro';
+
+    $query = new Query($index);
+    $entry = $query->findBySlug('docs', 'en', 'getting-started/intro');
+
+    expect($entry)->not->toBeNull();
+    expect($entry->slug())->toBe('intro');
+    expect($entry->section())->toBe('getting-started');
 });
