@@ -81,7 +81,45 @@ final class I18nExtension extends AbstractExtension implements GlobalsInterface
         } catch (\Throwable) {
         }
 
-        // Fallback: swap locale in current URL
-        return '/' . $targetLocale . '/';
+        return $this->swapLocaleInCurrentUri($targetLocale);
+    }
+
+    /**
+     * Fallback for routes without a current_entry (search, dynamic lists, 404).
+     * Strips an existing locale prefix from REQUEST_URI and prepends the target.
+     */
+    private function swapLocaleInCurrentUri(string $targetLocale): string
+    {
+        $uri = $_SERVER['REQUEST_URI'] ?? '/';
+        $qsPos = strpos($uri, '?');
+        $path = $qsPos === false ? $uri : substr($uri, 0, $qsPos);
+        $query = $qsPos === false ? '' : substr($uri, $qsPos);
+
+        $locales = [];
+        try {
+            $configured = \config('site.locales', []);
+            if (is_array($configured)) {
+                $locales = array_values(array_filter($configured, 'is_string'));
+            }
+        } catch (\Throwable) {
+        }
+
+        $rest = '';
+        if (preg_match('#^/([a-z]{2})(/.*)?$#', $path, $m)) {
+            $candidate = $m[1];
+            if ($locales === [] || in_array($candidate, $locales, true)) {
+                $rest = $m[2] ?? '';
+            } else {
+                $rest = $path;
+            }
+        } else {
+            $rest = $path;
+        }
+
+        if ($rest === '' || $rest === '/') {
+            return '/' . $targetLocale . '/' . $query;
+        }
+
+        return '/' . $targetLocale . $rest . $query;
     }
 }
