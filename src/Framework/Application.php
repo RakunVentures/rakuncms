@@ -173,7 +173,16 @@ final class Application
         $creator = new ServerRequestCreator($psr17Factory, $psr17Factory, $psr17Factory, $psr17Factory);
         $request = $creator->fromGlobals();
 
-        $handler = new Dispatcher($this->middleware);
+        $pipeline = $this->middleware;
+        if (getenv('RAKUN_DEV_RELOAD') === '1') {
+            $stamp = getenv('RAKUN_DEV_RELOAD_STAMP');
+            if (!is_string($stamp) || $stamp === '') {
+                $stamp = $this->getBasePath() . '/cache/.dev-reload-stamp';
+            }
+            array_unshift($pipeline, new \Rkn\Cms\Middleware\DevReloadMiddleware($stamp));
+        }
+
+        $handler = new Dispatcher($pipeline);
         $response = $handler->handle($request);
 
         $emitter = new SapiEmitter();

@@ -26,7 +26,8 @@ final class ServeCommand extends Command
         $this
             ->addOption('host', null, InputOption::VALUE_REQUIRED, 'Host to bind to', 'localhost')
             ->addOption('port', 'p', InputOption::VALUE_REQUIRED, 'Port to listen on', '8080')
-            ->addOption('no-watch', null, InputOption::VALUE_NONE, 'Disable auto-cache clear on file changes');
+            ->addOption('no-watch', null, InputOption::VALUE_NONE, 'Disable auto-cache clear on file changes')
+            ->addOption('workers', null, InputOption::VALUE_REQUIRED, 'PHP_CLI_SERVER_WORKERS — concurrent worker processes', '4');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
@@ -34,6 +35,7 @@ final class ServeCommand extends Command
         $host = (string) $input->getOption('host');
         $port = (int) $input->getOption('port');
         $watch = !$input->getOption('no-watch');
+        $workers = max(1, (int) $input->getOption('workers'));
 
         $basePath = $this->findBasePath();
 
@@ -63,6 +65,10 @@ final class ServeCommand extends Command
             $output->writeln('<error>Startup cache clear failed: ' . $e->getMessage() . '</error>');
         }
 
+        // Live-reload stamp: middleware in dev mode reads its mtime via long-poll.
+        $stampFile = $basePath . '/cache/.dev-reload-stamp';
+        $this->touchReloadStamp($stampFile);
+
         $output->writeln(sprintf(
             '<info>RakunCMS development server started for %s:</info> http://%s:%s',
             basename($basePath),
@@ -76,7 +82,8 @@ final class ServeCommand extends Command
         
         if ($watch) {
             $output->writeln('<info>Watching for file changes in content/, config/ and templates/...</info>');
-            $this->startWatcher($basePath, $output);
+            $output->writeln('<info>Browser live-reload active at /__dev/reload (long polling).</info>');
+            $this->startWatcher($basePath, $stampFile, $output);
         }
 
         $output->writeln('Press Ctrl+C to stop.');
@@ -84,6 +91,14 @@ final class ServeCommand extends Command
         // Support Laravel Herd Dump Server
         putenv('VAR_DUMPER_FORMAT=server');
         putenv('VAR_DUMPER_SERVER=127.0.0.1:9912');
+
+        // Activate DevReloadMiddleware inside spawned `php -S` workers.
+        putenv('RAKUN_DEV_RELOAD=1');
+        putenv('RAKUN_DEV_RELOAD_STAMP=' . $stampFile);
+
+        // Concurrent workers so the live-reload polling never starves real requests.
+        putenv('PHP_CLI_SERVER_WORKERS=' . $workers);
+        $output->writeln(sprintf('<info>PHP_CLI_SERVER_WORKERS=%d</info>', $workers));
 
         $command = sprintf(
             '%s -d display_errors=1 -d display_startup_errors=1 -d error_reporting=E_ALL -d log_errors=1 -S %s:%s -t %s %s/index.php',
@@ -202,7 +217,7 @@ final class ServeCommand extends Command
     /**
      * Simple background watcher that monitors mtime of files.
      */
-    private function startWatcher(string $basePath, OutputInterface $output): void
+    private function startWatcher(string $basePath, string $stampFile, OutputInterface $output): void
     {
         $pid = pcntl_fork();
 
@@ -231,7 +246,7 @@ final class ServeCommand extends Command
 
             if ($currentHash !== $lastHash) {
                 $output->writeln("\n<comment>[" . date('H:i:s') . "] Change detected. Clearing cache...</comment>");
-                
+
                 // Invoke cache:clear command internally
                 try {
                     $command = $this->getApplication()->find('cache:clear');
@@ -239,10 +254,21 @@ final class ServeCommand extends Command
                 } catch (\Throwable $e) {
                     $output->writeln('<error>Auto-cache clear failed: ' . $e->getMessage() . '</error>');
                 }
-                
+
+                $this->touchReloadStamp($stampFile);
+
                 $lastHash = $currentHash;
             }
         }
+    }
+
+    private function touchReloadStamp(string $stampFile): void
+    {
+        $dir = dirname($stampFile);
+        if (!is_dir($dir)) {
+            @mkdir($dir, 0755, true);
+        }
+        @touch($stampFile);
     }
 
     private function calculateDirsHash(array $dirs): string
