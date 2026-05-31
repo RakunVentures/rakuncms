@@ -52,17 +52,23 @@ PROHIBIDO:
   - Cualquier otro lenguaje de scripting (ruby, perl, etc.)
 ```
 
-### 3. SIEMPRE usar MCP Playwright para pruebas de navegador
+### 3. SIEMPRE usar MCP Chrome DevTools para pruebas interactivas de navegador
 
 ```
-REGLA: No usar curl ni wget para verificar UI.
-       Usar las herramientas MCP de Playwright que permiten interacción real con el navegador.
+REGLA: No usar curl ni wget para verificar UI de forma manual o interactiva.
+       Usar las herramientas MCP de Chrome DevTools (`mcp__plugin_chrome-devtools-mcp_chrome-devtools__*`)
+       para smoke tests manuales. Para pruebas E2E programáticas se usa Playwright
+       SOLO como librería JS en specs bajo `src/test/e2e/`.
 
 PERMITIDO:
-  - mcp__playwright__browser_navigate, browser_snapshot, browser_click, etc.
+  - mcp__plugin_chrome-devtools-mcp_chrome-devtools__navigate_page
+  - mcp__plugin_chrome-devtools-mcp_chrome-devtools__take_snapshot
+  - mcp__plugin_chrome-devtools-mcp_chrome-devtools__take_screenshot
+  - Tests programáticos: `npx playwright test` con specs en `src/test/e2e/`
   - curl SOLO para verificar APIs JSON (no páginas HTML)
 
 PROHIBIDO:
+  - mcp__playwright__* (Playwright MCP prohibido para smoke tests manuales)
   - curl http://localhost:8080/pagina (para verificar UI)
   - wget para descargar páginas
 ```
