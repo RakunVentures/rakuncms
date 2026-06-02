@@ -28,10 +28,14 @@ class TemplateWarmupCommand extends Command
             mkdir($cacheDir, 0775, true);
         }
 
-        $twig = new \Twig\Environment(
-            new \Twig\Loader\FilesystemLoader($templateDir),
-            ['cache' => $cacheDir, 'auto_reload' => false]
-        );
+        // Boot the application so config(), app() and the CMS Twig extensions
+        // (t, collection, global, asset, seo_*, csrf, yoyo, …) are registered.
+        // Without this, templates using those functions fail to compile.
+        if (\Rkn\Framework\Application::getInstance() === null) {
+            new \Rkn\Framework\Application($basePath);
+        }
+
+        $twig = \Rkn\Cms\Template\Engine::create($basePath)->twig();
 
         $count = 0;
         $errors = 0;

@@ -18,6 +18,13 @@ class CacheWarmupCommand extends Command
         $basePath = getcwd();
         $cacheDir = $basePath . '/cache';
 
+        // Boot the application so config(), app() and the CMS Twig extensions
+        // (t, collection, global, asset, seo_*, csrf, yoyo, …) are registered.
+        // Without this, templates using those functions fail to compile.
+        if (\Rkn\Framework\Application::getInstance() === null) {
+            new \Rkn\Framework\Application($basePath);
+        }
+
         // Step 1: Rebuild content index
         $output->writeln('<info>Rebuilding content index...</info>');
         $indexer = new \Rkn\Cms\Content\Indexer($basePath);
@@ -32,10 +39,7 @@ class CacheWarmupCommand extends Command
             mkdir($twigCacheDir, 0775, true);
         }
 
-        $twig = new \Twig\Environment(
-            new \Twig\Loader\FilesystemLoader($templateDir),
-            ['cache' => $twigCacheDir, 'auto_reload' => false]
-        );
+        $twig = \Rkn\Cms\Template\Engine::create($basePath)->twig();
 
         $count = 0;
         $iterator = new \RecursiveIteratorIterator(
