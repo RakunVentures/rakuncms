@@ -67,7 +67,7 @@ class InitCommand extends Command
         $this->createFile($basePath . '/config/rakun.yaml', $this->getConfigContent());
         $this->createFile($basePath . '/.env.example', $this->getDotenvExampleContent());
         $this->createFile($basePath . '/.env', $this->getDotenvExampleContent());
-        $this->appendIfMissing($basePath . '/.gitignore', "/.env\n");
+        $this->scaffoldGitignore($basePath . '/.gitignore');
         $this->createFile($basePath . '/content/_globals/site.yaml', $this->getSiteYamlContent());
         $this->createFile($basePath . '/content/pages/index.md', $this->getIndexMdContent());
         $this->createFile($basePath . '/templates/_layouts/base.twig', $this->getBaseTwigContent());
@@ -102,6 +102,28 @@ class InitCommand extends Command
         }
         $prefix = ($existing === '' || str_ends_with($existing, "\n")) ? '' : "\n";
         file_put_contents($path, $prefix . $line, FILE_APPEND);
+    }
+
+    /**
+     * Ensure the project .gitignore ignores dependencies/secrets but NOT the
+     * compiled front-end assets. RakunCMS targets shared hosting (cPanel/Plesk)
+     * with no npm/node on the server, so any CSS/JS build runs locally and the
+     * compiled output under public/assets/ is committed and deployed via git.
+     * Each line is added idempotently so a pre-existing .gitignore is respected.
+     */
+    private function scaffoldGitignore(string $path): void
+    {
+        $lines = [
+            '# Compiled front-end assets ARE committed on purpose: the server has no',
+            '# npm/node, so build CSS/JS locally and version the compiled output.',
+            '/vendor/',
+            '/node_modules/',
+            '/.env',
+            '/.env.*.local',
+        ];
+        foreach ($lines as $line) {
+            $this->appendIfMissing($path, $line . "\n");
+        }
     }
 
     private function getDotenvExampleContent(): string
@@ -201,16 +223,14 @@ RewriteEngine On
 # Evitar lectura directa a archivos y carpetas ocultas
 RewriteRule "(^|/)\." - [F]
 
-# Full-page Cache Rewrites
-RewriteCond %{REQUEST_URI} ^/?$
-RewriteCond %{DOCUMENT_ROOT}/../cache/pages/index.html -f
-RewriteRule .? ../cache/pages/index.html [L]
-
-RewriteCond %{DOCUMENT_ROOT}/../cache/pages%{REQUEST_URI}.html -f
-RewriteRule . ../cache/pages%{REQUEST_URI}.html [L]
+# NOTE: the full-page cache lives ABOVE the docroot and is served by PHP (the
+# PageCacheReader middleware), NOT by Apache. Do NOT add a RewriteRule pointing
+# outside the docroot to the cache directory: Apache 2.4 rejects such paths with
+# "AH10244: invalid URI path" (HTTP 400 Bad Request).
 
 # Fallback al front-controller
 RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
 RewriteRule ^ index.php [QSA,L]
 HTACCESS;
     }
