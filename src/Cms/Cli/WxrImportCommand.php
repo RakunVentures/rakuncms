@@ -18,11 +18,22 @@ final class WxrImportCommand extends Command
     /** @var array<string, string> */
     private array $authorMap = [];
 
+    /** @var array<string, string> remote image URL => local public URL (deduped across posts) */
+    private array $imageMap = [];
+    private int $imagesDownloaded = 0;
+    private int $imagesSkipped = 0;
+    /** @var array<int, string> remote URLs that failed to download (left untouched in body) */
+    private array $imageFailures = [];
+    private int $skippedExisting = 0;
+
     protected function configure(): void
     {
         $this->addArgument('path', InputArgument::REQUIRED, 'The WXR XML file or directory containing XML files');
         $this->addOption('collection', 'c', InputOption::VALUE_REQUIRED, 'Target collection (e.g., blog, pages)', 'blog');
         $this->addOption('post-type', 't', InputOption::VALUE_REQUIRED | InputOption::VALUE_IS_ARRAY, 'Post types to import', ['post', 'page']);
+        $this->addOption('download-images', null, InputOption::VALUE_NONE, 'Download images referenced in post bodies into public/ and rewrite their URLs to local paths (idempotent: skips files already present)');
+        $this->addOption('media-dir', null, InputOption::VALUE_REQUIRED, 'Public-relative directory (under public/) to store downloaded images', 'assets/images/uploads');
+        $this->addOption('overwrite', null, InputOption::VALUE_NONE, 'Overwrite entries that already exist (default: skip existing for an idempotent, non-destructive import)');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
@@ -33,6 +44,9 @@ final class WxrImportCommand extends Command
         $path = $input->getArgument('path');
         $targetCollection = $input->getOption('collection');
         $allowedPostTypes = $input->getOption('post-type');
+        $downloadImages = (bool) $input->getOption('download-images');
+        $mediaDir = trim((string) $input->getOption('media-dir'), '/');
+        $overwrite = (bool) $input->getOption('overwrite');
 
         $files = [];
         if (is_dir($path)) {
@@ -60,12 +74,28 @@ final class WxrImportCommand extends Command
         $totalCount = 0;
         foreach ($files as $file) {
             $output->writeln("Processing <comment>" . basename($file) . "</comment>...");
-            $fileCount = $this->importFileManually($file, $targetCollection, $allowedPostTypes, $output);
+            $fileCount = $this->importFileManually($file, $targetCollection, $allowedPostTypes, $downloadImages, $mediaDir, $overwrite, $output);
             $output->writeln("Finished <comment>" . basename($file) . "</comment>: <info>{$fileCount}</info> items.");
             $totalCount += $fileCount;
         }
 
         $output->writeln("<info>Successfully imported {$totalCount} entries total.</info>");
+
+        if ($this->skippedExisting > 0) {
+            $output->writeln(sprintf("<info>Skipped %d entries already present (use --overwrite to refresh).</info>", $this->skippedExisting));
+        }
+
+        if ($downloadImages) {
+            $output->writeln(sprintf(
+                "<info>Images: %d downloaded, %d already present, %d failed.</info>",
+                $this->imagesDownloaded,
+                $this->imagesSkipped,
+                count($this->imageFailures)
+            ));
+            foreach ($this->imageFailures as $failed) {
+                $output->writeln("  <comment>image FAILED (kept remote URL):</comment> {$failed}");
+            }
+        }
 
         return Command::SUCCESS;
     }
@@ -92,7 +122,7 @@ final class WxrImportCommand extends Command
         }
     }
 
-    private function importFileManually(string $file, string $collection, array $allowedPostTypes, OutputInterface $output): int
+    private function importFileManually(string $file, string $collection, array $allowedPostTypes, bool $downloadImages, string $mediaDir, bool $overwrite, OutputInterface $output): int
     {
         $content = file_get_contents($file);
         if ($content === false) return 0;
@@ -130,12 +160,12 @@ final class WxrImportCommand extends Command
                     $contentChild = $item->children($contentNs);
                     $dc = $item->children($dcNs);
 
-                    $title = (string) $item->title;
+                    $title = trim((string) $item->title);
                     $slug = (string) $wp->post_name;
                     $status = (string) $wp->status;
                     $date = (string) $wp->post_date;
                     $body = (string) $contentChild->encoded;
-                    
+
                     $authorLogin = (string) $dc->creator;
                     $authorName = $this->authorMap[$authorLogin] ?? $authorLogin;
 
@@ -149,20 +179,45 @@ final class WxrImportCommand extends Command
 
                     $filename = "{$folder}/{$slug}.md";
 
+                    // Idempotent + non-destructive: never overwrite an existing entry
+                    // unless --overwrite is given. Re-running a backup is a no-op for
+                    // content already present (no duplicates, and richer prior edits
+                    // such as a curated featured image are left intact).
+                    if (file_exists($filename) && !$overwrite) {
+                        $this->skippedExisting++;
+                        continue;
+                    }
+
                     $link = (string) $item->link;
                     $parsedUrl = parse_url($link);
                     $oldUrlPath = $parsedUrl["path"] ?? "";
 
-                    $frontmatter = [
-                        'title' => $title,
-                        'date' => $date,
-                        'status' => $status,
-                        'author' => $authorName,
-                        'template' => $postType === 'page' ? 'page' : 'blog-post',
-                        'wp_id' => (string) $wp->post_id,
-                        'wp_type' => $postType,
-                        'old_url' => $oldUrlPath,
-                    ];
+                    $body = preg_replace('/\[caption[^\]]*\].*?href="([^"]*)".*?src="([^"]*)".*?\[\/caption\]/is', '![]($2)', $body);
+                    $body = preg_replace('/\[caption[^\]]*\].*?src="([^"]*)".*?\[\/caption\]/is', '![]($1)', $body);
+
+                    if ($downloadImages) {
+                        $body = $this->localizeImages($body, $mediaDir);
+                    }
+
+                    $body = trim($body);
+
+                    // Featured image = first image referenced in the body. This WXR
+                    // export carries _thumbnail_id but no attachment URLs, so the
+                    // thumbnail can't be resolved directly; the first body image is
+                    // the site's existing convention for the cover.
+                    $featured = $this->firstBodyImage($body);
+
+                    $frontmatter = ['title' => $title];
+                    if ($featured !== null) {
+                        $frontmatter['image'] = $featured;
+                    }
+                    $frontmatter['date'] = $date;
+                    $frontmatter['status'] = $status;
+                    $frontmatter['author'] = $authorName;
+                    $frontmatter['template'] = $postType === 'page' ? 'page' : 'blog-post';
+                    $frontmatter['wp_id'] = (string) $wp->post_id;
+                    $frontmatter['wp_type'] = $postType;
+                    $frontmatter['old_url'] = $oldUrlPath;
 
                     foreach ($item->category as $cat) {
                         $domain = (string) $cat['domain'];
@@ -173,9 +228,6 @@ final class WxrImportCommand extends Command
                             $frontmatter['tags'][] = $name;
                         }
                     }
-
-                    $body = preg_replace('/\[caption[^\]]*\].*?href="([^"]*)".*?src="([^"]*)".*?\[\/caption\]/is', '![]($2)', $body);
-                    $body = preg_replace('/\[caption[^\]]*\].*?src="([^"]*)".*?\[\/caption\]/is', '![]($1)', $body);
 
                     $contentMd = "---\n";
                     foreach ($frontmatter as $key => $value) {
@@ -195,6 +247,113 @@ final class WxrImportCommand extends Command
         }
         $output->writeln('');
         return $count;
+    }
+
+    /**
+     * Download every WordPress uploads image referenced in the body and rewrite
+     * its URL to a local path. A URL is rewritten ONLY if the file is present
+     * locally afterwards (downloaded now, or already on disk) — on failure the
+     * original remote URL is kept so the link is never silently lost. Idempotent
+     * across runs: existing non-empty files are skipped, not re-downloaded.
+     */
+    private function localizeImages(string $body, string $mediaDir): string
+    {
+        if (!preg_match_all('#https?://[^\s"\x27<>()]+/uploads/[^\s"\x27<>()]+\.(?:jpe?g|png|gif|webp)#i', $body, $matches)) {
+            return $body;
+        }
+
+        foreach (array_unique($matches[0]) as $url) {
+            if (isset($this->imageMap[$url])) {
+                $body = str_replace($url, $this->imageMap[$url], $body);
+                continue;
+            }
+
+            $target = $this->mediaTargetForUrl($url, $mediaDir);
+            if ($target === null) {
+                continue;
+            }
+
+            $dest = getcwd() . '/public/' . trim($mediaDir, '/') . '/' . $target['rel'];
+
+            if (is_file($dest) && filesize($dest) > 0) {
+                $this->imagesSkipped++;
+                $this->imageMap[$url] = $target['public_url'];
+                $body = str_replace($url, $target['public_url'], $body);
+                continue;
+            }
+
+            if ($this->downloadImage($url, $dest)) {
+                $this->imagesDownloaded++;
+                $this->imageMap[$url] = $target['public_url'];
+                $body = str_replace($url, $target['public_url'], $body);
+            } else {
+                $this->imageFailures[] = $url;
+            }
+        }
+
+        return $body;
+    }
+
+    /**
+     * First image referenced in the body (HTML <img src> or markdown), used as
+     * the featured image. Returns null when the body has no image.
+     */
+    private function firstBodyImage(string $body): ?string
+    {
+        if (preg_match('#<img[^>]+src="([^"]+)"#i', $body, $m)) {
+            return $m[1];
+        }
+        if (preg_match('#!\[[^\]]*\]\(([^)]+)\)#', $body, $m)) {
+            return $m[1];
+        }
+        return null;
+    }
+
+    /**
+     * Map a WordPress uploads URL to its local relative path + public URL.
+     * Pure (no I/O) so it is unit-testable. Returns null for non-uploads URLs
+     * or paths that try to traverse out of the media dir.
+     *
+     * @return array{rel: string, public_url: string}|null
+     */
+    private function mediaTargetForUrl(string $url, string $mediaDir): ?array
+    {
+        $clean = explode('?', $url)[0];
+        $pos = stripos($clean, '/uploads/');
+        if ($pos === false) {
+            return null;
+        }
+        $rel = ltrim(substr($clean, $pos + strlen('/uploads/')), '/');
+        if ($rel === '' || str_contains($rel, '..')) {
+            return null;
+        }
+        return ['rel' => $rel, 'public_url' => '/' . trim($mediaDir, '/') . '/' . $rel];
+    }
+
+    private function downloadImage(string $url, string $dest): bool
+    {
+        $dir = dirname($dest);
+        if (!is_dir($dir) && !mkdir($dir, 0755, true) && !is_dir($dir)) {
+            return false;
+        }
+
+        $ctx = stream_context_create([
+            'http' => ['method' => 'GET', 'timeout' => 30, 'follow_location' => 1, 'max_redirects' => 5, 'user_agent' => 'RakunCMS-WXR-Importer'],
+            'ssl'  => ['verify_peer' => false, 'verify_peer_name' => false],
+        ]);
+
+        $data = @file_get_contents($url, false, $ctx);
+        if ($data === false || strlen($data) < 64) {
+            return false;
+        }
+
+        // Reject obvious HTML error pages served with 200.
+        $head = strtolower(ltrim(substr($data, 0, 32)));
+        if (str_starts_with($head, '<!doctype') || str_starts_with($head, '<html')) {
+            return false;
+        }
+
+        return file_put_contents($dest, $data) !== false;
     }
 
     private function slugify(string $text): string
