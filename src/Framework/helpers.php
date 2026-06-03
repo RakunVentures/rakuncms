@@ -6,6 +6,8 @@ use Rkn\Framework\Application;
 use Rkn\Cms\Content\Indexer;
 use Rkn\Cms\Content\Query;
 use Rkn\Cms\Content\Entry;
+use Rkn\Cms\Content\IndexStore;
+use Rkn\Cms\Content\IndexStoreFactory;
 
 if (!function_exists('app')) {
     /**
@@ -43,47 +45,47 @@ if (!function_exists('config')) {
     }
 }
 
+if (!function_exists('index_store')) {
+    /**
+     * The active content IndexStore (php array or sqlite), memoised per request
+     * by the container. Falls back to a freshly-built store outside a request.
+     */
+    function index_store(): IndexStore
+    {
+        $application = Application::getInstance();
+        if ($application !== null && $application->container()->has('index_store')) {
+            return $application->container()->get('index_store');
+        }
+
+        $basePath = $application !== null ? $application->getBasePath() : (getcwd() ?: '.');
+        return IndexStoreFactory::make($basePath);
+    }
+}
+
 if (!function_exists('collection')) {
     /**
      * Get a content collection query.
      */
     function collection(string $name): Query
     {
-        $basePath = app('base_path');
-        $indexer = new Indexer($basePath);
-        $index = $indexer->load();
-
-        return (new Query($index))->collection($name);
+        return (new Query(index_store()))->collection($name);
     }
 }
 
 if (!function_exists('entry')) {
     /**
-     * Get a specific content entry.
+     * Get a specific content entry by index key (exact) or key prefix + locale.
      */
     function entry(string $path): ?Entry
     {
-        $basePath = app('base_path');
-        $indexer = new Indexer($basePath);
-        $index = $indexer->load();
-        $entries = $index['entries'];
-
-        if (isset($entries[$path])) {
-            return Entry::fromArray($entries[$path]);
-        }
-
         $locale = 'es';
         try {
             $locale = app('locale');
         } catch (\Throwable) {}
 
-        foreach ($entries as $key => $data) {
-            if (str_starts_with($key, $path) && $data['locale'] === $locale) {
-                return Entry::fromArray($data);
-            }
-        }
+        $row = index_store()->findEntryByPath($path, $locale);
 
-        return null;
+        return $row !== null ? Entry::fromArray($row) : null;
     }
 }
 

@@ -7,10 +7,12 @@ namespace Rkn\Cms\Http\Controllers;
 use Nyholm\Psr7\Response;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
+use Rkn\Cms\Content\ContentDraft;
+use Rkn\Cms\Content\ContentStorageFactory;
 use Rkn\Cms\Content\Entry;
 use Rkn\Cms\Content\Indexer;
+use Rkn\Cms\Content\IndexStoreFactory;
 use Rkn\Cms\Content\Query;
-use Symfony\Component\Yaml\Yaml;
 
 final class ContentApiController
 {
@@ -23,67 +25,201 @@ final class ContentApiController
 
     public function showConfig(): ResponseInterface
     {
-        $config = function_exists('config') ? (\config() ?? []) : [];
-        return $this->json(200, $config);
+        return $this->json(200, $this->redactSecrets($this->fullConfig()));
+    }
+
+    /**
+     * Collection/field schema for building dynamic admin forms. Exposes only
+     * structural info (no secrets), from either config layout (top-level
+     * `collections` or monolithic `rakun.collections`).
+     */
+    public function schema(): ResponseInterface
+    {
+        $config = $this->fullConfig();
+        $collections = $config['collections'] ?? ($config['rakun']['collections'] ?? []);
+        if (!is_array($collections)) {
+            $collections = [];
+        }
+
+        $out = [];
+        foreach ($collections as $slug => $def) {
+            if (!is_array($def)) {
+                continue;
+            }
+            $out[] = [
+                'slug'             => is_string($slug) ? $slug : (string) ($def['id'] ?? ''),
+                'name'             => $def['name'] ?? (is_string($slug) ? $slug : ''),
+                'chronological'    => (bool) ($def['chronological'] ?? false),
+                'default_template' => $def['default_template'] ?? null,
+                'active'           => (bool) ($def['active'] ?? true),
+                'fields'           => is_array($def['fields'] ?? null) ? $def['fields'] : [],
+            ];
+        }
+
+        return $this->json(200, ['data' => $out]);
+    }
+
+    /**
+     * The full merged config array (or [] outside a booted app).
+     *
+     * @return array<array-key, mixed>
+     */
+    private function fullConfig(): array
+    {
+        try {
+            $config = \app('config');
+        } catch (\Throwable) {
+            return [];
+        }
+
+        return is_array($config) ? $config : [];
+    }
+
+    /**
+     * Strip secrets before exposing config over the API: drops any `api.keys`
+     * list (live API keys) at any depth and redacts password/secret/token
+     * scalar fields. Recursive.
+     *
+     * @param  array<array-key, mixed>  $config
+     * @return array<array-key, mixed>
+     */
+    private function redactSecrets(array $config): array
+    {
+        foreach ($config as $key => $value) {
+            if (is_array($value)) {
+                if ($key === 'api' && array_key_exists('keys', $value)) {
+                    unset($value['keys']);
+                }
+                $config[$key] = $this->redactSecrets($value);
+            } elseif (is_string($key) && preg_match('/(password|secret|token)/i', $key) === 1) {
+                $config[$key] = '***';
+            }
+        }
+
+        return $config;
     }
 
     public function list(ServerRequestInterface $request): ResponseInterface
     {
-        $params = $request->getQueryParams();
-        $filterCollection = isset($params['collection']) ? (string) $params['collection'] : null;
+        $params     = $request->getQueryParams();
+        $collection = isset($params['collection']) && $params['collection'] !== '' ? (string) $params['collection'] : null;
+        $locale     = isset($params['locale']) && $params['locale'] !== '' ? (string) $params['locale'] : null;
+        $search     = isset($params['q']) ? trim((string) $params['q']) : '';
+        $sortField  = isset($params['sort']) ? (string) $params['sort'] : '';
+        $page       = max(1, (int) ($params['page'] ?? 1));
+        $perPage    = max(1, min(100, (int) ($params['per_page'] ?? 20)));
+        $offset     = ($page - 1) * $perPage;
 
-        $collectionsToScan = $filterCollection !== null
-            ? [$filterCollection]
-            : $this->discoverCollections();
+        $store = IndexStoreFactory::make($this->basePath);
 
-        $data = [];
-        foreach ($collectionsToScan as $collection) {
-            $dir = $this->basePath . '/content/' . $collection;
-            if (!is_dir($dir)) {
-                continue;
+        // No collection filter: full enumeration via the index (admin overview).
+        // Constant-memory stream, sliced in PHP for the requested page.
+        if ($collection === null) {
+            $rows = [];
+            foreach ($store->each() as $row) {
+                $rows[] = $row;
             }
+            $total = count($rows);
+            $data  = array_map(
+                fn (array $row): array => $this->rowSummary($row),
+                array_slice($rows, $offset, $perPage),
+            );
 
-            foreach (new \DirectoryIterator($dir) as $file) {
-                if ($file->getExtension() !== 'md' || str_starts_with($file->getFilename(), '.')) {
-                    continue;
-                }
-
-                $raw   = (string) file_get_contents($file->getPathname());
-                $parts = explode('---', $raw, 3);
-                $meta  = [];
-                if (count($parts) >= 3) {
-                    $parsed = Yaml::parse($parts[1]);
-                    if (is_array($parsed)) {
-                        $meta = $parsed;
-                    }
-                }
-
-                $basename = $file->getBasename('.md');
-                $slug     = $this->stripLocale($basename);
-
-                $data[] = [
-                    'title'      => $meta['title'] ?? $basename,
-                    'slug'       => $slug,
-                    'collection' => $collection,
-                    'date'       => $meta['date'] ?? date('Y-m-d', $file->getMTime()),
-                    'meta'       => $meta,
-                ];
-            }
+            return $this->json(200, ['data' => $data, 'meta' => $this->pageMeta($total, $page, $perPage)]);
         }
 
-        return $this->json(200, [
-            'data' => $data,
-            'meta' => [
-                'total' => count($data),
-                'page'  => 1,
-            ],
-        ]);
+        $base = (new Query($store))->collection($collection);
+        if ($locale !== null) {
+            $base = $base->locale($locale);
+        }
+        if ($sortField !== '') {
+            $direction = strtolower((string) ($params['order'] ?? 'asc')) === 'desc' ? 'desc' : 'asc';
+            $base = $base->sort($sortField, $direction);
+        }
+
+        if ($search !== '') {
+            // Title search. Filtered total requires materialising the matched
+            // set (fine for the admin's low traffic); meta.total reflects matches.
+            $matched = $base->where('title', 'contains', $search)->get();
+            $total   = count($matched);
+            $data    = array_map(
+                fn (Entry $e): array => $this->serializeEntry($e),
+                array_slice($matched, $offset, $perPage),
+            );
+
+            return $this->json(200, ['data' => $data, 'meta' => $this->pageMeta($total, $page, $perPage)]);
+        }
+
+        $total   = $base->count();
+        $entries = $base->limit($perPage)->offset($offset)->get();
+        $data    = array_map(fn (Entry $e): array => $this->serializeEntry($e), $entries);
+
+        return $this->json(200, ['data' => $data, 'meta' => $this->pageMeta($total, $page, $perPage)]);
     }
 
-    public function show(string $collection, string $slug): ResponseInterface
+    /**
+     * Summary row for the list endpoint, from a raw index row.
+     *
+     * @param  array<string, mixed>  $row
+     * @return array<string, mixed>
+     */
+    private function rowSummary(array $row): array
     {
-        $indexer = new Indexer($this->basePath);
-        $query   = new Query($indexer->load());
+        $meta = is_array($row['meta'] ?? null) ? $row['meta'] : [];
+
+        return [
+            'title'      => $row['title'] ?? ($row['slug'] ?? ''),
+            'slug'       => $row['slug'] ?? '',
+            'collection' => $row['collection'] ?? '',
+            'locale'     => $row['locale'] ?? null,
+            'status'     => $this->normalizeStatus($meta, (bool) ($row['draft'] ?? false)),
+            'date'       => $row['date'] ?? null,
+            'meta'       => $meta,
+        ];
+    }
+
+    /**
+     * Normalize an entry's publication status to a stable machine value:
+     * published | draft | scheduled. Honors frontmatter `status` (incl. the
+     * WordPress `publish`/`future` vocabulary) and the `draft` flag.
+     *
+     * @param  array<string, mixed>  $meta
+     */
+    private function normalizeStatus(array $meta, bool $draft = false): string
+    {
+        $raw = $meta['status'] ?? null;
+        if (is_string($raw) && $raw !== '') {
+            return match (strtolower($raw)) {
+                'publish', 'published'        => 'published',
+                'draft'                       => 'draft',
+                'future', 'scheduled', 'pending' => 'scheduled',
+                default                       => strtolower($raw),
+            };
+        }
+
+        if ($draft || !empty($meta['draft'])) {
+            return 'draft';
+        }
+
+        return 'published';
+    }
+
+    /**
+     * @return array{total: int, page: int, per_page: int, pages: int}
+     */
+    private function pageMeta(int $total, int $page, int $perPage): array
+    {
+        return [
+            'total'    => $total,
+            'page'     => $page,
+            'per_page' => $perPage,
+            'pages'    => (int) ceil($total / $perPage),
+        ];
+    }
+
+    public function show(string $collection, string $slug, bool $raw = false): ResponseInterface
+    {
+        $query   = new Query(IndexStoreFactory::make($this->basePath));
         $entries = $query->collection($collection)->where('slug', '=', $slug)->get();
         $entry   = $entries[0] ?? null;
 
@@ -92,8 +228,74 @@ final class ContentApiController
         }
 
         $data = $this->serializeEntry($entry);
-        $data['content'] = $entry->content();
+        // `?raw=1` returns the raw Markdown body (for editors); otherwise rendered HTML.
+        $data['content'] = $raw ? $this->rawBody($entry->file()) : $entry->content();
+
         return $this->json(200, ['data' => $data]);
+    }
+
+    /**
+     * Raw Markdown body (frontmatter stripped) read from the entry's `.md` file.
+     */
+    private function rawBody(string $relativeFile): string
+    {
+        if ($relativeFile === '') {
+            return '';
+        }
+        $path = $this->basePath . '/' . ltrim($relativeFile, '/');
+        if (!is_file($path)) {
+            return '';
+        }
+
+        $raw   = (string) file_get_contents($path);
+        $parts = explode('---', $raw, 3);
+
+        return count($parts) >= 3 ? ltrim($parts[2], "\n") : $raw;
+    }
+
+    /**
+     * Update an existing entry: merge incoming title/meta/content into the
+     * file's frontmatter+body, preserving its locale and any fields not sent.
+     * The `.md` file remains the write target; the active index is refreshed.
+     * (PUT routes to here from both the native and WP-compat dispatchers.)
+     */
+    public function update(ServerRequestInterface $request, string $collection, string $slug): ResponseInterface
+    {
+        $body = json_decode((string) $request->getBody(), true);
+        if (!is_array($body)) {
+            return $this->json(400, ['error' => 'Invalid JSON body']);
+        }
+
+        $locale  = (string) ($body['locale'] ?? $this->defaultLocale());
+        $storage = ContentStorageFactory::make($this->basePath);
+
+        $existing = $storage->read($collection, $locale, $slug);
+        if ($existing === null) {
+            return $this->json(404, ['error' => "Entry '{$slug}' not found in '{$collection}'"]);
+        }
+
+        $meta = $existing->frontmatter;
+        if (array_key_exists('title', $body)) {
+            $meta['title'] = (string) $body['title'];
+        }
+        if (isset($body['meta']) && is_array($body['meta'])) {
+            $meta = array_merge($meta, $body['meta']);
+        }
+        $content = array_key_exists('content', $body) ? (string) $body['content'] : $existing->body;
+
+        $storage->write(new ContentDraft($collection, $locale, $slug, $meta, $content));
+        $this->refreshIndex();
+
+        return $this->json(200, [
+            'data' => [
+                'title'      => $meta['title'] ?? $slug,
+                'slug'       => $slug,
+                'collection' => $collection,
+                'locale'     => $locale,
+                'meta'       => $meta,
+            ],
+            'message' => 'Updated',
+        ]);
     }
 
     public function create(ServerRequestInterface $request, string $collection): ResponseInterface
@@ -108,29 +310,23 @@ final class ContentApiController
             return $this->json(422, ['error' => 'Title is required']);
         }
 
-        $locale  = (string) ($body['locale'] ?? 'en');
+        $locale  = (string) ($body['locale'] ?? $this->defaultLocale());
         $slug    = (string) ($body['slug'] ?? $this->slugify($title));
         $meta    = is_array($body['meta'] ?? null) ? $body['meta'] : [];
         $content = (string) ($body['content'] ?? '');
 
-        $dir      = $this->basePath . '/content/' . $collection;
-        $filePath = "{$dir}/{$slug}.{$locale}.md";
-
-        if (file_exists($filePath)) {
+        $storage = ContentStorageFactory::make($this->basePath);
+        if ($storage->read($collection, $locale, $slug) !== null) {
             return $this->json(409, ['error' => "Entry '{$slug}' already exists in '{$collection}'"]);
-        }
-
-        if (!is_dir($dir)) {
-            mkdir($dir, 0755, true);
         }
 
         $frontmatter = array_merge(
             ['title' => $title, 'date' => date('Y-m-d H:i:s')],
             $meta,
         );
-        $fileContent = "---\n" . Yaml::dump($frontmatter, 2) . "---\n\n" . $content;
 
-        file_put_contents($filePath, $fileContent);
+        $storage->write(new ContentDraft($collection, $locale, $slug, $frontmatter, $content));
+        $this->refreshIndex();
 
         return $this->json(201, [
             'data' => [
@@ -158,11 +354,53 @@ final class ContentApiController
             return $this->json(404, ['error' => "Entry '{$slug}' not found in '{$collection}'"]);
         }
 
+        $storage = ContentStorageFactory::make($this->basePath);
         foreach ($matched as $file) {
-            unlink($file);
+            $segments = explode('.', basename($file, '.md'));
+            $locale = (count($segments) >= 2 && strlen((string) end($segments)) === 2)
+                ? (string) end($segments)
+                : $this->defaultLocale();
+            $storage->delete($collection, $locale, $slug);
         }
+        $this->refreshIndex();
 
         return $this->json(200, ['message' => 'Deleted']);
+    }
+
+    /**
+     * Site default locale (or 'en' when the app isn't booted, e.g. unit tests).
+     */
+    private function defaultLocale(): string
+    {
+        try {
+            $locale = \config('site.default_locale') ?? \config('rakun.site.default_locale');
+            if (is_string($locale) && $locale !== '') {
+                return $locale;
+            }
+        } catch (\Throwable) {
+            // Application not initialised — fall through to the safe default.
+        }
+
+        return 'en';
+    }
+
+    /**
+     * Refresh the active content index after a write so changes are visible
+     * immediately. SQLite sync is incremental (only the touched file); the PHP
+     * driver rebuilds. Best-effort — the index/rebuild endpoint also refreshes.
+     */
+    private function refreshIndex(): void
+    {
+        try {
+            $store = IndexStoreFactory::make($this->basePath);
+            if ($store instanceof \Rkn\Cms\Content\Stores\SqliteIndexStore) {
+                $store->sync();
+            } else {
+                (new Indexer($this->basePath))->rebuild();
+            }
+        } catch (\Throwable) {
+            // ignore; explicit rebuild still available
+        }
     }
 
     public function collections(): ResponseInterface
@@ -207,26 +445,20 @@ final class ContentApiController
         return $names;
     }
 
-    private function stripLocale(string $basename): string
-    {
-        $parts = explode('.', $basename);
-        if (count($parts) >= 2 && strlen((string) end($parts)) === 2) {
-            array_pop($parts);
-        }
-        return implode('.', $parts);
-    }
-
     /**
      * @return array<string, mixed>
      */
     private function serializeEntry(Entry $entry): array
     {
+        $meta = $entry->meta();
+
         return [
             'title'      => $entry->title(),
             'slug'       => $entry->slug(),
             'collection' => $entry->collection(),
+            'status'     => $this->normalizeStatus($meta),
             'date'       => $entry->date(),
-            'meta'       => $entry->meta(),
+            'meta'       => $meta,
         ];
     }
 

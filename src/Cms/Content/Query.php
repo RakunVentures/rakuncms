@@ -4,13 +4,16 @@ declare(strict_types=1);
 
 namespace Rkn\Cms\Content;
 
+use Rkn\Cms\Content\Stores\PhpArrayIndexStore;
+
+/**
+ * Fluent content query. Public API is unchanged; internally it accumulates a
+ * QuerySpec and delegates to an IndexStore (PhpArray or SQLite). Constructing
+ * with the legacy {entries, indices} array stays supported for back-compat.
+ */
 final class Query
 {
-    /** @var array<string, array<string, mixed>> */
-    private array $entries;
-
-    /** @var array<string, array<string, list<string>|string>> */
-    private array $indices;
+    private IndexStore $store;
 
     private ?string $collectionFilter = null;
     private ?string $localeFilter = null;
@@ -25,12 +28,11 @@ final class Query
     private int $offsetCount = 0;
 
     /**
-     * @param array{entries: array<string, array<string, mixed>>, indices: array<string, array<string, list<string>|string>>, meta: array<string, mixed>} $index
+     * @param array{entries: array<string, array<string, mixed>>, indices: array<string, mixed>, meta?: array<string, mixed>}|IndexStore $index
      */
-    public function __construct(array $index)
+    public function __construct(array|IndexStore $index)
     {
-        $this->entries = $index['entries'];
-        $this->indices = $index['indices'];
+        $this->store = $index instanceof IndexStore ? $index : new PhpArrayIndexStore($index);
     }
 
     public function collection(string $name): self
@@ -70,11 +72,7 @@ final class Query
             return [];
         }
 
-        $sectionsIndex = $this->indices['sections'][$this->collectionFilter] ?? [];
-        if (!is_array($sectionsIndex)) {
-            return [];
-        }
-
+        $sectionsIndex = $this->store->sectionsFor($this->collectionFilter);
         $resolvedLocale = $locale ?? $this->localeFilter;
 
         $result = [];
@@ -135,48 +133,8 @@ final class Query
      */
     public function get(): array
     {
-        $keys = $this->resolveKeys();
-
-        // Apply conditions
-        $keys = array_filter($keys, function (string $key) {
-            $entry = $this->entries[$key] ?? null;
-            if ($entry === null) {
-                return false;
-            }
-
-            foreach ($this->conditions as $condition) {
-                if (!$this->matchCondition($entry, $condition)) {
-                    return false;
-                }
-            }
-
-            return true;
-        });
-
-        // Sort
-        if ($this->sortField !== null) {
-            $field = $this->sortField;
-            $dir = $this->sortDirection;
-            $entries = &$this->entries;
-
-            usort($keys, function (string $a, string $b) use ($field, $dir, $entries) {
-                $va = $entries[$a][$field] ?? '';
-                $vb = $entries[$b][$field] ?? '';
-
-                $cmp = is_numeric($va) && is_numeric($vb)
-                    ? $va <=> $vb
-                    : strcmp((string) $va, (string) $vb);
-
-                return $dir === 'desc' ? -$cmp : $cmp;
-            });
-        }
-
-        // Offset + Limit
-        if ($this->offsetCount > 0 || $this->limitCount !== null) {
-            $keys = array_slice($keys, $this->offsetCount, $this->limitCount);
-        }
-
-        return array_map(fn (string $key) => Entry::fromArray($this->entries[$key]), array_values($keys));
+        $rows = $this->store->query($this->spec());
+        return array_map(fn (array $row) => Entry::fromArray($row), $rows);
     }
 
     public function first(): ?Entry
@@ -187,7 +145,7 @@ final class Query
 
     public function count(): int
     {
-        return count($this->resolveKeys());
+        return $this->store->count($this->spec());
     }
 
     /**
@@ -195,83 +153,21 @@ final class Query
      */
     public function findBySlug(string $collection, string $locale, string $slug): ?Entry
     {
-        $key = $collection . ':' . $locale . ':' . $slug;
-        $entryKey = $this->indices['by_locale_slug'][$key] ?? null;
-
-        if ($entryKey !== null && isset($this->entries[$entryKey])) {
-            return Entry::fromArray($this->entries[$entryKey]);
-        }
-
-        // Fallback: search through entries (also covers root-only slug matches)
-        foreach ($this->entries as $data) {
-            if ($data['collection'] !== $collection || $data['locale'] !== $locale) {
-                continue;
-            }
-            $section = (string) ($data['section'] ?? '');
-            $entrySlug = $data['slugs'][$locale] ?? $data['slug'];
-            $fullSlug = $section !== '' ? $section . '/' . $entrySlug : $entrySlug;
-            if ($fullSlug === $slug || $entrySlug === $slug) {
-                return Entry::fromArray($data);
-            }
-        }
-
-        return null;
+        $row = $this->store->findBySlug($collection, $locale, $slug);
+        return $row !== null ? Entry::fromArray($row) : null;
     }
 
-    /**
-     * @return list<string>
-     */
-    private function resolveKeys(): array
+    private function spec(): QuerySpec
     {
-        $sets = [];
-
-        if ($this->collectionFilter !== null) {
-            $sets[] = $this->indices['by_collection'][$this->collectionFilter] ?? [];
-        }
-        if ($this->localeFilter !== null) {
-            $sets[] = $this->indices['by_locale'][$this->localeFilter] ?? [];
-        }
-        if ($this->sectionFilter !== null && $this->collectionFilter !== null) {
-            $sectionKey = $this->collectionFilter . ':' . $this->sectionFilter;
-            $sets[] = $this->indices['by_section'][$sectionKey] ?? [];
-        }
-
-        if ($sets === []) {
-            return array_keys($this->entries);
-        }
-
-        $result = array_shift($sets);
-        foreach ($sets as $set) {
-            $result = array_intersect($result, $set);
-        }
-
-        return array_values($result);
-    }
-
-    /**
-     * @param array<string, mixed> $entry
-     * @param array{field: string, operator: string, value: mixed} $condition
-     */
-    private function matchCondition(array $entry, array $condition): bool
-    {
-        $field = $condition['field'];
-        $operator = $condition['operator'];
-        $value = $condition['value'];
-
-        $entryValue = $entry[$field] ?? ($entry['meta'][$field] ?? null);
-
-        return match ($operator) {
-            '=' , '==' => $entryValue == $value,
-            '===' => $entryValue === $value,
-            '!=' , '<>' => $entryValue != $value,
-            '>' => $entryValue > $value,
-            '<' => $entryValue < $value,
-            '>=' => $entryValue >= $value,
-            '<=' => $entryValue <= $value,
-            'contains' => is_string($entryValue) && str_contains(strtolower($entryValue), strtolower((string) $value)),
-            'in' => is_array($value) && in_array($entryValue, $value),
-            'has' => is_array($entryValue) && in_array($value, $entryValue),
-            default => false,
-        };
+        return new QuerySpec(
+            collection: $this->collectionFilter,
+            locale: $this->localeFilter,
+            section: $this->sectionFilter,
+            conditions: $this->conditions,
+            sortField: $this->sortField,
+            sortDirection: $this->sortDirection,
+            limit: $this->limitCount,
+            offset: $this->offsetCount,
+        );
     }
 }

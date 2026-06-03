@@ -135,6 +135,11 @@ final class Application
             return new \Rkn\Cms\Queue\FileQueue($basePath);
         });
 
+        // Active content index backend (php array | sqlite), memoised per request.
+        $container->set('index_store', function () use ($basePath) {
+            return \Rkn\Cms\Content\IndexStoreFactory::make($basePath);
+        });
+
         $container->set(\Rkn\Cms\Mail\Mailer::class, function () use ($container) {
             $config = $container->get('config');
             return new \Rkn\Cms\Mail\Mailer($config['mail'] ?? []);

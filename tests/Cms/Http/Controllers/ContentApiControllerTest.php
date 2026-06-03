@@ -92,6 +92,35 @@ test('list filters by collection', function () {
     }
 });
 
+test('list paginates with page and per_page', function () {
+    $request = (new ServerRequest('GET', new Uri('/api/v1/entries')))
+        ->withQueryParams(['per_page' => '2', 'page' => '1']);
+    $data = json_decode((string) $this->controller->list($request)->getBody(), true);
+
+    expect($data['data'])->toHaveCount(2);
+    expect($data['meta']['total'])->toBe(3);
+    expect($data['meta']['per_page'])->toBe(2);
+    expect($data['meta']['pages'])->toBe(2);
+
+    $request2 = (new ServerRequest('GET', new Uri('/api/v1/entries')))
+        ->withQueryParams(['per_page' => '2', 'page' => '2']);
+    $data2 = json_decode((string) $this->controller->list($request2)->getBody(), true);
+
+    expect($data2['data'])->toHaveCount(1);
+    expect($data2['meta']['page'])->toBe(2);
+});
+
+test('list paginates within a collection', function () {
+    $request = (new ServerRequest('GET', new Uri('/api/v1/entries')))
+        ->withQueryParams(['collection' => 'blog', 'per_page' => '1', 'page' => '1']);
+    $data = json_decode((string) $this->controller->list($request)->getBody(), true);
+
+    expect($data['data'])->toHaveCount(1);
+    expect($data['meta']['total'])->toBe(2);
+    expect($data['meta']['pages'])->toBe(2);
+    expect($data['data'][0]['collection'])->toBe('blog');
+});
+
 test('show returns entry with content key', function () {
     $response = $this->controller->show('blog', 'hello');
 
@@ -108,6 +137,31 @@ test('show returns 404 for missing entry', function () {
     $response = $this->controller->show('blog', 'nonexistent');
 
     expect($response->getStatusCode())->toBe(404);
+});
+
+test('show returns raw markdown body with raw=true', function () {
+    $raw = json_decode((string) $this->controller->show('blog', 'hello', true)->getBody(), true);
+
+    // Raw Markdown body (read from the .md file), not rendered HTML.
+    expect($raw['data']['content'])->toContain('Hello world content.');
+    expect($raw['data']['content'])->not->toContain('<p>');
+});
+
+test('entries expose a normalized status (default published)', function () {
+    $data = json_decode((string) $this->controller->show('blog', 'hello')->getBody(), true);
+
+    expect($data['data']['status'])->toBe('published');
+});
+
+test('status normalizes WordPress publish/draft vocabulary', function () {
+    file_put_contents($this->tempDir . '/content/blog/wp.en.md', "---\ntitle: WP\nstatus: publish\n---\n\nbody");
+    file_put_contents($this->tempDir . '/content/blog/dr.en.md', "---\ntitle: Draft One\nstatus: draft\n---\n\nbody");
+
+    $pub = json_decode((string) $this->controller->show('blog', 'wp')->getBody(), true);
+    $dra = json_decode((string) $this->controller->show('blog', 'dr')->getBody(), true);
+
+    expect($pub['data']['status'])->toBe('published');
+    expect($dra['data']['status'])->toBe('draft');
 });
 
 test('create writes new markdown file', function () {
@@ -167,6 +221,63 @@ test('delete returns 404 for missing entry', function () {
     $response = $this->controller->delete('blog', 'nonexistent');
 
     expect($response->getStatusCode())->toBe(404);
+});
+
+test('update merges title and content, preserving untouched fields', function () {
+    $body = json_encode([
+        'title'   => 'Hello Updated',
+        'content' => 'Updated body text.',
+        'meta'    => ['description' => 'Edited desc'],
+    ]);
+    $request = (new ServerRequest('PUT', new Uri('/api/v1/entries/blog/hello')))
+        ->withBody(\Nyholm\Psr7\Stream::create((string) $body));
+
+    $response = $this->controller->update($request, 'blog', 'hello');
+    $data = json_decode((string) $response->getBody(), true);
+
+    expect($response->getStatusCode())->toBe(200);
+    expect($data['data']['title'])->toBe('Hello Updated');
+    expect($data['data']['slug'])->toBe('hello');
+    expect($data['data']['locale'])->toBe('en');
+
+    $content = file_get_contents($this->tempDir . '/content/blog/hello.en.md');
+    expect($content)->toContain('Hello Updated');
+    expect($content)->toContain('Updated body text.');
+    expect($content)->toContain('Edited desc');
+    // A field not sent in the update (the original tag) is preserved.
+    expect($content)->toContain('php');
+});
+
+test('update keeps existing body when only title is sent', function () {
+    $body = json_encode(['title' => 'Only Title Changed']);
+    $request = (new ServerRequest('PUT', new Uri('/api/v1/entries/blog/second')))
+        ->withBody(\Nyholm\Psr7\Stream::create((string) $body));
+
+    $response = $this->controller->update($request, 'blog', 'second');
+
+    expect($response->getStatusCode())->toBe(200);
+    $content = file_get_contents($this->tempDir . '/content/blog/second.en.md');
+    expect($content)->toContain('Only Title Changed');
+    expect($content)->toContain('Second post content.');
+});
+
+test('update returns 404 for missing entry', function () {
+    $body = json_encode(['title' => 'Nope']);
+    $request = (new ServerRequest('PUT', new Uri('/api/v1/entries/blog/nonexistent')))
+        ->withBody(\Nyholm\Psr7\Stream::create((string) $body));
+
+    $response = $this->controller->update($request, 'blog', 'nonexistent');
+
+    expect($response->getStatusCode())->toBe(404);
+});
+
+test('update returns 400 for invalid JSON body', function () {
+    $request = (new ServerRequest('PUT', new Uri('/api/v1/entries/blog/hello')))
+        ->withBody(\Nyholm\Psr7\Stream::create('not-json'));
+
+    $response = $this->controller->update($request, 'blog', 'hello');
+
+    expect($response->getStatusCode())->toBe(400);
 });
 
 test('collections returns list of collections with counts', function () {

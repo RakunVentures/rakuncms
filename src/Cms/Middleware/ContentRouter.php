@@ -24,11 +24,10 @@ final class ContentRouter implements MiddlewareInterface
         $path = trim($request->getUri()->getPath(), '/');
         $locale = $request->getAttribute('locale', 'es');
 
-        // Load index
+        // Active content index (php array or sqlite), memoised per request.
         $basePath = \app('base_path');
-        $indexer = new Indexer($basePath);
-        $index = $indexer->load();
-        $query = new Query($index);
+        $store = \app('index_store');
+        $query = new Query($store);
 
         // Parse path: /{locale}/{collection?}/{slug}
         $segments = $path ? explode('/', $path) : [];
@@ -85,7 +84,7 @@ final class ContentRouter implements MiddlewareInterface
 
             if ($taxonomy !== null) {
                 $container = \app();
-                $container->set('content.query', fn () => new Query($index));
+                $container->set('content.query', fn () => new Query($store));
                 $container->set('locale', $locale);
                 $container->set('current_page_number', $currentPageNumber);
 
@@ -145,7 +144,7 @@ final class ContentRouter implements MiddlewareInterface
         // Store entry and query in container for templates
         $container = \app();
         $container->set('current_entry', $entry);
-        $container->set('content.query', fn () => new Query($index));
+        $container->set('content.query', fn () => new Query($store));
         $container->set('locale', $locale);
         $container->set('current_page_number', $currentPageNumber);
 

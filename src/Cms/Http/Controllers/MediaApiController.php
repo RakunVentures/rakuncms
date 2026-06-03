@@ -13,6 +13,7 @@ final class MediaApiController
     private string $basePath;
     private string $assetsDir;
 
+    /** @var array<string, list<string>> */
     private array $allowedMimeTypes = [
         'image/jpeg' => ['jpg', 'jpeg'],
         'image/png' => ['png'],
@@ -73,25 +74,83 @@ final class MediaApiController
             return $this->json(415, ['error' => "MIME type $mimeType not allowed"]);
         }
 
+        // Safe subdirectory (no traversal) and safe filename. The extension is
+        // derived from the VERIFIED MIME type, not the client-supplied name.
+        $body   = $request->getParsedBody();
+        $subDir = is_array($body) && isset($body['directory']) ? (string) $body['directory'] : 'uploads';
+        $subDir = $this->sanitizeSubDir($subDir);
+
         $originalName = $file->getClientFilename() ?? 'upload';
-        $body = $request->getParsedBody();
-        $subDir = is_array($body) ? ($body['directory'] ?? 'uploads') : 'uploads';
-        
+        $stem = $this->sanitizeStem(pathinfo($originalName, PATHINFO_FILENAME));
+        $ext  = $this->allowedMimeTypes[$mimeType][0];
+
         $targetDir = $this->assetsDir . '/' . $subDir;
         if (!is_dir($targetDir)) {
             mkdir($targetDir, 0755, true);
         }
 
-        $targetPath = $targetDir . '/' . $originalName;
+        // Never silently overwrite an existing asset.
+        $filename   = $this->uniqueFilename($targetDir, $stem, $ext);
+        $targetPath = $targetDir . '/' . $filename;
         rename($tempPath, $targetPath);
+
+        $width  = null;
+        $height = null;
+        if (str_starts_with($mimeType, 'image/') && $mimeType !== 'image/svg+xml') {
+            $dims = @getimagesize($targetPath);
+            if (is_array($dims)) {
+                $width  = $dims[0];
+                $height = $dims[1];
+            }
+        }
+
+        $relative = $subDir . '/' . $filename;
 
         return $this->json(201, [
             'data' => [
-                'url' => '/assets/' . $subDir . '/' . $originalName,
-                'path' => 'assets/' . $subDir . '/' . $originalName,
+                'url'    => '/assets/' . $relative,
+                'path'   => 'assets/' . $relative,
+                'mime'   => $mimeType,
+                'size'   => filesize($targetPath) ?: 0,
+                'width'  => $width,
+                'height' => $height,
             ],
             'message' => 'File uploaded',
         ]);
+    }
+
+    private function sanitizeSubDir(string $dir): string
+    {
+        $parts = [];
+        foreach (explode('/', $dir) as $segment) {
+            $clean = preg_replace('/[^A-Za-z0-9_-]/', '', $segment) ?? '';
+            if ($clean !== '' && $clean !== '.' && $clean !== '..') {
+                $parts[] = $clean;
+            }
+        }
+
+        return $parts === [] ? 'uploads' : implode('/', $parts);
+    }
+
+    private function sanitizeStem(string $name): string
+    {
+        $name = strtolower($name);
+        $name = preg_replace('/[^a-z0-9]+/', '-', $name) ?? '';
+        $name = trim($name, '-');
+
+        return $name === '' ? 'file' : substr($name, 0, 80);
+    }
+
+    private function uniqueFilename(string $dir, string $stem, string $ext): string
+    {
+        $candidate = "{$stem}.{$ext}";
+        $i = 1;
+        while (file_exists($dir . '/' . $candidate)) {
+            $candidate = "{$stem}-{$i}.{$ext}";
+            $i++;
+        }
+
+        return $candidate;
     }
 
     public function delete(string $mediaPath): ResponseInterface
@@ -109,8 +168,11 @@ final class MediaApiController
         return $this->json(200, ['message' => 'File deleted']);
     }
 
+    /**
+     * @param  array<string, mixed>  $data
+     */
     private function json(int $status, array $data): ResponseInterface
     {
-        return new Response($status, ['Content-Type' => 'application/json'], json_encode($data));
+        return new Response($status, ['Content-Type' => 'application/json'], json_encode($data) ?: '{}');
     }
 }

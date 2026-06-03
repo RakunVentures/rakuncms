@@ -32,9 +32,7 @@ final class RssController
         $siteDescription = \config('site.description') ?? \config('rakun.site.description') ?? '';
         $defaultLocale = \config('site.default_locale') ?? \config('rakun.site.default_locale') ?? 'es';
 
-        $indexer = new Indexer($basePath);
-        $index = $indexer->load();
-        $query = new Query($index);
+        $query = new Query(\index_store());
 
         // Get latest entries in default locale, sorted by date
         $entries = $query->locale($defaultLocale)->sort('date', 'desc')->limit(20)->get();

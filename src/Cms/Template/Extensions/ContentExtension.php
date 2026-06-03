@@ -34,41 +34,20 @@ final class ContentExtension extends AbstractExtension
 
     public function collection(string $name): Query
     {
-        $basePath = \app('base_path');
-        $indexer = new Indexer($basePath);
-        $index = $indexer->load();
-
-        return (new Query($index))->collection($name);
+        return (new Query(\index_store()))->collection($name);
     }
 
     public function entry(string $path): ?Entry
     {
-        $basePath = \app('base_path');
-        $indexer = new Indexer($basePath);
-        $index = $indexer->load();
-
-        // Path can be "collection/slug" or "collection/slug.locale"
-        $entries = $index['entries'];
-
-        // Direct key match
-        if (isset($entries[$path])) {
-            return Entry::fromArray($entries[$path]);
-        }
-
-        // Try with locale suffix
         $locale = 'es';
         try {
             $locale = \app('locale');
         } catch (\Throwable) {
         }
 
-        foreach ($entries as $key => $data) {
-            if (str_starts_with($key, $path) && $data['locale'] === $locale) {
-                return Entry::fromArray($data);
-            }
-        }
+        $row = \index_store()->findEntryByPath($path, $locale);
 
-        return null;
+        return $row !== null ? Entry::fromArray($row) : null;
     }
 
     /**
@@ -143,12 +122,9 @@ final class ContentExtension extends AbstractExtension
      */
     public function uniqueTags(string $collectionName): array
     {
-        $basePath = \app('base_path');
-        $indexer = new Indexer($basePath);
-        $index = $indexer->load();
         $tags = [];
 
-        foreach ($index['entries'] as $entryData) {
+        foreach (\index_store()->each() as $entryData) {
             if (($entryData['collection'] ?? '') !== $collectionName) {
                 continue;
             }

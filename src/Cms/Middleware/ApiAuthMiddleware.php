@@ -56,11 +56,17 @@ final class ApiAuthMiddleware implements MiddlewareInterface
         return $handler->handle($request);
     }
 
+    /**
+     * @param  list<string>  $permissions
+     */
     public static function hasPermission(array $permissions, string $required): bool
     {
         return in_array($required, $permissions, true) || in_array('admin', $permissions, true);
     }
 
+    /**
+     * @param  array<string, mixed>  $data
+     */
     private function jsonResponse(int $status, array $data): ResponseInterface
     {
         return new Response(

@@ -241,8 +241,7 @@ final class WpApiDispatcher implements MiddlewareInterface
 
         if ($response->getStatusCode() >= 400) return $response;
 
-        $indexer = new Indexer($basePath);
-        $query = new Query($indexer->load());
+        $query = new Query(\index_store());
         $resData = json_decode((string) $response->getBody(), true);
         $slug = $resData['data']['slug'] ?? '';
         $entry = $query->collection($collection)->where('slug', '=', $slug)->get()[0] ?? null;
@@ -255,8 +254,7 @@ final class WpApiDispatcher implements MiddlewareInterface
 
     private function findEntryByWpId(string $collection, int $id): ?Entry
     {
-        $indexer = new Indexer(\app('base_path'));
-        $query = new Query($indexer->load());
+        $query = new Query(\index_store());
         foreach ($query->collection($collection)->get() as $entry) {
             if (
                 (int) ($entry->meta()['wp_id'] ?? 0) === $id
@@ -277,8 +275,7 @@ final class WpApiDispatcher implements MiddlewareInterface
         $basePath = \app('base_path');
         $params = $request->getQueryParams();
 
-        $indexer = new Indexer($basePath);
-        $query = new Query($indexer->load());
+        $query = new Query(\index_store());
         $query = $query->collection($collection);
 
         $total = $query->count();

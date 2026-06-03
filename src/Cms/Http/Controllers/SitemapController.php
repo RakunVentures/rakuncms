@@ -31,9 +31,9 @@ final class SitemapController
         );
         $locales = \config('site.locales') ?? \config('rakun.site.locales') ?? ['es', 'en'];
 
-        $indexer = new Indexer($basePath);
-        $index = $indexer->load();
-        $entries = $index['entries'];
+        // Sitemap inherently enumerates everything; stream from the active store
+        // (constant memory per row) instead of loading the whole PHP index array.
+        $entries = iterator_to_array(\index_store()->each(), false);
 
         $xml = '<?xml version="1.0" encoding="UTF-8"?>' . "\n";
         $xml .= '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"';
@@ -85,7 +85,7 @@ final class SitemapController
     /**
      * Group entries by their content identity across locales.
      *
-     * @param array<string, array<string, mixed>> $entries
+     * @param list<array<string, mixed>> $entries
      * @param list<string> $locales
      * @return list<array<string, array<string, mixed>>>
      */

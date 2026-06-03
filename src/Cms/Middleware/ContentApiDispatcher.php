@@ -26,23 +26,31 @@ final class ContentApiDispatcher implements MiddlewareInterface
         $segments = explode('/', $apiPath);
         $method = $request->getMethod();
         
-        // SAFE PATH DETECTION
+        // Resolve the site base path. Prefer the Application's bound base_path
+        // (the same one the request pipeline / index_store use) so the API reads
+        // the same content/index as the rendered site. Fall back to the script
+        // location only if the app isn't available.
         $basePath = '';
         try {
-            $basePath = dirname(\app('config_path'));
+            $basePath = (string) \app('base_path');
         } catch (\Throwable) {
-            $basePath = dirname(__DIR__, 5); // Fallback to heuristic
+            $basePath = '';
         }
-        
-        if (!is_dir($basePath . '/content')) {
-             $basePath = dirname($_SERVER['SCRIPT_FILENAME'], 2);
+
+        if ($basePath === '' || !is_dir($basePath . '/content')) {
+            $script = (string) ($_SERVER['SCRIPT_FILENAME'] ?? '');
+            $basePath = $script !== '' ? dirname($script, 2) : dirname(__DIR__, 5);
         }
 
         if ($segments[0] === 'media') {
             $mediaController = new MediaApiController($basePath);
             if ($method === 'GET') return $mediaController->list();
-            if ($method === 'POST') return $mediaController->upload($request);
+            if ($method === 'POST') {
+                if ($denied = $this->requirePermission($request, 'media')) return $denied;
+                return $mediaController->upload($request);
+            }
             if ($method === 'DELETE') {
+                if ($denied = $this->requirePermission($request, 'media')) return $denied;
                 $mediaPath = implode('/', array_slice($segments, 1));
                 return $mediaController->delete($mediaPath);
             }
@@ -54,12 +62,22 @@ final class ContentApiDispatcher implements MiddlewareInterface
             return $controller->showConfig();
         }
 
+        if ($segments[0] === 'schema' && $method === 'GET') {
+            return $controller->schema();
+        }
+
         if ($segments[0] === 'collections' && $method === 'GET') {
             return $controller->collections();
         }
 
         if ($segments[0] === 'index' && ($segments[1] ?? '') === 'rebuild' && $method === 'POST') {
-            (new \Rkn\Cms\Content\Indexer($basePath))->rebuild();
+            if ($denied = $this->requirePermission($request, 'write')) return $denied;
+            $store = \app('index_store');
+            if ($store instanceof \Rkn\Cms\Content\Stores\SqliteIndexStore) {
+                $store->sync();
+            } else {
+                (new \Rkn\Cms\Content\Indexer($basePath))->rebuild();
+            }
             return new \Nyholm\Psr7\Response(200, ['Content-Type' => 'application/json'], json_encode(['message' => 'Index rebuilt']));
         }
 
@@ -68,15 +86,50 @@ final class ContentApiDispatcher implements MiddlewareInterface
                 return $controller->list($request);
             }
             if (count($segments) === 2 && $method === 'POST') {
+                if ($denied = $this->requirePermission($request, 'write')) return $denied;
                 return $controller->create($request, $segments[1]);
             }
             if (count($segments) === 3) {
-                if ($method === 'GET') return $controller->show($segments[1], $segments[2]);
-                if ($method === 'PUT') return $controller->update($request, $segments[1], $segments[2]);
-                if ($method === 'DELETE') return $controller->delete($segments[1], $segments[2]);
+                if ($method === 'GET') {
+                    $rawParam = $request->getQueryParams()['raw'] ?? '';
+                    $raw = $rawParam === '1' || $rawParam === 'true';
+
+                    return $controller->show($segments[1], $segments[2], $raw);
+                }
+                if ($method === 'PUT') {
+                    if ($denied = $this->requirePermission($request, 'write')) return $denied;
+                    return $controller->update($request, $segments[1], $segments[2]);
+                }
+                if ($method === 'DELETE') {
+                    if ($denied = $this->requirePermission($request, 'write')) return $denied;
+                    return $controller->delete($segments[1], $segments[2]);
+                }
             }
         }
 
         return $handler->handle($request);
+    }
+
+    /**
+     * Gate a mutating action by permission. Reads the `api_permissions` attribute
+     * set by ApiAuthMiddleware ('admin' grants all). Returns a 403 response when
+     * the key lacks the permission, or null to proceed.
+     */
+    private function requirePermission(ServerRequestInterface $request, string $required): ?ResponseInterface
+    {
+        $permissions = $request->getAttribute('api_permissions', []);
+        if (!is_array($permissions)) {
+            $permissions = [];
+        }
+        /** @var list<string> $permissions */
+        if (ApiAuthMiddleware::hasPermission($permissions, $required)) {
+            return null;
+        }
+
+        return new \Nyholm\Psr7\Response(
+            403,
+            ['Content-Type' => 'application/json'],
+            json_encode(['error' => "Permission '{$required}' required"]) ?: '{}',
+        );
     }
 }
