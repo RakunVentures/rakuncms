@@ -46,7 +46,7 @@ final class MediaApiController
                     'path' => 'assets/' . $relativePath,
                     'size' => $file->getSize(),
                     'modified' => $file->getMTime(),
-                    'type' => mime_content_type($file->getPathname()) ?: 'application/octet-stream',
+                    'type' => $this->mimeFromExtension($file->getExtension()),
                 ];
             }
         }
@@ -117,6 +117,36 @@ final class MediaApiController
             ],
             'message' => 'File uploaded',
         ]);
+    }
+
+    /**
+     * Cheap extension→MIME lookup for listing. Avoids mime_content_type(), which
+     * reads each file's magic bytes and turns a large asset tree into a multi-second
+     * (or timing-out) scan. For a directory listing the stored extension is a
+     * sufficient, stable type hint; upload still verifies the real MIME by finfo.
+     */
+    private function mimeFromExtension(string $ext): string
+    {
+        static $map = [
+            'jpg'  => 'image/jpeg',
+            'jpeg' => 'image/jpeg',
+            'png'  => 'image/png',
+            'gif'  => 'image/gif',
+            'webp' => 'image/webp',
+            'avif' => 'image/avif',
+            'svg'  => 'image/svg+xml',
+            'ico'  => 'image/x-icon',
+            'pdf'  => 'application/pdf',
+            'mp4'  => 'video/mp4',
+            'mov'  => 'video/quicktime',
+            'webm' => 'video/webm',
+            'txt'  => 'text/plain',
+            'json' => 'application/json',
+            'css'  => 'text/css',
+            'js'   => 'text/javascript',
+        ];
+
+        return $map[strtolower($ext)] ?? 'application/octet-stream';
     }
 
     private function sanitizeSubDir(string $dir): string

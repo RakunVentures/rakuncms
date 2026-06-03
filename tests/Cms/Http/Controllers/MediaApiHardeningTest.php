@@ -87,3 +87,28 @@ test('upload rejects a disallowed MIME type', function () {
 
     expect($response->getStatusCode())->toBe(415);
 });
+
+test('list reports type by extension (not magic bytes) and counts files', function () {
+    $assets = $this->tempDir . '/public/assets';
+    mkdir($assets . '/images', 0755, true);
+
+    // Bytes que NO son imagen/PDF reales: si el tipo se dedujera por magic bytes
+    // (mime_content_type) saldría text/plain; al ser por extensión sale image/jpeg.
+    file_put_contents($assets . '/images/photo.jpg', 'not really a jpeg');
+    file_put_contents($assets . '/doc.pdf', '%PDF fake');
+    file_put_contents($assets . '/data.xyz', 'unknown ext');
+
+    $response = $this->controller->list();
+    expect($response->getStatusCode())->toBe(200);
+
+    $payload = json_decode((string) $response->getBody(), true);
+    $byPath  = [];
+    foreach ($payload['data'] as $row) {
+        $byPath[$row['path']] = $row['type'];
+    }
+
+    expect($payload['meta']['count'])->toBe(3);
+    expect($byPath['assets/images/photo.jpg'])->toBe('image/jpeg');
+    expect($byPath['assets/doc.pdf'])->toBe('application/pdf');
+    expect($byPath['assets/data.xyz'])->toBe('application/octet-stream');
+});
