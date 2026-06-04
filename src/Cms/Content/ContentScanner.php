@@ -67,12 +67,11 @@ final class ContentScanner
 
             foreach ($this->collectMarkdownFiles($collectionPath) as $file) {
                 $entry = $this->indexFile($file, $collectionName, $collectionPath);
-                if ($entry === null || $entry['draft']) {
+                if ($entry === null) {
                     continue;
                 }
-                if (!$scheduleChecker->shouldPublish($entry)) {
-                    continue;
-                }
+
+                $entry['status'] = EntryStatus::of($entry, $scheduleChecker);
 
                 $key = $this->buildEntryKey($collectionName, $entry['section'], basename($file, '.md'));
                 $entries[$key] = $entry;
@@ -85,14 +84,17 @@ final class ContentScanner
 
                 $indices['by_locale_slug'][$collectionName . ':' . $entry['locale'] . ':' . $this->fullSlug($entry)] = $key;
 
-                if (!empty($entry['tags'])) {
-                    foreach ($entry['tags'] as $tag) {
-                        $indices['by_tag'][$tag][] = $key;
+                // Tags and date indices: only published entries
+                if ($entry['status'] === 'published') {
+                    if (!empty($entry['tags'])) {
+                        foreach ($entry['tags'] as $tag) {
+                            $indices['by_tag'][$tag][] = $key;
+                        }
                     }
-                }
 
-                if (!empty($entry['date'])) {
-                    $indices['by_date'][substr($entry['date'], 0, 7)][] = $key;
+                    if (!empty($entry['date'])) {
+                        $indices['by_date'][substr($entry['date'], 0, 7)][] = $key;
+                    }
                 }
             }
         }

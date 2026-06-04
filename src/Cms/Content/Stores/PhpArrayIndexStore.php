@@ -86,12 +86,16 @@ final class PhpArrayIndexStore implements IndexStore
         $entryKey = is_array($bySlug) ? ($bySlug[$key] ?? null) : null;
 
         if ($entryKey !== null && isset($this->entries[$entryKey])) {
-            return $this->entries[$entryKey];
+            $data = $this->entries[$entryKey];
+            return ($data['status'] ?? 'published') === 'published' ? $data : null;
         }
 
         // Fallback: scan (covers root-only slug matches)
         foreach ($this->entries as $data) {
             if (($data['collection'] ?? null) !== $collection || ($data['locale'] ?? null) !== $locale) {
+                continue;
+            }
+            if (($data['status'] ?? 'published') !== 'published') {
                 continue;
             }
             $section = (string) ($data['section'] ?? '');
@@ -114,10 +118,14 @@ final class PhpArrayIndexStore implements IndexStore
     public function findEntryByPath(string $path, ?string $locale = null): ?array
     {
         if (isset($this->entries[$path])) {
-            return $this->entries[$path];
+            $data = $this->entries[$path];
+            return ($data['status'] ?? 'published') === 'published' ? $data : null;
         }
         foreach ($this->entries as $key => $data) {
-            if (str_starts_with($key, $path) && ($locale === null || ($data['locale'] ?? null) === $locale)) {
+            if (str_starts_with($key, $path)
+                && ($locale === null || ($data['locale'] ?? null) === $locale)
+                && ($data['status'] ?? 'published') === 'published'
+            ) {
                 return $data;
             }
         }
@@ -126,20 +134,56 @@ final class PhpArrayIndexStore implements IndexStore
 
     public function allTags(): array
     {
-        $byTag = $this->indices['by_tag'] ?? [];
-        return is_array($byTag) ? array_keys($byTag) : [];
+        // Derive from published entries only (by_tag index now may include draft keys).
+        $tags = [];
+        foreach ($this->entries as $data) {
+            if (($data['status'] ?? 'published') !== 'published') {
+                continue;
+            }
+            if (!empty($data['tags']) && is_array($data['tags'])) {
+                foreach ($data['tags'] as $tag) {
+                    $tags[(string) $tag] = true;
+                }
+            }
+        }
+        $result = array_keys($tags);
+        sort($result);
+        return $result;
     }
 
     public function allDatePeriods(): array
     {
-        $byDate = $this->indices['by_date'] ?? [];
-        return is_array($byDate) ? array_keys($byDate) : [];
+        // Derive from published entries only.
+        $periods = [];
+        foreach ($this->entries as $data) {
+            if (($data['status'] ?? 'published') !== 'published') {
+                continue;
+            }
+            $date = $data['date'] ?? null;
+            if ($date !== null && $date !== '') {
+                $periods[substr((string) $date, 0, 7)] = true;
+            }
+        }
+        $result = array_keys($periods);
+        sort($result);
+        return $result;
     }
 
-    public function each(): iterable
+    public function each(?string $status = null): iterable
     {
         foreach ($this->entries as $row) {
-            yield $row;
+            if ($status === 'all') {
+                yield $row;
+            } elseif ($status !== null) {
+                if (($row['status'] ?? 'published') === $status) {
+                    yield $row;
+                }
+            } else {
+                // null → published only (safe default)
+                if (($row['status'] ?? 'published') === 'published') {
+                    yield $row;
+                }
+            }
         }
     }
 
@@ -160,15 +204,25 @@ final class PhpArrayIndexStore implements IndexStore
         }
 
         if ($sets === []) {
-            return array_keys($this->entries);
+            $keys = array_keys($this->entries);
+        } else {
+            $result = array_shift($sets);
+            foreach ($sets as $set) {
+                $result = array_intersect($result, $set);
+            }
+            $keys = array_values($result);
         }
 
-        $result = array_shift($sets);
-        foreach ($sets as $set) {
-            $result = array_intersect($result, $set);
+        // Status filter: null or 'all' means no filter; anything else filters by that status.
+        $statusFilter = $spec->status;
+        if ($statusFilter !== null && $statusFilter !== 'all') {
+            $keys = array_values(array_filter($keys, function (string $key) use ($statusFilter) {
+                $entry = $this->entries[$key] ?? null;
+                return $entry !== null && ($entry['status'] ?? 'published') === $statusFilter;
+            }));
         }
 
-        return array_values($result);
+        return $keys;
     }
 
     /**

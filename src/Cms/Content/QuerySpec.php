@@ -13,6 +13,10 @@ final class QuerySpec
 {
     /**
      * @param list<array{field: string, operator: string, value: mixed}> $conditions
+     * @param ?string $status 'published'|'draft'|'scheduled' = filter to that status;
+     *                        'all' or null = no status filter. Default 'published' is
+     *                        fail-safe: any consumer that does not opt-in gets
+     *                        published-only results.
      */
     public function __construct(
         public readonly ?string $collection = null,
@@ -23,6 +27,7 @@ final class QuerySpec
         public readonly string $sortDirection = 'asc',
         public readonly ?int $limit = null,
         public readonly int $offset = 0,
+        public readonly ?string $status = 'published',
     ) {
     }
 }

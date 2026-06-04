@@ -109,14 +109,17 @@ final class ContentApiController
         $page       = max(1, (int) ($params['page'] ?? 1));
         $perPage    = max(1, min(100, (int) ($params['per_page'] ?? 20)));
         $offset     = ($page - 1) * $perPage;
+        $status     = $this->parseStatusParam($params['status'] ?? null);
 
         $store = IndexStoreFactory::make($this->basePath);
 
         // No collection filter: full enumeration via the index (admin overview).
         // Constant-memory stream, sliced in PHP for the requested page.
+        // Pass the resolved status to each() so the admin can see drafts too.
         if ($collection === null) {
+            $eachStatus = $status === 'published' ? null : $status;
             $rows = [];
-            foreach ($store->each() as $row) {
+            foreach ($store->each($eachStatus) as $row) {
                 $rows[] = $row;
             }
             $total = count($rows);
@@ -136,6 +139,11 @@ final class ContentApiController
             $direction = strtolower((string) ($params['order'] ?? 'asc')) === 'desc' ? 'desc' : 'asc';
             $base = $base->sort($sortField, $direction);
         }
+
+        // Apply the status filter (default published-only; admin opts in via ?status=).
+        $base = $status === 'all'
+            ? $base->includeAllStatuses()
+            : $base->withStatus($status);
 
         if ($search !== '') {
             // Title search. Filtered total requires materialising the matched
@@ -158,6 +166,24 @@ final class ContentApiController
     }
 
     /**
+     * Parse the ?status query param to a canonical value.
+     * Accepted: 'published', 'draft', 'scheduled', 'all'.
+     * Default (null or invalid) → 'published' (safe fail-closed).
+     */
+    private function parseStatusParam(mixed $raw): string
+    {
+        if (!is_string($raw) || $raw === '') {
+            return 'published';
+        }
+        return match (strtolower($raw)) {
+            'all'       => 'all',
+            'draft'     => 'draft',
+            'scheduled' => 'scheduled',
+            default     => 'published',
+        };
+    }
+
+    /**
      * Summary row for the list endpoint, from a raw index row.
      *
      * @param  array<string, mixed>  $row
@@ -167,12 +193,20 @@ final class ContentApiController
     {
         $meta = is_array($row['meta'] ?? null) ? $row['meta'] : [];
 
+        // Prefer the pre-computed index 'status' column (set during ContentScanner::indexFile,
+        // which includes date-based scheduling logic). Fall back to normalizeStatus() for
+        // older or manually-constructed index rows that lack the column.
+        $storedStatus = isset($row['status']) && is_string($row['status']) && $row['status'] !== ''
+            ? $row['status']
+            : null;
+        $status = $storedStatus ?? $this->normalizeStatus($meta, (bool) ($row['draft'] ?? false));
+
         return [
             'title'      => $row['title'] ?? ($row['slug'] ?? ''),
             'slug'       => $row['slug'] ?? '',
             'collection' => $row['collection'] ?? '',
             'locale'     => $row['locale'] ?? null,
-            'status'     => $this->normalizeStatus($meta, (bool) ($row['draft'] ?? false)),
+            'status'     => $status,
             'date'       => $row['date'] ?? null,
             'meta'       => $meta,
         ];
@@ -217,10 +251,24 @@ final class ContentApiController
         ];
     }
 
-    public function show(string $collection, string $slug, bool $raw = false): ResponseInterface
+    /**
+     * @param string|null $status Narrow to a specific status. null (default) → all statuses
+     *                            (admin preview endpoint; existing callers are unaffected).
+     *                            Accepted values: 'published', 'draft', 'scheduled'.
+     */
+    public function show(string $collection, string $slug, bool $raw = false, ?string $status = null): ResponseInterface
     {
-        $query   = new Query(IndexStoreFactory::make($this->basePath));
-        $entries = $query->collection($collection)->where('slug', '=', $slug)->get();
+        $query = (new Query(IndexStoreFactory::make($this->basePath)))->collection($collection);
+
+        // Default: include all statuses (admin preview endpoint).
+        // Callers can pass a specific status to narrow (e.g. published-only public routes).
+        if ($status !== null) {
+            $query = $query->withStatus($status);
+        } else {
+            $query = $query->includeAllStatuses();
+        }
+
+        $entries = $query->where('slug', '=', $slug)->get();
         $entry   = $entries[0] ?? null;
 
         if ($entry === null) {

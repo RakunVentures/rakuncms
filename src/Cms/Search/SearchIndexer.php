@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace Rkn\Cms\Search;
 
+use Rkn\Cms\Content\EntryStatus;
 use Rkn\Cms\Content\Indexer;
 use Rkn\Cms\Content\Parser;
+use Rkn\Cms\Content\ScheduleChecker;
 
 final class SearchIndexer
 {
@@ -46,7 +48,16 @@ final class SearchIndexer
         $entries = [];
         $inverted = [];
 
+        // El índice ahora contiene TODAS las entradas (published + draft + scheduled).
+        // El buscador es PÚBLICO (función Twig search(), SearchApiController, exportJson)
+        // → solo indexa contenido publicado, nunca borradores ni programados.
+        $scheduleChecker = new ScheduleChecker($this->basePath);
+
         foreach ($contentIndex['entries'] as $key => $entryData) {
+            if (EntryStatus::of($entryData, $scheduleChecker) !== 'published') {
+                continue;
+            }
+
             $parser = new Parser();
             $content = '';
             $file = $this->basePath . '/' . $entryData['file'];

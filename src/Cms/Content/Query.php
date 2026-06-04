@@ -26,6 +26,7 @@ final class Query
     private string $sortDirection = 'asc';
     private ?int $limitCount = null;
     private int $offsetCount = 0;
+    private ?string $statusFilter = 'published';
 
     /**
      * @param array{entries: array<string, array<string, mixed>>, indices: array<string, mixed>, meta?: array<string, mixed>}|IndexStore $index
@@ -129,6 +130,27 @@ final class Query
     }
 
     /**
+     * Filter results to the given status ('published', 'draft', 'scheduled').
+     * Pass null or use includeAllStatuses() to remove the filter.
+     */
+    public function withStatus(?string $status): self
+    {
+        $clone = clone $this;
+        $clone->statusFilter = $status;
+        return $clone;
+    }
+
+    /**
+     * Remove the status filter — include entries of all statuses.
+     */
+    public function includeAllStatuses(): self
+    {
+        $clone = clone $this;
+        $clone->statusFilter = 'all';
+        return $clone;
+    }
+
+    /**
      * @return list<Entry>
      */
     public function get(): array
@@ -168,6 +190,7 @@ final class Query
             sortDirection: $this->sortDirection,
             limit: $this->limitCount,
             offset: $this->offsetCount,
+            status: $this->statusFilter,
         );
     }
 }

@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace Rkn\Cms\Cli;
 
 use Rkn\Cms\Content\Entry;
+use Rkn\Cms\Content\EntryStatus;
 use Rkn\Cms\Content\Indexer;
 use Rkn\Cms\Content\Query;
+use Rkn\Cms\Content\ScheduleChecker;
 use Rkn\Cms\Http\Controllers\RssController;
 use Rkn\Cms\Http\Controllers\SitemapController;
 use Rkn\Cms\Template\Engine;
@@ -57,14 +59,17 @@ final class BuildCommand extends Command
 
         $output->writeln(sprintf('  Found %d entries', count($entries)));
 
-        // Render each entry
+        // Render each entry. El índice ahora incluye TODAS las entradas
+        // (published + draft + scheduled); el build estático solo renderiza las
+        // PUBLICADAS (isDraft() solo cubría el flag booleano, no scheduled ni meta.status:draft).
+        $scheduleChecker = new ScheduleChecker($basePath);
         $rendered = 0;
         foreach ($entries as $entryData) {
-            $entry = Entry::fromArray($entryData);
-
-            if ($entry->isDraft()) {
+            if (EntryStatus::of($entryData, $scheduleChecker) !== 'published') {
                 continue;
             }
+
+            $entry = Entry::fromArray($entryData);
 
             $url = $entry->url();
             $html = $this->renderEntry($entry, $index, $basePath);

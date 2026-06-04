@@ -91,10 +91,12 @@ final class ContentApiDispatcher implements MiddlewareInterface
             }
             if (count($segments) === 3) {
                 if ($method === 'GET') {
-                    $rawParam = $request->getQueryParams()['raw'] ?? '';
-                    $raw = $rawParam === '1' || $rawParam === 'true';
+                    $qp         = $request->getQueryParams();
+                    $rawParam   = $qp['raw'] ?? '';
+                    $raw        = $rawParam === '1' || $rawParam === 'true';
+                    $statusParam = isset($qp['status']) && $qp['status'] !== '' ? (string) $qp['status'] : null;
 
-                    return $controller->show($segments[1], $segments[2], $raw);
+                    return $controller->show($segments[1], $segments[2], $raw, $statusParam);
                 }
                 if ($method === 'PUT') {
                     if ($denied = $this->requirePermission($request, 'write')) return $denied;

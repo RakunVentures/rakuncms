@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Rkn\Cms\Content\Stores;
 
 use Rkn\Cms\Content\ContentScanner;
+use Rkn\Cms\Content\EntryStatus;
 use Rkn\Cms\Content\IndexStore;
 use Rkn\Cms\Content\QuerySpec;
 use Rkn\Cms\Content\ScheduleChecker;
@@ -21,7 +22,7 @@ use Rkn\Cms\Content\ScheduleChecker;
  */
 final class SqliteIndexStore implements IndexStore
 {
-    private const SCHEMA_VERSION = '1';
+    private const SCHEMA_VERSION = '3';
 
     /** Top-level entry fields that sort() may order by (meta keys are not sortable, matching legacy Query). */
     private const SORT_COLUMNS = [
@@ -91,7 +92,7 @@ final class SqliteIndexStore implements IndexStore
     public function findBySlug(string $collection, string $locale, string $slug): ?array
     {
         $stmt = $this->db()->prepare(
-            'SELECT * FROM entries WHERE collection = ? AND locale = ? AND full_slug = ? LIMIT 1'
+            "SELECT * FROM entries WHERE collection = ? AND locale = ? AND full_slug = ? AND status = 'published' LIMIT 1"
         );
         $stmt->execute([$collection, $locale, $slug]);
         $row = $stmt->fetch(\PDO::FETCH_ASSOC);
@@ -101,7 +102,7 @@ final class SqliteIndexStore implements IndexStore
 
         // Fallback: bare locale-slug (covers root-only slug matches).
         $stmt = $this->db()->prepare(
-            'SELECT * FROM entries WHERE collection = ? AND locale = ? AND (full_slug = ? OR locale_slug = ?) LIMIT 1'
+            "SELECT * FROM entries WHERE collection = ? AND locale = ? AND (full_slug = ? OR locale_slug = ?) AND status = 'published' LIMIT 1"
         );
         $stmt->execute([$collection, $locale, $slug, $slug]);
         $row = $stmt->fetch(\PDO::FETCH_ASSOC);
@@ -129,7 +130,7 @@ final class SqliteIndexStore implements IndexStore
 
     public function findEntryByPath(string $path, ?string $locale = null): ?array
     {
-        $stmt = $this->db()->prepare('SELECT * FROM entries WHERE key = ? LIMIT 1');
+        $stmt = $this->db()->prepare("SELECT * FROM entries WHERE key = ? AND status = 'published' LIMIT 1");
         $stmt->execute([$path]);
         $row = $stmt->fetch(\PDO::FETCH_ASSOC);
         if ($row !== false) {
@@ -137,7 +138,7 @@ final class SqliteIndexStore implements IndexStore
         }
 
         $len = strlen($path);
-        $sql = 'SELECT * FROM entries WHERE substr(key, 1, ?) = ?';
+        $sql = "SELECT * FROM entries WHERE substr(key, 1, ?) = ? AND status = 'published'";
         $params = [$len, $path];
         if ($locale !== null) {
             $sql .= ' AND locale = ?';
@@ -152,21 +153,31 @@ final class SqliteIndexStore implements IndexStore
 
     public function allTags(): array
     {
-        $rows = $this->db()->query('SELECT DISTINCT tag FROM entry_tags ORDER BY tag ASC')->fetchAll(\PDO::FETCH_COLUMN);
+        $rows = $this->db()
+            ->query("SELECT DISTINCT et.tag FROM entry_tags et JOIN entries e ON e.key = et.key WHERE e.status = 'published' ORDER BY et.tag ASC")
+            ->fetchAll(\PDO::FETCH_COLUMN);
         return array_map('strval', $rows);
     }
 
     public function allDatePeriods(): array
     {
         $rows = $this->db()
-            ->query("SELECT DISTINCT substr(date, 1, 7) AS p FROM entries WHERE date IS NOT NULL AND date <> '' ORDER BY p ASC")
+            ->query("SELECT DISTINCT substr(date, 1, 7) AS p FROM entries WHERE date IS NOT NULL AND date <> '' AND status = 'published' ORDER BY p ASC")
             ->fetchAll(\PDO::FETCH_COLUMN);
         return array_map('strval', $rows);
     }
 
-    public function each(): iterable
+    public function each(?string $status = null): iterable
     {
-        $stmt = $this->db()->query('SELECT * FROM entries ORDER BY key ASC');
+        if ($status === 'all') {
+            $stmt = $this->db()->query('SELECT * FROM entries ORDER BY key ASC');
+        } elseif ($status !== null) {
+            $stmt = $this->db()->prepare('SELECT * FROM entries WHERE status = ? ORDER BY key ASC');
+            $stmt->execute([$status]);
+        } else {
+            // null → published only (safe default)
+            $stmt = $this->db()->query("SELECT * FROM entries WHERE status = 'published' ORDER BY key ASC");
+        }
         while (($row = $stmt->fetch(\PDO::FETCH_ASSOC)) !== false) {
             yield $this->hydrate($row);
         }
@@ -191,7 +202,7 @@ final class SqliteIndexStore implements IndexStore
             $existing[(string) $r['key']] = (int) $r['mtime'];
         }
 
-        $report = ['inserted' => 0, 'updated' => 0, 'deleted' => 0, 'scanned' => 0];
+        $report = ['inserted' => 0, 'updated' => 0, 'deleted' => 0, 'scanned' => 0, 'skipped' => 0];
         $seen = [];
 
         $db->beginTransaction();
@@ -210,7 +221,7 @@ final class SqliteIndexStore implements IndexStore
                     foreach ($this->scanner->collectMarkdownFiles($collectionPath) as $file) {
                         $report['scanned']++;
                         $entry = $this->scanner->indexFile($file, $collection, $collectionPath);
-                        if ($entry === null || $entry['draft'] || !$scheduleChecker->shouldPublish($entry)) {
+                        if ($entry === null) {
                             continue;
                         }
 
@@ -218,12 +229,20 @@ final class SqliteIndexStore implements IndexStore
                         $seen[$key] = true;
 
                         $mtime = (int) $entry['mtime'];
-                        if (!array_key_exists($key, $existing)) {
-                            $this->upsertRow($key, $entry);
-                            $report['inserted']++;
-                        } elseif ($existing[$key] !== $mtime) {
-                            $this->upsertRow($key, $entry);
-                            $report['updated']++;
+                        try {
+                            if (!array_key_exists($key, $existing)) {
+                                $this->upsertRow($key, $entry, $scheduleChecker);
+                                $report['inserted']++;
+                            } elseif ($existing[$key] !== $mtime) {
+                                $this->upsertRow($key, $entry, $scheduleChecker);
+                                $report['updated']++;
+                            }
+                        } catch (\PDOException $e) {
+                            // Otro archivo PUBLICADO ya ocupa este (collection, locale, full_slug)
+                            // — p.ej. un {slug}.{locale}.md huérfano junto a {slug}.md. Se omite para
+                            // no tumbar el índice completo (el primero gana). SQLite no aborta la
+                            // transacción tras una violación de constraint (ABORT por defecto).
+                            $report['skipped']++;
                         }
                     }
                 }
@@ -286,21 +305,31 @@ final class SqliteIndexStore implements IndexStore
     // ----------------------------------------------------------- internals
 
     /** @param array<string, mixed> $entry */
-    private function upsertRow(string $key, array $entry): void
+    private function upsertRow(string $key, array $entry, ?ScheduleChecker $sc = null): void
     {
         $fullSlug = $this->scanner->fullSlug($entry);
         $localeSlug = $entry['slugs'][$entry['locale']] ?? $entry['slug'];
 
+        // Compute status: use pre-computed value if already set (e.g. from scan()),
+        // otherwise compute it now (e.g. from the public upsert() API).
+        if (isset($entry['status'])) {
+            $status = (string) $entry['status'];
+        } else {
+            $checker = $sc ?? new ScheduleChecker(dirname($this->scanner->contentPath()));
+            $status = EntryStatus::of($entry, $checker);
+        }
+
         $stmt = $this->db()->prepare(
             'INSERT INTO entries
-              (key, collection, locale, section, slug, full_slug, locale_slug, title, url, template, date, "order", draft, mtime, file, slugs_json, tags_json, meta_json)
-             VALUES (:key,:collection,:locale,:section,:slug,:full_slug,:locale_slug,:title,:url,:template,:date,:ord,:draft,:mtime,:file,:slugs,:tags,:meta)
+              (key, collection, locale, section, slug, full_slug, locale_slug, title, url, template, date, "order", draft, mtime, file, slugs_json, tags_json, meta_json, status)
+             VALUES (:key,:collection,:locale,:section,:slug,:full_slug,:locale_slug,:title,:url,:template,:date,:ord,:draft,:mtime,:file,:slugs,:tags,:meta,:status)
              ON CONFLICT(key) DO UPDATE SET
               collection=excluded.collection, locale=excluded.locale, section=excluded.section,
               slug=excluded.slug, full_slug=excluded.full_slug, locale_slug=excluded.locale_slug,
               title=excluded.title, url=excluded.url, template=excluded.template, date=excluded.date,
               "order"=excluded."order", draft=excluded.draft, mtime=excluded.mtime, file=excluded.file,
-              slugs_json=excluded.slugs_json, tags_json=excluded.tags_json, meta_json=excluded.meta_json'
+              slugs_json=excluded.slugs_json, tags_json=excluded.tags_json, meta_json=excluded.meta_json,
+              status=excluded.status'
         );
         $stmt->execute([
             ':key' => $key,
@@ -321,6 +350,7 @@ final class SqliteIndexStore implements IndexStore
             ':slugs' => $this->jsonStr($entry['slugs'] ?? []),
             ':tags' => $this->jsonStr($entry['tags'] ?? []),
             ':meta' => $this->jsonStr($entry['meta'] ?? []),
+            ':status' => $status,
         ]);
 
         $del = $this->db()->prepare('DELETE FROM entry_tags WHERE key = ?');
@@ -380,6 +410,11 @@ final class SqliteIndexStore implements IndexStore
         if ($spec->section !== null) {
             $clauses[] = 'section = ?';
             $params[] = $spec->section;
+        }
+        // Status filter: null or 'all' means no filter; anything else means that status.
+        if ($spec->status !== null && $spec->status !== 'all') {
+            $clauses[] = 'status = ?';
+            $params[] = $spec->status;
         }
         $where = $clauses === [] ? '' : ' WHERE ' . implode(' AND ', $clauses);
         return [$where, $params];
@@ -509,6 +544,7 @@ final class SqliteIndexStore implements IndexStore
             'slugs' => $this->jsonArr($r['slugs_json']),
             'tags' => $this->jsonArr($r['tags_json']),
             'mtime' => (int) $r['mtime'],
+            'status' => (string) ($r['status'] ?? 'published'),
         ];
     }
 
@@ -584,12 +620,18 @@ final class SqliteIndexStore implements IndexStore
             "order" INTEGER NOT NULL DEFAULT 0, draft INTEGER NOT NULL DEFAULT 0,
             mtime INTEGER NOT NULL DEFAULT 0, file TEXT NOT NULL,
             slugs_json TEXT NOT NULL DEFAULT "{}", tags_json TEXT NOT NULL DEFAULT "[]",
-            meta_json TEXT NOT NULL DEFAULT "{}"
+            meta_json TEXT NOT NULL DEFAULT "{}",
+            status TEXT NOT NULL DEFAULT "published"
         )');
-        $pdo->exec('CREATE UNIQUE INDEX ux_entries_locale_slug ON entries(collection, locale, full_slug)');
+        // PARCIAL: la unicidad (collection, locale, full_slug) solo aplica entre
+        // entradas PUBLICADAS (invariante de routing público). Drafts/scheduled
+        // pueden compartir slug con su versión publicada (revisión en borrador).
+        $pdo->exec("CREATE UNIQUE INDEX ux_entries_pub_slug ON entries(collection, locale, full_slug) WHERE status = 'published'");
+        $pdo->exec('CREATE INDEX ix_entries_locale_slug ON entries(collection, locale, full_slug)');
         $pdo->exec('CREATE INDEX ix_entries_coll_locale ON entries(collection, locale, "order")');
         $pdo->exec('CREATE INDEX ix_entries_coll_sec_loc ON entries(collection, section, locale, "order")');
         $pdo->exec('CREATE INDEX ix_entries_date ON entries(collection, locale, date)');
+        $pdo->exec('CREATE INDEX ix_entries_status ON entries(collection, locale, status)');
 
         $pdo->exec('CREATE TABLE entry_tags (
             key TEXT NOT NULL REFERENCES entries(key) ON DELETE CASCADE,

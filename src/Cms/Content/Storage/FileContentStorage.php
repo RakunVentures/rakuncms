@@ -42,8 +42,17 @@ final class FileContentStorage implements ContentStorage
             mkdir($dir, 0755, true);
         }
 
-        $suffix = $draft->locale !== '' ? ".{$draft->locale}" : '';
-        $file   = "{$dir}/{$draft->slug}{$suffix}.md";
+        // Sobrescribir el archivo existente IN SITU (preservando su forma de nombre)
+        // para NO crear duplicados al editar: un {slug}.md (locale por defecto) se
+        // reescribía como {slug}.{locale}.md, dejando ambos. Si no existe, se crea con
+        // la convención de siempre ({slug}.{locale}.md).
+        $existing = $this->locate($draft->collection, $draft->locale, $draft->slug);
+        if ($existing !== null) {
+            $file = $existing;
+        } else {
+            $suffix = $draft->locale !== '' ? ".{$draft->locale}" : '';
+            $file   = "{$dir}/{$draft->slug}{$suffix}.md";
+        }
 
         // The slug may contain a section path (e.g. "category/post"); ensure the
         // intermediate directories exist.

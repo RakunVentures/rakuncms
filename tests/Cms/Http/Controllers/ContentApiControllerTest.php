@@ -290,3 +290,82 @@ test('collections returns list of collections with counts', function () {
     expect($names)->toContain('blog');
     expect($names)->toContain('pages');
 });
+
+// ──────────────────────────────────────────────────────────────────────────────
+// ?status opt-in tests
+// ──────────────────────────────────────────────────────────────────────────────
+
+test('list ?status=published returns only published entries (default)', function () {
+    file_put_contents($this->tempDir . '/content/blog/draft-a.en.md', "---\ntitle: Draft A\nstatus: draft\n---\nbody");
+
+    // Explicit ?status=published
+    $request = (new ServerRequest('GET', new Uri('/api/v1/entries')))
+        ->withQueryParams(['collection' => 'blog', 'status' => 'published']);
+    $data = json_decode((string) $this->controller->list($request)->getBody(), true);
+
+    $statuses = array_column($data['data'], 'status');
+    expect($statuses)->each->toBe('published');
+    expect(in_array('draft', $statuses, true))->toBeFalse();
+});
+
+test('list ?status=draft returns only draft entries', function () {
+    file_put_contents($this->tempDir . '/content/blog/draft-b.en.md', "---\ntitle: Draft B\nstatus: draft\n---\nbody");
+
+    $request = (new ServerRequest('GET', new Uri('/api/v1/entries')))
+        ->withQueryParams(['collection' => 'blog', 'status' => 'draft']);
+    $data = json_decode((string) $this->controller->list($request)->getBody(), true);
+
+    expect($data['data'])->not->toBeEmpty();
+    $statuses = array_column($data['data'], 'status');
+    expect($statuses)->each->toBe('draft');
+});
+
+test('list ?status=all returns all statuses', function () {
+    file_put_contents($this->tempDir . '/content/blog/draft-c.en.md', "---\ntitle: Draft C\nstatus: draft\n---\nbody");
+
+    $request = (new ServerRequest('GET', new Uri('/api/v1/entries')))
+        ->withQueryParams(['collection' => 'blog', 'status' => 'all']);
+    $data = json_decode((string) $this->controller->list($request)->getBody(), true);
+
+    $statuses = array_column($data['data'], 'status');
+    expect(in_array('published', $statuses, true))->toBeTrue();
+    expect(in_array('draft', $statuses, true))->toBeTrue();
+});
+
+test('list without ?status hides drafts by default (no-collection path)', function () {
+    file_put_contents($this->tempDir . '/content/blog/draft-d.en.md', "---\ntitle: Draft D\nstatus: draft\n---\nbody");
+
+    // No collection, no status → published only
+    $request = new ServerRequest('GET', new Uri('/api/v1/entries'));
+    $data = json_decode((string) $this->controller->list($request)->getBody(), true);
+
+    $statuses = array_column($data['data'], 'status');
+    expect(in_array('draft', $statuses, true))->toBeFalse();
+});
+
+test('list ?status=all on no-collection path includes drafts', function () {
+    file_put_contents($this->tempDir . '/content/blog/draft-e.en.md', "---\ntitle: Draft E\nstatus: draft\n---\nbody");
+
+    $request = (new ServerRequest('GET', new Uri('/api/v1/entries')))
+        ->withQueryParams(['status' => 'all']);
+    $data = json_decode((string) $this->controller->list($request)->getBody(), true);
+
+    $statuses = array_column($data['data'], 'status');
+    expect(in_array('draft', $statuses, true))->toBeTrue();
+});
+
+test('show with no status param returns drafts (admin preview default)', function () {
+    file_put_contents($this->tempDir . '/content/blog/my-draft.en.md', "---\ntitle: My Draft\nstatus: draft\n---\nbody");
+
+    $response = $this->controller->show('blog', 'my-draft');
+    expect($response->getStatusCode())->toBe(200);
+    $data = json_decode((string) $response->getBody(), true);
+    expect($data['data']['status'])->toBe('draft');
+});
+
+test('show with status=published returns 404 for draft entry', function () {
+    file_put_contents($this->tempDir . '/content/blog/hidden-draft.en.md', "---\ntitle: Hidden\nstatus: draft\n---\nbody");
+
+    $response = $this->controller->show('blog', 'hidden-draft', false, 'published');
+    expect($response->getStatusCode())->toBe(404);
+});

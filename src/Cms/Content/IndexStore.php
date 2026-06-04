@@ -69,7 +69,10 @@ interface IndexStore
      * Stream every entry row (build/search/sitemap full enumeration). Returns a
      * generator so the SQLite store never materialises all rows at once.
      *
+     * Pass null (default) to stream published entries only. Pass 'all' to include
+     * every status. Pass 'draft' or 'scheduled' to stream only that status.
+     *
      * @return iterable<array<string, mixed>>
      */
-    public function each(): iterable;
+    public function each(?string $status = null): iterable;
 }

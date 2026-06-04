@@ -2,7 +2,36 @@
 
 declare(strict_types=1);
 
+use Rkn\Cms\Content\Indexer;
 use Rkn\Cms\Search\SearchIndexer;
+
+/**
+ * @param array<string, string> $files  filename => contents under content/blog/
+ */
+function makeSearchSite(array $files): string
+{
+    $base = sys_get_temp_dir() . '/rkn-search-' . uniqid();
+    mkdir($base . '/content/blog', 0777, true);
+    foreach ($files as $name => $body) {
+        file_put_contents("{$base}/content/blog/{$name}", $body);
+    }
+
+    return $base;
+}
+
+function rknRmrf(string $dir): void
+{
+    if (!is_dir($dir)) {
+        return;
+    }
+    foreach (new DirectoryIterator($dir) as $i) {
+        if ($i->isDot()) {
+            continue;
+        }
+        $i->isDir() ? rknRmrf($i->getPathname()) : @unlink($i->getPathname());
+    }
+    @rmdir($dir);
+}
 
 test('tokenizes text correctly', function () {
     $indexer = new SearchIndexer('/tmp');
@@ -81,4 +110,30 @@ test('filters short words under 2 characters', function () {
     expect($words)->not->toContain('z');
     expect($words)->toContain('go');
     expect($words)->toContain('park');
+});
+
+test('search index excludes drafts and scheduled entries (no public leak)', function () {
+    $future = (new DateTimeImmutable('+1 year'))->format('Y-m-d');
+    $base = makeSearchSite([
+        'published.md' => "---\ntitle: Pub Post\nslug: pub-post\n---\nhello published content",
+        'draftflag.md' => "---\ntitle: Draft Flag\nslug: draft-flag\ndraft: true\n---\nsecret draft body",
+        'metadraft.md' => "---\ntitle: Meta Draft\nslug: meta-draft\nstatus: draft\n---\nsecret meta draft",
+        'scheduled.md' => "---\ntitle: Future Post\nslug: future-post\npublish_date: \"{$future}\"\n---\nfuture content",
+    ]);
+
+    try {
+        (new Indexer($base))->rebuild();
+        $index = (new SearchIndexer($base))->build();
+        $titles = array_column($index['entries'], 'title');
+
+        expect($titles)->toContain('Pub Post');
+        expect($titles)->not->toContain('Draft Flag');   // draft:true
+        expect($titles)->not->toContain('Meta Draft');   // status: draft
+        expect($titles)->not->toContain('Future Post');  // publish_date futuro
+
+        // El cuerpo del draft tampoco debe quedar en el índice invertido público.
+        expect(array_keys($index['inverted']))->not->toContain('secret');
+    } finally {
+        rknRmrf($base);
+    }
 });
