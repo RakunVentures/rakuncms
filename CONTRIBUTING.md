@@ -1,6 +1,6 @@
 # Contributing to RakunCMS
 
-Thank you for considering contributing to RakunCMS! Our goal is to provide a fast, flexible, and easy-to-use flat-file CMS for shared hosting environments. We welcome all contributions, from bug reports and feature requests to code patches and documentation improvements.
+Thank you for considering contributing to RakunCMS! Our goal is to provide a fast, flexible, and easy-to-use CMS for shared hosting environments. By default it is flat-file — content lives in Markdown files with no database needed — but it also supports a MySQL content store as a first-class opt-in for teams that need a durable source of truth or concurrent editing. We welcome all contributions, from bug reports and feature requests to code patches and documentation improvements.
 
 ## Table of Contents
 
@@ -175,7 +175,7 @@ RakunCMS uses a "Herd" pattern (similar to Service Providers in Laravel). These 
 *   `CoreHerd`: Registers Router, View, EventDispatcher.
 *   `CmsHerd`: Registers CMS specific services (ContentManager, ThemeService).
 *   `MailHerd`: Registers Mailer.
-*   `DbHerd` (Optional): Registers Database connection.
+*   Database content source (Optional): the content store is selected by `ContentStorageFactory` from `content.driver` (`file` by default, or `mysql`); the SQLite query index is selected by `IndexStoreFactory` from `index.driver`.
 
 ---
 
@@ -208,7 +208,16 @@ RakunCMS includes a reactive component system called Yoyo (inspired by Livewire,
 
 ### Database (Optional)
 
-While primarily Flat-File, RakunCMS can support a database (e.g., SQLite, MySQL) via PDO. This is useful for plugins or complex features (like forms or user management).
+RakunCMS supports two content store drivers, selected via `content.driver` in config:
+
+- **`file` (default)**: Markdown files under `content/` are the source of truth. `ContentStorageFactory` returns a `FileContentStorage` instance that implements the `ContentStorage` interface. No database required.
+- **`mysql`**: MySQL is the durable source of truth with per-write revision history. `ContentStorageFactory` returns a `MysqlContentStorage` instance (also implements `ContentStorage`). Falls back to `file` if `pdo_mysql` is unavailable. The `.md` files become a regenerable cache; refresh them with `content:rebuild-cache`.
+
+Because both drivers implement the same `ContentStorage` interface, the Query API is identical regardless of which store is active. Use `content:import` to migrate existing `.md` files into MySQL.
+
+The content **index** (used for listing and search, not the store itself) has its own independent driver setting, `index.driver: php|sqlite`, which selects between `PhpArrayIndexStore` and `SqliteIndexStore` via `IndexStoreFactory`. The SQLite index (`cache/index.sqlite`) gives bounded, constant memory for large collections. Rebuild it with `index:rebuild`.
+
+A database is never required — flat-file (`file` + `php`) remains the default and is appropriate for most small to medium sites.
 
 ---
 

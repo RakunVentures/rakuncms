@@ -2,7 +2,7 @@
 
 **The flat-file PHP CMS that deploys to shared hosting in minutes.**
 
-RakunCMS is a blazing fast, flat-file CMS built for shared hosting environments — powered by Markdown, Twig, Yoyo reactive components, and PSR standards. No database required.
+RakunCMS is a blazing fast, flat-file CMS built for shared hosting environments — powered by Markdown, Twig, Yoyo reactive components, and PSR standards. Content can live in flat Markdown files or a database — no heavyweight stack required.
 
 [![Latest Stable Version](https://poser.pugx.org/rkn/cms/v/stable)](https://packagist.org/packages/rkn/cms)
 [![Total Downloads](https://poser.pugx.org/rkn/cms/downloads)](https://packagist.org/packages/rkn/cms)
@@ -12,7 +12,7 @@ RakunCMS is a blazing fast, flat-file CMS built for shared hosting environments 
 
 We built RakunCMS as an alternative to CMSs like WordPress, Grav, Statamic, and Kirby. Our core philosophy is simplicity, performance, and accessibility. 
 
-- **No database — pure Markdown**: Your content lives in simple Markdown files with YAML frontmatter. Your folder structure defines your site structure.
+- **Flat-file or database**: content lives in Markdown files (folder = site structure) by default, or in MySQL via the opt-in content store — same Query API either way.
 - **Runs on $3/mo shared hosting (cPanel/Plesk)**: Deploy effortlessly via FTP/cPanel. No persistent processes, no VPS required.
 - **No Node.js or Docker required**: Everything runs in a pure PHP ecosystem.
 - **Composer-installable**: Manage your site easily with Composer.
@@ -39,13 +39,15 @@ Open `http://localhost:8080` in your browser to see your site running!
 
 ## Core Features
 
-- **Flat-File Architecture**: No MySQL configuration, no database backups. Everything is stored in Markdown and YAML.
+- **Flat-File Architecture (default)**: By default, everything is stored in Markdown and YAML — no MySQL configuration, no database backups. Opt in to a MySQL content store by setting `content.driver: mysql` in config, powered by `ContentStorageFactory` selecting between `FileContentStorage` and `MysqlContentStorage` via the `ContentStorage` interface. A SQLite-backed content index (set `index.driver: sqlite`) is also available for large collections where a PHP-array index would be memory-intensive.
 - **Reactive Yoyo Components**: Build interactive, stateful PHP components (similar to Livewire) using HTMX under the hood.
 - **Built-in SEO Engine**: Automatically generates Open Graph tags, JSON-LD markup, handles consent management, and integrates with WebMCP.
 - **Full-Text Search**: Features an integrated inverted index for blazing fast search capabilities without needing external services like Algolia or Elasticsearch.
 - **Native i18n**: Out-of-the-box support for multi-locale routing and content localization.
 - **Multi-Level Caching**: Achieve 1-3ms response times in production using static HTML full-page caching coupled with OPcache.
 - **CLI Tools**: Integrated `rakun` command-line tool to easily clear the cache, make components, or run background queue workers.
+- **Static Export**: `bin/rakun build` renders every published entry to `dist/<url>/index.html` and generates `sitemap.xml`/`rss.xml`/`robots.txt` — source-agnostic and fully compatible with both `file` and `mysql` content stores. Deploy to any cheap or static host.
+- **Optional Admin Panel**: `rakuncms-admin` is a separate, optional Laravel + Filament application that manages one or more RakunCMS sites over the HTTP content API. Flat-file sites can still be edited by hand or via Git with no admin panel required.
 
 ## Developer Experience (DX)
 - **Laravel Herd Integration**: Includes a custom Valet driver (`RakunCmsValetDriver`) and the `php rakun herd:install` command for automatic site discovery and blazingly fast local development on macOS.
