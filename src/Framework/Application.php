@@ -126,7 +126,7 @@ final class Application
 
         $container->set(Psr17Factory::class, new Psr17Factory());
 
-        $container->set(\Rkn\Cms\Middleware\CsrfProtection::class, function () use ($container) {
+        $container->set(\Rkn\Cms\Middleware\CsrfProtection::class, function () {
             $secret = (string) env('APP_KEY', 'change-me-at-least-32-chars-long');
             return new \Rkn\Cms\Middleware\CsrfProtection($secret);
         });

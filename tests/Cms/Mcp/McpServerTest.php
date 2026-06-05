@@ -3,6 +3,8 @@
 declare(strict_types=1);
 
 use Rkn\Cms\Mcp\McpServer;
+use Rkn\Cms\Mcp\McpMode;
+use Rkn\Cms\Mcp\ScopedToolInterface;
 use Rkn\Cms\Mcp\ToolInterface;
 use Rkn\Cms\Mcp\ResourceInterface;
 use Rkn\Cms\Mcp\PromptInterface;
@@ -21,10 +23,89 @@ test('responds to initialize with protocol version and capabilities', function (
     $decoded = json_decode($response, true);
     expect($decoded['id'])->toBe(1);
     expect($decoded['result']['protocolVersion'])->toBe('2024-11-05');
-    expect($decoded['result']['serverInfo']['name'])->toBe('rakuncms-boost');
+    expect($decoded['result']['serverInfo']['name'])->toBe('rakuncms');
+    expect($decoded['result']['serverInfo']['mode'])->toBe('readonly');
     expect($decoded['result']['capabilities'])->toHaveKey('tools');
     expect($decoded['result']['capabilities'])->toHaveKey('resources');
     expect($decoded['result']['capabilities'])->toHaveKey('prompts');
+});
+
+test('hides scoped tools above the active MCP mode', function () {
+    $server = createTestServer();
+    $server->setMode(McpMode::Readonly);
+
+    $tool = new class implements ToolInterface, ScopedToolInterface {
+        public function name(): string { return 'admin-only'; }
+        public function description(): string { return 'Admin only'; }
+        public function inputSchema(): array { return ['type' => 'object', 'properties' => new \stdClass()]; }
+        public function requiredMode(): McpMode { return McpMode::Admin; }
+        public function execute(array $arguments): array { return ['ok' => true]; }
+    };
+
+    $server->registerTool($tool);
+    $response = $server->handleLine('{"jsonrpc":"2.0","id":11,"method":"tools/list","params":{}}');
+
+    $decoded = json_decode($response, true);
+    expect($decoded['result']['tools'])->toBe([]);
+});
+
+test('rejects direct calls to tools above the active MCP mode', function () {
+    $server = createTestServer();
+    $server->setMode(McpMode::Readonly);
+
+    $tool = new class implements ToolInterface, ScopedToolInterface {
+        public function name(): string { return 'admin-only'; }
+        public function description(): string { return 'Admin only'; }
+        public function inputSchema(): array { return ['type' => 'object', 'properties' => new \stdClass()]; }
+        public function requiredMode(): McpMode { return McpMode::Admin; }
+        public function execute(array $arguments): array { return ['ok' => true]; }
+    };
+
+    $server->registerTool($tool);
+    $response = $server->handleLine('{"jsonrpc":"2.0","id":12,"method":"tools/call","params":{"name":"admin-only","arguments":{}}}');
+
+    $decoded = json_decode($response, true);
+    expect($decoded['error']['code'])->toBe(-32001);
+});
+
+test('hides scoped resources above the active MCP mode', function () {
+    $server = createTestServer();
+    $server->setMode(McpMode::Readonly);
+
+    $resource = new class implements ResourceInterface, \Rkn\Cms\Mcp\ScopedResourceInterface {
+        public function uri(): string { return 'rakun://secret'; }
+        public function name(): string { return 'Secret'; }
+        public function description(): string { return 'Admin-only config'; }
+        public function mimeType(): string { return 'text/yaml'; }
+        public function read(): array { return ['text' => 'api_key: SECRET']; }
+        public function requiredMode(): McpMode { return McpMode::Admin; }
+    };
+
+    $server->registerResource($resource);
+    $response = $server->handleLine('{"jsonrpc":"2.0","id":21,"method":"resources/list","params":{}}');
+
+    $decoded = json_decode($response, true);
+    expect($decoded['result']['resources'])->toBe([]);
+});
+
+test('rejects reading resources above the active MCP mode', function () {
+    $server = createTestServer();
+    $server->setMode(McpMode::Readonly);
+
+    $resource = new class implements ResourceInterface, \Rkn\Cms\Mcp\ScopedResourceInterface {
+        public function uri(): string { return 'rakun://secret'; }
+        public function name(): string { return 'Secret'; }
+        public function description(): string { return 'Admin-only config'; }
+        public function mimeType(): string { return 'text/yaml'; }
+        public function read(): array { return ['text' => 'api_key: SECRET']; }
+        public function requiredMode(): McpMode { return McpMode::Admin; }
+    };
+
+    $server->registerResource($resource);
+    $response = $server->handleLine('{"jsonrpc":"2.0","id":22,"method":"resources/read","params":{"uri":"rakun://secret"}}');
+
+    $decoded = json_decode($response, true);
+    expect($decoded['error']['code'])->toBe(-32001);
 });
 
 test('handles notifications/initialized silently', function () {

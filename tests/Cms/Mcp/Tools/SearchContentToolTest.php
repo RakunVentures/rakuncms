@@ -13,6 +13,7 @@ beforeEach(function () {
     file_put_contents($this->tmpDir . '/content/pages/home.md', "---\ntitle: Inicio\nmeta:\n  description: Página principal del sitio\n---\nBienvenido");
     file_put_contents($this->tmpDir . '/content/pages/about.md', "---\ntitle: Nosotros\nmeta:\n  description: Conoce al equipo\n---\nSobre nosotros");
     file_put_contents($this->tmpDir . '/content/blog/post-1.md', "---\ntitle: Tutorial PHP\nmeta:\n  description: Aprende PHP desde cero\n---\nContenido");
+    file_put_contents($this->tmpDir . '/content/blog/draft.md', "---\ntitle: Tutorial MCP\nstatus: draft\nmeta:\n  description: Automatiza contenido con asistentes\n---\nContenido");
 });
 
 afterEach(function () {
@@ -54,6 +55,31 @@ test('limits results', function () {
     $result = $tool->execute(['query' => 'o', 'limit' => 1]);
 
     expect($result['count'])->toBeLessThanOrEqual(1);
+});
+
+test('filters search by collection status and tag', function () {
+    file_put_contents($this->tmpDir . '/content/blog/tagged.md', "---\ntitle: MCP Tags\nstatus: published\ntags:\n  - ai\nmeta:\n  description: MCP para contenido\n---\nContenido");
+
+    $tool = new SearchContentTool($this->tmpDir);
+    $result = $tool->execute([
+        'query' => 'MCP',
+        'collection' => 'blog',
+        'status' => 'published',
+        'tag' => 'ai',
+    ]);
+
+    expect($result['count'])->toBe(1);
+    expect($result['results'][0]['slug'])->toBe('tagged');
+});
+
+test('supports exact and fuzzy search modes', function () {
+    $tool = new SearchContentTool($this->tmpDir);
+
+    $exact = $tool->execute(['query' => 'Tutorial PHP', 'mode' => 'exact']);
+    expect($exact['count'])->toBe(1);
+
+    $fuzzy = $tool->execute(['query' => 'Tutrial', 'mode' => 'fuzzy']);
+    expect($fuzzy['count'])->toBeGreaterThan(0);
 });
 
 test('returns error when query missing', function () {

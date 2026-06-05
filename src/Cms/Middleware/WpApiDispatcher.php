@@ -28,6 +28,18 @@ final class WpApiDispatcher implements MiddlewareInterface
             $path = '/';
         }
 
+        // Honor the api.enabled switch: when the API is disabled, the WordPress-proxy
+        // write surface must be off too (otherwise it bypasses the kill switch).
+        if (str_starts_with($path, '/wp-json')
+            && in_array($request->getMethod(), ['POST', 'PUT', 'PATCH', 'DELETE'], true)
+            && !$this->apiWritesEnabled()) {
+            return $this->jsonResponse(403, [
+                'code' => 'rest_api_disabled',
+                'message' => 'The API is disabled.',
+                'data' => ['status' => 403],
+            ]);
+        }
+
         if ($path === '/wp-json') {
             if ($request->getMethod() === 'GET') {
                 return $this->handleDiscovery($request);
@@ -103,6 +115,14 @@ final class WpApiDispatcher implements MiddlewareInterface
         return $handler->handle($request);
     }
 
+    /** Whether the content API (and thus its WP-proxy writes) is enabled. Default: on. */
+    private function apiWritesEnabled(): bool
+    {
+        $enabled = \config('api.enabled') ?? \config('rakun.api.enabled') ?? true;
+
+        return filter_var($enabled, FILTER_VALIDATE_BOOL, FILTER_NULL_ON_FAILURE) ?? true;
+    }
+
     private function handleDiscovery(ServerRequestInterface $request): ResponseInterface
     {
         $siteUrl = \config('site.url', 'http://localhost');
@@ -160,6 +180,9 @@ final class WpApiDispatcher implements MiddlewareInterface
         ]);
     }
 
+    /**
+     * @return array{id: mixed, name: string, permissions: list<string>}|null
+     */
     private function authenticateWpRequest(ServerRequestInterface $request): ?array
     {
         $authHeader = $request->getHeaderLine('Authorization');
@@ -167,7 +190,7 @@ final class WpApiDispatcher implements MiddlewareInterface
             return null;
         }
 
-        $decoded = base64_decode(substr($authHeader, 6));
+        $decoded = base64_decode(substr($authHeader, 6), true);
         if ($decoded === false || !str_contains($decoded, ':')) {
             return null;
         }
@@ -180,7 +203,7 @@ final class WpApiDispatcher implements MiddlewareInterface
         foreach ($apiKeys as $keyConfig) {
             if (isset($keyConfig['key']) && hash_equals($keyConfig['key'], $password)) {
                 return [
-                    'id' => mt_rand(1, 100),
+                    'id' => random_int(100000, 999999),
                     'name' => $keyConfig['name'] ?? $username,
                     'permissions' => $keyConfig['permissions'] ?? [],
                 ];
@@ -334,6 +357,9 @@ final class WpApiDispatcher implements MiddlewareInterface
         return $this->jsonResponse(200, []);
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     private function formatWpPost(Entry $entry, Parser $parser, string $siteUrl, string $wpType): array
     {
         $meta = $entry->meta();
@@ -379,6 +405,9 @@ final class WpApiDispatcher implements MiddlewareInterface
         return trim($text, '-');
     }
 
+    /**
+     * @param array<string, mixed>|object $data
+     */
     private function jsonResponse(int $status, array|object $data): ResponseInterface
     {
         return new Response(

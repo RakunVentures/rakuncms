@@ -34,9 +34,18 @@ final class McpServeCommand extends Command
         $server->registerTool(new \Rkn\Cms\Mcp\Tools\ListEntriesTool($basePath));
         $server->registerTool(new \Rkn\Cms\Mcp\Tools\ReadEntryTool($basePath));
         $server->registerTool(new \Rkn\Cms\Mcp\Tools\SearchContentTool($basePath));
+        $server->registerTool(new \Rkn\Cms\Mcp\Tools\CreateEntryTool($basePath));
+        $server->registerTool(new \Rkn\Cms\Mcp\Tools\UpdateEntryTool($basePath));
+        $server->registerTool(new \Rkn\Cms\Mcp\Tools\DeleteEntryTool($basePath));
+        $server->registerTool(new \Rkn\Cms\Mcp\Tools\PublishEntryTool($basePath));
+        $server->registerTool(new \Rkn\Cms\Mcp\Tools\ScheduleEntryTool($basePath));
         $server->registerTool(new \Rkn\Cms\Mcp\Tools\ListTemplatesTool($basePath));
         $server->registerTool(new \Rkn\Cms\Mcp\Tools\ReadTemplateTool($basePath));
         $server->registerTool(new \Rkn\Cms\Mcp\Tools\ListComponentsTool($basePath));
+        $server->registerTool(new \Rkn\Cms\Mcp\Tools\ListMediaTool($basePath));
+        $server->registerTool(new \Rkn\Cms\Mcp\Tools\UploadMediaTool($basePath));
+        $server->registerTool(new \Rkn\Cms\Mcp\Tools\DeleteMediaTool($basePath));
+        $server->registerTool(new \Rkn\Cms\Mcp\Tools\RunCommandTool($basePath));
         $server->registerTool(new \Rkn\Cms\Mcp\Tools\BoostArchetypesTool());
         $server->registerTool(new \Rkn\Cms\Mcp\Tools\BoostApplyTool($basePath));
 
@@ -44,6 +53,9 @@ final class McpServeCommand extends Command
         $server->registerResource(new \Rkn\Cms\Mcp\Resources\GuidelinesResource($basePath));
         $server->registerResource(new \Rkn\Cms\Mcp\Resources\ArchitectureResource($basePath));
         $server->registerResource(new \Rkn\Cms\Mcp\Resources\ConfigResource($basePath));
+        $server->registerResource(new \Rkn\Cms\Mcp\Resources\SiteInfoResource($basePath));
+        $server->registerResource(new \Rkn\Cms\Mcp\Resources\CollectionsResource($basePath));
+        $server->registerResource(new \Rkn\Cms\Mcp\Resources\CommandsResource());
 
         // Prompts
         $server->registerPrompt(new \Rkn\Cms\Mcp\Prompts\CreateEntryPrompt($basePath));

@@ -11,6 +11,7 @@ final class JsonRpcHandler
     public const METHOD_NOT_FOUND = -32601;
     public const INVALID_PARAMS = -32602;
     public const INTERNAL_ERROR = -32603;
+    public const FORBIDDEN = -32001;
 
     /**
      * Parse a JSON-RPC 2.0 request string.

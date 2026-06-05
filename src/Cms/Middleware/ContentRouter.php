@@ -56,7 +56,7 @@ final class ContentRouter implements MiddlewareInterface
         } elseif (count($segments) === 1) {
             // Single segment: page
             $entry = $query->findBySlug('pages', $locale, $segments[0]);
-        } elseif (count($segments) >= 2) {
+        } else {
             // Multi-segment: collection/{section.../}slug
             $collectionName = $segments[0];
             $slug = implode('/', array_slice($segments, 1));

@@ -240,6 +240,7 @@ final class ServeCommand extends Command
 
         $lastHash = $this->calculateDirsHash($watchDirs);
 
+        /** @phpstan-ignore-next-line watcher process runs until terminated */
         while (true) {
             sleep(1);
             $currentHash = $this->calculateDirsHash($watchDirs);
@@ -271,6 +272,9 @@ final class ServeCommand extends Command
         @touch($stampFile);
     }
 
+    /**
+     * @param list<string> $dirs
+     */
     private function calculateDirsHash(array $dirs): string
     {
         $files = '';

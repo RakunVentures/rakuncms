@@ -122,6 +122,9 @@ final class WxrImportCommand extends Command
         }
     }
 
+    /**
+     * @param list<string> $allowedPostTypes
+     */
     private function importFileManually(string $file, string $collection, array $allowedPostTypes, bool $downloadImages, string $mediaDir, bool $overwrite, OutputInterface $output): int
     {
         $content = file_get_contents($file);

@@ -137,6 +137,9 @@ final class BoostInstallCommand extends Command
                 'rakuncms' => [
                     'command' => 'php',
                     'args' => ['rakun', 'mcp:serve'],
+                    'env' => [
+                        'RAKUN_MCP_MODE' => 'readonly',
+                    ],
                 ],
             ],
         ];

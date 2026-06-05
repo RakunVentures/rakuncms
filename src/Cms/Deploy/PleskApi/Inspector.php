@@ -558,12 +558,15 @@ final class Inspector
      *   Skip SSL verification: disabled
      *
      * Returns:
-     *   - array<int, string>  → registered actions (one entry per line, trimmed)
+     *   - list<string>        → registered actions (one entry per line, trimmed)
      *   - empty array         → label found but value blank ("Actions:" with nothing)
      *   - null                → label not present in stdout (older Plesk extension)
      *
      * Used by {@see Provisioner::createGitPullRepo} to decide whether a re-run
      * with a changed {@code --post-deploy} payload needs to push an update.
+     */
+    /**
+     * @return list<string>|null
      */
     private function parseActionsBlock(string $stdout): ?array
     {

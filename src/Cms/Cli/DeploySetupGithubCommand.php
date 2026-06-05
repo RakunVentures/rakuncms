@@ -365,7 +365,7 @@ final class DeploySetupGithubCommand extends Command
     private function envVar(string $name): ?string
     {
         $val = $_ENV[$name] ?? $_SERVER[$name] ?? getenv($name);
-        if ($val === false || $val === null || $val === '') {
+        if ($val === false || $val === '') {
             return null;
         }
         return (string) $val;

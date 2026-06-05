@@ -20,7 +20,7 @@ final class SearchContentTool implements ToolInterface
 
     public function description(): string
     {
-        return 'Full-text search across content entries by title and meta.description';
+        return 'Search content entries by title and meta.description with filters and matching modes';
     }
 
     public function inputSchema(): array
@@ -35,6 +35,24 @@ final class SearchContentTool implements ToolInterface
                 'locale' => [
                     'type' => 'string',
                     'description' => 'Filter by locale',
+                ],
+                'collection' => [
+                    'type' => 'string',
+                    'description' => 'Filter by collection',
+                ],
+                'status' => [
+                    'type' => 'string',
+                    'description' => 'Filter by status',
+                    'enum' => ['published', 'draft', 'scheduled', 'all'],
+                ],
+                'tag' => [
+                    'type' => 'string',
+                    'description' => 'Filter by tag',
+                ],
+                'mode' => [
+                    'type' => 'string',
+                    'description' => 'Match mode: contains, exact, or fuzzy',
+                    'enum' => ['contains', 'exact', 'fuzzy'],
                 ],
                 'limit' => [
                     'type' => 'integer',
@@ -53,6 +71,10 @@ final class SearchContentTool implements ToolInterface
         }
 
         $locale = $arguments['locale'] ?? null;
+        $collection = $arguments['collection'] ?? null;
+        $status = $arguments['status'] ?? null;
+        $tag = $arguments['tag'] ?? null;
+        $mode = is_string($arguments['mode'] ?? null) ? $arguments['mode'] : 'contains';
         $limit = (int) ($arguments['limit'] ?? 10);
 
         $indexer = new Indexer($this->basePath);
@@ -65,29 +87,67 @@ final class SearchContentTool implements ToolInterface
             if ($locale !== null && ($entry['locale'] ?? '') !== $locale) {
                 continue;
             }
+            if ($collection !== null && ($entry['collection'] ?? '') !== $collection) {
+                continue;
+            }
+            if ($status !== null && $status !== 'all' && ($entry['status'] ?? 'published') !== $status) {
+                continue;
+            }
+            if ($tag !== null && (!is_array($entry['tags'] ?? null) || !in_array($tag, $entry['tags'], true))) {
+                continue;
+            }
 
-            $title = mb_strtolower($entry['title'] ?? '');
-            $description = mb_strtolower($entry['meta']['description'] ?? '');
+            $meta = is_array($entry['meta'] ?? null) ? $entry['meta'] : [];
+            $title = mb_strtolower((string) ($entry['title'] ?? ''));
+            $description = mb_strtolower((string) ($meta['description'] ?? ''));
+            $haystack = trim($title . ' ' . $description);
 
-            if (str_contains($title, $search) || str_contains($description, $search)) {
+            $score = $this->score($haystack, $title, $description, $search, $mode);
+            if ($score > 0) {
                 $matched[] = [
                     'title' => $entry['title'],
                     'slug' => $entry['slug'],
                     'collection' => $entry['collection'],
                     'locale' => $entry['locale'],
+                    'status' => $entry['status'] ?? 'published',
                     'file' => $entry['file'],
+                    'score' => $score,
+                    'snippet' => $meta['description'] ?? $entry['title'] ?? '',
                 ];
-
-                if (count($matched) >= $limit) {
-                    break;
-                }
             }
         }
 
+        usort($matched, fn (array $a, array $b): int => $b['score'] <=> $a['score']);
+        $matched = array_slice($matched, 0, max(1, $limit));
+
         return [
             'query' => $searchQuery,
+            'mode' => $mode,
             'count' => count($matched),
             'results' => $matched,
         ];
+    }
+
+    private function score(string $haystack, string $title, string $description, string $search, string $mode): int
+    {
+        if ($mode === 'exact') {
+            return ($title === $search || $description === $search) ? 100 : 0;
+        }
+
+        if (str_contains($haystack, $search)) {
+            return $mode === 'fuzzy' ? 90 : 100;
+        }
+
+        if ($mode !== 'fuzzy') {
+            return 0;
+        }
+
+        foreach (preg_split('/\s+/', $haystack) ?: [] as $word) {
+            if ($word !== '' && levenshtein($search, $word) <= max(1, (int) floor(strlen($search) / 4))) {
+                return 60;
+            }
+        }
+
+        return 0;
     }
 }

@@ -4,12 +4,20 @@ declare(strict_types=1);
 
 namespace Rkn\Cms\Mcp\Resources;
 
+use Rkn\Cms\Mcp\McpMode;
 use Rkn\Cms\Mcp\ResourceInterface;
+use Rkn\Cms\Mcp\ScopedResourceInterface;
 
-final class ConfigResource implements ResourceInterface
+final class ConfigResource implements ResourceInterface, ScopedResourceInterface
 {
     public function __construct(private string $basePath)
     {
+    }
+
+    /** Raw config can carry secrets (api.keys, smtp, db) — gate to Admin mode. */
+    public function requiredMode(): McpMode
+    {
+        return McpMode::Admin;
     }
 
     public function uri(): string

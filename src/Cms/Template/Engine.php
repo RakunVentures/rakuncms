@@ -75,15 +75,21 @@ final class Engine
         $yoyo->registerViewProvider('default', $twigProvider);
         $yoyo->registerViewProvider('twig', $twigProvider);
         
-        // Register known components
-        $yoyo->registerComponents([
-            'category-grid' => \App\Components\CategoryGrid::class,
-            'trend-grid' => \App\Components\TrendGrid::class,
-            'search' => \App\Components\Search::class,
-            'contact-form' => \App\Components\ContactForm::class,
-            'newsletter-subscription' => \App\Components\NewsletterSubscription::class,
-            'magazine-grid' => \App\Components\MagazineGrid::class,
-        ]);
+        // Register known project components only when the host app provides them.
+        $components = [];
+        foreach ([
+            'category-grid' => 'App\\Components\\CategoryGrid',
+            'trend-grid' => 'App\\Components\\TrendGrid',
+            'search' => 'App\\Components\\Search',
+            'contact-form' => 'App\\Components\\ContactForm',
+            'newsletter-subscription' => 'App\\Components\\NewsletterSubscription',
+            'magazine-grid' => 'App\\Components\\MagazineGrid',
+        ] as $name => $class) {
+            if (class_exists($class)) {
+                $components[$name] = $class;
+            }
+        }
+        $yoyo->registerComponents($components);
 
         $twig->addExtension(new YoyoTwigExtension());
 

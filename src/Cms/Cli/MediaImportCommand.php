@@ -14,6 +14,8 @@ use Symfony\Component\Console\Output\OutputInterface;
 final class MediaImportCommand extends Command
 {
     private string $userAgent = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
+
+    /** @var array<string, string> */
     private array $mediaMap = [];
 
     protected function configure(): void

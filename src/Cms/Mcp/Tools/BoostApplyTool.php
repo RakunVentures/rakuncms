@@ -7,10 +7,12 @@ namespace Rkn\Cms\Mcp\Tools;
 use Rkn\Cms\Boost\ArchetypeInterface;
 use Rkn\Cms\Boost\ArchetypeRegistry;
 use Rkn\Cms\Boost\SiteProfile;
+use Rkn\Cms\Mcp\McpMode;
+use Rkn\Cms\Mcp\ScopedToolInterface;
 use Rkn\Cms\Mcp\ToolInterface;
 use Symfony\Component\Yaml\Yaml;
 
-final class BoostApplyTool implements ToolInterface
+final class BoostApplyTool implements ToolInterface, ScopedToolInterface
 {
     private ArchetypeRegistry $registry;
 
@@ -29,6 +31,11 @@ final class BoostApplyTool implements ToolInterface
     public function description(): string
     {
         return 'Apply a site archetype to create a complete site structure with collections, templates, entries, and styles';
+    }
+
+    public function requiredMode(): McpMode
+    {
+        return McpMode::Admin;
     }
 
     public function inputSchema(): array

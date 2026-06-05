@@ -17,6 +17,8 @@ final class McpServer
     /** @var array<string, PromptInterface> */
     private array $prompts = [];
 
+    private McpMode $mode;
+
     /** @phpstan-ignore-next-line Property tracked for protocol state, read in future extensions */
     private bool $initialized = false;
 
@@ -35,6 +37,12 @@ final class McpServer
         $this->handler = new JsonRpcHandler();
         $this->stdin = $stdin ?? STDIN;
         $this->stdout = $stdout ?? STDOUT;
+        $this->mode = McpMode::fromEnvironment();
+    }
+
+    public function setMode(McpMode $mode): void
+    {
+        $this->mode = $mode;
     }
 
     public function registerTool(ToolInterface $tool): void
@@ -141,8 +149,9 @@ final class McpServer
                 'prompts' => new \stdClass(),
             ],
             'serverInfo' => [
-                'name' => 'rakuncms-boost',
+                'name' => 'rakuncms',
                 'version' => '0.1.0',
+                'mode' => $this->mode->value,
             ],
         ];
     }
@@ -154,6 +163,10 @@ final class McpServer
     {
         $tools = [];
         foreach ($this->tools as $tool) {
+            if (!$this->canUseTool($tool)) {
+                continue;
+            }
+
             $tools[] = [
                 'name' => $tool->name(),
                 'description' => $tool->description(),
@@ -176,6 +189,11 @@ final class McpServer
             throw new \RuntimeException('Tool not found: ' . $name, JsonRpcHandler::INVALID_PARAMS);
         }
 
+        if (!$this->canUseTool($this->tools[$name])) {
+            $required = $this->requiredMode($this->tools[$name]);
+            throw McpException::forbidden("Tool '{$name}' requires RAKUN_MCP_MODE={$required->value}");
+        }
+
         $result = $this->tools[$name]->execute(is_array($arguments) ? $arguments : []);
 
         return [
@@ -188,6 +206,16 @@ final class McpServer
         ];
     }
 
+    private function canUseTool(ToolInterface $tool): bool
+    {
+        return $this->mode->allows($this->requiredMode($tool));
+    }
+
+    private function requiredMode(ToolInterface $tool): McpMode
+    {
+        return $tool instanceof ScopedToolInterface ? $tool->requiredMode() : McpMode::Readonly;
+    }
+
     /**
      * @return array<string, mixed>
      */
@@ -195,6 +223,9 @@ final class McpServer
     {
         $resources = [];
         foreach ($this->resources as $resource) {
+            if (!$this->canUseResource($resource)) {
+                continue;
+            }
             $resources[] = [
                 'uri' => $resource->uri(),
                 'name' => $resource->name(),
@@ -203,6 +234,13 @@ final class McpServer
             ];
         }
         return ['resources' => $resources];
+    }
+
+    private function canUseResource(ResourceInterface $resource): bool
+    {
+        $required = $resource instanceof ScopedResourceInterface ? $resource->requiredMode() : McpMode::Readonly;
+
+        return $this->mode->allows($required);
     }
 
     /**
@@ -218,6 +256,11 @@ final class McpServer
         }
 
         $resource = $this->resources[$uri];
+        if (!$this->canUseResource($resource)) {
+            $required = $resource instanceof ScopedResourceInterface ? $resource->requiredMode() : McpMode::Readonly;
+            throw McpException::forbidden("Resource '{$uri}' requires RAKUN_MCP_MODE={$required->value}");
+        }
+
         $data = $resource->read();
 
         return [

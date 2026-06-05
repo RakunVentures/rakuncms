@@ -14,6 +14,7 @@ beforeEach(function () {
     file_put_contents($this->tmpDir . '/content/pages/about.md', "---\ntitle: Nosotros\norder: 2\n---\nSobre nosotros");
     file_put_contents($this->tmpDir . '/content/blog/post-1.md', "---\ntitle: Primer Post\ndate: 2025-03-01\ntags:\n  - php\n---\nContenido");
     file_put_contents($this->tmpDir . '/content/blog/post-2.md', "---\ntitle: Segundo Post\ndate: 2025-03-15\ntags:\n  - cms\n---\nContenido 2");
+    file_put_contents($this->tmpDir . '/content/blog/draft.md', "---\ntitle: Draft Post\nstatus: draft\ndate: 2025-03-20\n---\nContenido draft");
 });
 
 afterEach(function () {
@@ -34,6 +35,16 @@ test('lists entries for a collection', function () {
     expect($result['collection'])->toBe('pages');
     expect($result['count'])->toBe(2);
     expect($result['entries'])->toHaveCount(2);
+    expect($result['meta']['total'])->toBe(2);
+});
+
+test('filters entries by status and paginates', function () {
+    $tool = new ListEntriesTool($this->tmpDir);
+    $result = $tool->execute(['collection' => 'blog', 'status' => 'all', 'page' => 2, 'per_page' => 2]);
+
+    expect($result['meta']['total'])->toBe(3);
+    expect($result['meta']['page'])->toBe(2);
+    expect($result['count'])->toBe(1);
 });
 
 test('returns error when collection missing', function () {

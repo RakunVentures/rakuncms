@@ -8,6 +8,7 @@ use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
+use Rkn\Cms\Http\Controllers\CommandApiController;
 use Rkn\Cms\Http\Controllers\ContentApiController;
 use Rkn\Cms\Http\Controllers\MediaApiController;
 
@@ -79,6 +80,28 @@ final class ContentApiDispatcher implements MiddlewareInterface
                 (new \Rkn\Cms\Content\Indexer($basePath))->rebuild();
             }
             return new \Nyholm\Psr7\Response(200, ['Content-Type' => 'application/json'], json_encode(['message' => 'Index rebuilt']));
+        }
+
+        // Comandos de mantenimiento del CLI (allowlist en CommandApiController).
+        // GET /api/v1/commands           → lista los comandos disponibles.
+        // POST /api/v1/commands/{cmd}    → ejecuta uno (requiere permiso 'admin').
+        if ($segments[0] === 'commands') {
+            $commandController = new CommandApiController($basePath);
+            if ($method === 'GET' && count($segments) === 1) {
+                return $commandController->list();
+            }
+            // Import de WordPress (multipart: file + opciones). Va ANTES del genérico
+            // para no caer en run('wxr-import') (que no está en la allowlist → 404).
+            if ($method === 'POST' && ($segments[1] ?? '') === 'wxr-import') {
+                if ($denied = $this->requirePermission($request, 'admin')) return $denied;
+
+                return $commandController->importWxr($request);
+            }
+            if ($method === 'POST' && isset($segments[1]) && $segments[1] !== '') {
+                if ($denied = $this->requirePermission($request, 'admin')) return $denied;
+
+                return $commandController->run($segments[1]);
+            }
         }
 
         if ($segments[0] === 'entries') {
