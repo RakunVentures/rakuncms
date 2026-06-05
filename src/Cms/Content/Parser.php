@@ -20,6 +20,12 @@ final class Parser
         $environment = new Environment([
             'html_input' => 'allow',
             'allow_unsafe_links' => false,
+            // Permite <iframe> (embeds: YouTube, Maps, etc.) en el contenido — el
+            // CMS es de autores de confianza. Mantiene escapados los tags peligrosos
+            // (script/style/etc.): lista por defecto de DisallowedRawHtml SIN 'iframe'.
+            'disallowed_raw_html' => [
+                'disallowed_tags' => ['title', 'textarea', 'style', 'xmp', 'noembed', 'noframes', 'script', 'plaintext'],
+            ],
         ]);
 
         $environment->addExtension(new CommonMarkCoreExtension());

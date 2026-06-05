@@ -21,6 +21,19 @@ test('renders GFM features', function () {
     expect($html)->toContain('<del>strikethrough</del>');
 });
 
+test('allows iframe embeds but keeps dangerous tags escaped', function () {
+    $parser = new Parser();
+
+    // iframe (embeds: YouTube, Maps…) debe RENDERIZAR para autores de confianza.
+    $html = $parser->renderString('<iframe src="https://www.youtube.com/embed/x"></iframe>');
+    expect($html)->toContain('<iframe src="https://www.youtube.com/embed/x">');
+    expect($html)->not->toContain('&lt;iframe');
+
+    // script/style siguen escapados (no se relaja la seguridad de esos tags).
+    expect($parser->renderString('<script>alert(1)</script>'))->toContain('&lt;script');
+    expect($parser->renderString('<style>body{}</style>'))->toContain('&lt;style');
+});
+
 test('parses file with frontmatter', function () {
     // Create a temp markdown file
     $tmpFile = tempnam(sys_get_temp_dir(), 'rkn_test_');
