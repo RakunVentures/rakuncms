@@ -8,35 +8,22 @@ use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
-use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 
-#[AsCommand(name: 'wxr:magazine-process', description: 'Extract pages from PDF magazines as JPG images')]
+#[AsCommand(name: 'wxr:magazine-process', description: 'Update page count for PDF magazines')]
 final class MagazineProcessCommand extends Command
 {
     protected function configure(): void
     {
         $this->addArgument('slug', InputArgument::OPTIONAL, 'The magazine slug to process (empty for all)');
-        $this->addOption('limit-pages', null, InputOption::VALUE_REQUIRED, 'Max pages to extract per PDF', '0');
-        $this->addOption('quality', null, InputOption::VALUE_REQUIRED, 'JPG quality', '80');
-        $this->addOption('width', null, InputOption::VALUE_REQUIRED, 'Target width', '1200');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $slug = $input->getArgument('slug');
-        $quality = $input->getOption('quality');
-        $width = $input->getOption('width');
-        $limitPages = (int) $input->getOption('limit-pages');
         
         $basePath = getcwd();
         $contentDir = $basePath . '/content/revista';
-        $pdfDir = $basePath . '/public/assets/pdfs/revista';
-        $pagesBaseDir = $basePath . '/public/assets/images/revista/pages';
-
-        if (!is_dir($pagesBaseDir)) {
-            mkdir($pagesBaseDir, 0755, true);
-        }
 
         $mdFiles = $slug ? ["$contentDir/$slug.md"] : glob("$contentDir/*.md");
 
@@ -71,41 +58,6 @@ final class MagazineProcessCommand extends Command
             }
 
             $output->writeln(" - Total pages: $pageCount");
-
-            $magazinePagesDir = "$pagesBaseDir/$slug";
-            if (!is_dir($magazinePagesDir)) {
-                mkdir($magazinePagesDir, 0755, true);
-            }
-
-            $processLimit = $limitPages > 0 ? min($pageCount, $limitPages) : $pageCount;
-
-            for ($i = 0; $i < $processLimit; $i++) {
-                $targetImg = "$magazinePagesDir/page-" . sprintf('%03d', $i + 1) . ".jpg";
-                
-                if (file_exists($targetImg)) {
-                    continue;
-                }
-
-                $output->write("   Extracing page " . ($i + 1) . "/$processLimit... ");
-                
-                $pdfArg = $pdfPath . '[' . $i . ']';
-                $cmd = sprintf("magick -density 150 %s -flatten -resize %dx -quality %s %s 2>&1", 
-                    escapeshellarg($pdfArg), 
-                    $width,
-                    $quality,
-                    escapeshellarg($targetImg)
-                );
-                
-                exec($cmd, $cmdOutput, $returnVar);
-                
-                if ($returnVar === 0) {
-                    $output->writeln("<info>OK</info>");
-                } else {
-                    $output->writeln("<error>Error</error>");
-                    $output->writeln(implode("\n", $cmdOutput));
-                }
-                unset($cmdOutput);
-            }
 
             $newContent = preg_replace('/pages_count: \d+/', "pages_count: $pageCount", $content);
             file_put_contents($mdFile, $newContent);
