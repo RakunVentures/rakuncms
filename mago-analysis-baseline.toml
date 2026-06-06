@@ -1,0 +1,4225 @@
+variant = "loose"
+
+[[issues]]
+file = "src/Cms/Cache/Invalidator.php"
+code = "mixed-assignment"
+message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
+count = 1
+
+[[issues]]
+file = "src/Cms/Cache/Invalidator.php"
+code = "property-type-coercion"
+message = "A value of a less specific type `array<array-key, mixed>` is being assigned to property `$$dependencies` (array<string, list<string>>)."
+count = 1
+
+[[issues]]
+file = "src/Cms/Cache/PageCache.php"
+code = "falsable-return-statement"
+message = '''Function `Rkn\Cms\Cache\PageCache::get` is declared to return `null|string` but possibly returns 'false' (inferred as `false|string`).'''
+count = 1
+
+[[issues]]
+file = "src/Cms/Cache/PageCache.php"
+code = "invalid-return-statement"
+message = 'Invalid return type for function `Rkn\Cms\Cache\PageCache::get`: expected `null|string`, but found `false|string`.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Cache/PhpFileCache.php"
+code = "non-existent-class-like"
+message = 'Class `Rkn\Cms\Cache\PhpFileCache` cannot implement unknown type `CacheInterface`'
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/BackupCreateCommand.php"
+code = "non-existent-attribute-class"
+message = 'Attribute class `Symfony\Component\Console\Attribute\AsCommand` not found or could not be autoloaded.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/BackupCreateCommand.php"
+code = "non-existent-class-like"
+message = 'Class `Rkn\Cms\Cli\BackupCreateCommand` cannot extend unknown type `Command`'
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/BackupListCommand.php"
+code = "non-existent-attribute-class"
+message = 'Attribute class `Symfony\Component\Console\Attribute\AsCommand` not found or could not be autoloaded.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/BackupListCommand.php"
+code = "non-existent-class-like"
+message = 'Class `Rkn\Cms\Cli\BackupListCommand` cannot extend unknown type `Command`'
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/BackupRestoreCommand.php"
+code = "non-existent-attribute-class"
+message = 'Attribute class `Symfony\Component\Console\Attribute\AsCommand` not found or could not be autoloaded.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/BackupRestoreCommand.php"
+code = "non-existent-class-like"
+message = 'Class `Rkn\Cms\Cli\BackupRestoreCommand` cannot extend unknown type `Command`'
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/BoostCommand.php"
+code = "non-existent-attribute-class"
+message = 'Attribute class `Symfony\Component\Console\Attribute\AsCommand` not found or could not be autoloaded.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/BoostCommand.php"
+code = "non-existent-class-like"
+message = 'Class `Rkn\Cms\Cli\BoostCommand` cannot extend unknown type `Command`'
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/BoostInstallCommand.php"
+code = "non-existent-attribute-class"
+message = 'Attribute class `Symfony\Component\Console\Attribute\AsCommand` not found or could not be autoloaded.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/BoostInstallCommand.php"
+code = "non-existent-class-like"
+message = 'Class `Rkn\Cms\Cli\BoostInstallCommand` cannot extend unknown type `Command`'
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/BuildCommand.php"
+code = "non-existent-attribute-class"
+message = 'Attribute class `Symfony\Component\Console\Attribute\AsCommand` not found or could not be autoloaded.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/BuildCommand.php"
+code = "non-existent-class-like"
+message = 'Class `Rkn\Cms\Cli\BuildCommand` cannot extend unknown type `Command`'
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/CacheClearCommand.php"
+code = "non-existent-attribute-class"
+message = 'Attribute class `Symfony\Component\Console\Attribute\AsCommand` not found or could not be autoloaded.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/CacheClearCommand.php"
+code = "non-existent-class-like"
+message = 'Class `Rkn\Cms\Cli\CacheClearCommand` cannot extend unknown type `Command`'
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/CacheWarmupCommand.php"
+code = "non-existent-attribute-class"
+message = 'Attribute class `Symfony\Component\Console\Attribute\AsCommand` not found or could not be autoloaded.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/CacheWarmupCommand.php"
+code = "non-existent-class-like"
+message = 'Class `Rkn\Cms\Cli\CacheWarmupCommand` cannot extend unknown type `Command`'
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/ContentImportCommand.php"
+code = "non-existent-attribute-class"
+message = 'Attribute class `Symfony\Component\Console\Attribute\AsCommand` not found or could not be autoloaded.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/ContentImportCommand.php"
+code = "non-existent-class-like"
+message = 'Class `Rkn\Cms\Cli\ContentImportCommand` cannot extend unknown type `Command`'
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/ContentRebuildCacheCommand.php"
+code = "non-existent-attribute-class"
+message = 'Attribute class `Symfony\Component\Console\Attribute\AsCommand` not found or could not be autoloaded.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/ContentRebuildCacheCommand.php"
+code = "non-existent-class-like"
+message = 'Class `Rkn\Cms\Cli\ContentRebuildCacheCommand` cannot extend unknown type `Command`'
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/DeployCheckCommand.php"
+code = "non-existent-attribute-class"
+message = 'Attribute class `Symfony\Component\Console\Attribute\AsCommand` not found or could not be autoloaded.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/DeployCheckCommand.php"
+code = "non-existent-class-like"
+message = 'Class `Rkn\Cms\Cli\DeployCheckCommand` cannot extend unknown type `Command`'
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/DeployCommand.php"
+code = "non-existent-attribute-class"
+message = 'Attribute class `Symfony\Component\Console\Attribute\AsCommand` not found or could not be autoloaded.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/DeployCommand.php"
+code = "non-existent-class-like"
+message = 'Class `Rkn\Cms\Cli\DeployCommand` cannot extend unknown type `Command`'
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/DeployDiffCommand.php"
+code = "non-existent-attribute-class"
+message = 'Attribute class `Symfony\Component\Console\Attribute\AsCommand` not found or could not be autoloaded.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/DeployDiffCommand.php"
+code = "non-existent-class-like"
+message = 'Class `Rkn\Cms\Cli\DeployDiffCommand` cannot extend unknown type `Command`'
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/DeployInitCommand.php"
+code = "non-existent-attribute-class"
+message = 'Attribute class `Symfony\Component\Console\Attribute\AsCommand` not found or could not be autoloaded.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/DeployInitCommand.php"
+code = "non-existent-class-like"
+message = 'Class `Rkn\Cms\Cli\DeployInitCommand` cannot extend unknown type `Command`'
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/DeployInstallCommand.php"
+code = "non-existent-attribute-class"
+message = 'Attribute class `Symfony\Component\Console\Attribute\AsCommand` not found or could not be autoloaded.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/DeployInstallCommand.php"
+code = "non-existent-class-like"
+message = 'Class `Rkn\Cms\Cli\DeployInstallCommand` cannot extend unknown type `Command`'
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/DeployRollbackCommand.php"
+code = "non-existent-attribute-class"
+message = 'Attribute class `Symfony\Component\Console\Attribute\AsCommand` not found or could not be autoloaded.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/DeployRollbackCommand.php"
+code = "non-existent-class-like"
+message = 'Class `Rkn\Cms\Cli\DeployRollbackCommand` cannot extend unknown type `Command`'
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/DeploySetupGitCommand.php"
+code = "non-existent-attribute-class"
+message = 'Attribute class `Symfony\Component\Console\Attribute\AsCommand` not found or could not be autoloaded.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/DeploySetupGitCommand.php"
+code = "non-existent-class-like"
+message = 'Class `Rkn\Cms\Cli\DeploySetupGitCommand` cannot extend unknown type `Command`'
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/DeploySetupGithubCommand.php"
+code = "non-existent-attribute-class"
+message = 'Attribute class `Symfony\Component\Console\Attribute\AsCommand` not found or could not be autoloaded.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/DeploySetupGithubCommand.php"
+code = "non-existent-class-like"
+message = 'Class `Rkn\Cms\Cli\DeploySetupGithubCommand` cannot extend unknown type `Command`'
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/DeployStatusCommand.php"
+code = "non-existent-attribute-class"
+message = 'Attribute class `Symfony\Component\Console\Attribute\AsCommand` not found or could not be autoloaded.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/DeployStatusCommand.php"
+code = "non-existent-class-like"
+message = 'Class `Rkn\Cms\Cli\DeployStatusCommand` cannot extend unknown type `Command`'
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/EmailPublishCommand.php"
+code = "non-existent-attribute-class"
+message = 'Attribute class `Symfony\Component\Console\Attribute\AsCommand` not found or could not be autoloaded.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/EmailPublishCommand.php"
+code = "non-existent-class-like"
+message = 'Class `Rkn\Cms\Cli\EmailPublishCommand` cannot extend unknown type `Command`'
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/HerdInstallCommand.php"
+code = "non-existent-attribute-class"
+message = 'Attribute class `Symfony\Component\Console\Attribute\AsCommand` not found or could not be autoloaded.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/HerdInstallCommand.php"
+code = "non-existent-class-like"
+message = 'Class `Rkn\Cms\Cli\HerdInstallCommand` cannot extend unknown type `Command`'
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/IndexRebuildCommand.php"
+code = "non-existent-attribute-class"
+message = 'Attribute class `Symfony\Component\Console\Attribute\AsCommand` not found or could not be autoloaded.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/IndexRebuildCommand.php"
+code = "non-existent-class-like"
+message = 'Class `Rkn\Cms\Cli\IndexRebuildCommand` cannot extend unknown type `Command`'
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/InitCommand.php"
+code = "non-existent-attribute-class"
+message = 'Attribute class `Symfony\Component\Console\Attribute\AsCommand` not found or could not be autoloaded.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/InitCommand.php"
+code = "non-existent-class-like"
+message = 'Class `Rkn\Cms\Cli\InitCommand` cannot extend unknown type `Command`'
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/LlmsGenerateCommand.php"
+code = "non-existent-attribute-class"
+message = 'Attribute class `Symfony\Component\Console\Attribute\AsCommand` not found or could not be autoloaded.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/LlmsGenerateCommand.php"
+code = "non-existent-class-like"
+message = 'Class `Rkn\Cms\Cli\LlmsGenerateCommand` cannot extend unknown type `Command`'
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/MagazineProcessCommand.php"
+code = "non-existent-attribute-class"
+message = 'Attribute class `Symfony\Component\Console\Attribute\AsCommand` not found or could not be autoloaded.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/MagazineProcessCommand.php"
+code = "non-existent-class-like"
+message = 'Class `Rkn\Cms\Cli\MagazineProcessCommand` cannot extend unknown type `Command`'
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/MakeCollectionCommand.php"
+code = "non-existent-attribute-class"
+message = 'Attribute class `Symfony\Component\Console\Attribute\AsCommand` not found or could not be autoloaded.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/MakeCollectionCommand.php"
+code = "non-existent-class-like"
+message = 'Class `Rkn\Cms\Cli\MakeCollectionCommand` cannot extend unknown type `Command`'
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/MakeComponentCommand.php"
+code = "non-existent-attribute-class"
+message = 'Attribute class `Symfony\Component\Console\Attribute\AsCommand` not found or could not be autoloaded.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/MakeComponentCommand.php"
+code = "non-existent-class-like"
+message = 'Class `Rkn\Cms\Cli\MakeComponentCommand` cannot extend unknown type `Command`'
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/McpServeCommand.php"
+code = "non-existent-attribute-class"
+message = 'Attribute class `Symfony\Component\Console\Attribute\AsCommand` not found or could not be autoloaded.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/McpServeCommand.php"
+code = "non-existent-class-like"
+message = 'Class `Rkn\Cms\Cli\McpServeCommand` cannot extend unknown type `Command`'
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/MediaImportCommand.php"
+code = "non-existent-attribute-class"
+message = 'Attribute class `Symfony\Component\Console\Attribute\AsCommand` not found or could not be autoloaded.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/MediaImportCommand.php"
+code = "non-existent-class-like"
+message = 'Class `Rkn\Cms\Cli\MediaImportCommand` cannot extend unknown type `Command`'
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/MediaStatsCommand.php"
+code = "non-existent-attribute-class"
+message = 'Attribute class `Symfony\Component\Console\Attribute\AsCommand` not found or could not be autoloaded.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/MediaStatsCommand.php"
+code = "non-existent-class-like"
+message = 'Class `Rkn\Cms\Cli\MediaStatsCommand` cannot extend unknown type `Command`'
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/PublishCheckCommand.php"
+code = "non-existent-attribute-class"
+message = 'Attribute class `Symfony\Component\Console\Attribute\AsCommand` not found or could not be autoloaded.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/PublishCheckCommand.php"
+code = "non-existent-class-like"
+message = 'Class `Rkn\Cms\Cli\PublishCheckCommand` cannot extend unknown type `Command`'
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/QueueProcessCommand.php"
+code = "non-existent-attribute-class"
+message = 'Attribute class `Symfony\Component\Console\Attribute\AsCommand` not found or could not be autoloaded.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/QueueProcessCommand.php"
+code = "non-existent-class-like"
+message = 'Class `Rkn\Cms\Cli\QueueProcessCommand` cannot extend unknown type `Command`'
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/SearchIndexCommand.php"
+code = "non-existent-attribute-class"
+message = 'Attribute class `Symfony\Component\Console\Attribute\AsCommand` not found or could not be autoloaded.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/SearchIndexCommand.php"
+code = "non-existent-class-like"
+message = 'Class `Rkn\Cms\Cli\SearchIndexCommand` cannot extend unknown type `Command`'
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/ServeCommand.php"
+code = "non-existent-attribute-class"
+message = 'Attribute class `Symfony\Component\Console\Attribute\AsCommand` not found or could not be autoloaded.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/ServeCommand.php"
+code = "non-existent-class-like"
+message = 'Class `Rkn\Cms\Cli\ServeCommand` cannot extend unknown type `Command`'
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/SitemapGenerateCommand.php"
+code = "non-existent-attribute-class"
+message = 'Attribute class `Symfony\Component\Console\Attribute\AsCommand` not found or could not be autoloaded.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/SitemapGenerateCommand.php"
+code = "non-existent-class-like"
+message = 'Class `Rkn\Cms\Cli\SitemapGenerateCommand` cannot extend unknown type `Command`'
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/TemplateWarmupCommand.php"
+code = "non-existent-attribute-class"
+message = 'Attribute class `Symfony\Component\Console\Attribute\AsCommand` not found or could not be autoloaded.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/TemplateWarmupCommand.php"
+code = "non-existent-class-like"
+message = 'Class `Rkn\Cms\Cli\TemplateWarmupCommand` cannot extend unknown type `Command`'
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/WxrImportCommand.php"
+code = "non-existent-attribute-class"
+message = 'Attribute class `Symfony\Component\Console\Attribute\AsCommand` not found or could not be autoloaded.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/WxrImportCommand.php"
+code = "non-existent-class-like"
+message = 'Class `Rkn\Cms\Cli\WxrImportCommand` cannot extend unknown type `Command`'
+count = 1
+
+[[issues]]
+file = "src/Cms/Components/ContactForm.php"
+code = "non-existent-class-like"
+message = 'Class `Rkn\Cms\Components\ContactForm` cannot extend unknown type `Component`'
+count = 1
+
+[[issues]]
+file = "src/Cms/Components/Search.php"
+code = "non-existent-class-like"
+message = 'Class `Rkn\Cms\Components\Search` cannot extend unknown type `Component`'
+count = 1
+
+[[issues]]
+file = "src/Cms/Content/Collection.php"
+code = "mixed-return-statement"
+message = 'Could not infer a precise return type for function `Rkn\Cms\Content\Collection::sortDirection`. Saw type `nonnull`.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Content/Collection.php"
+code = "mixed-return-statement"
+message = 'Could not infer a precise return type for function `Rkn\Cms\Content\Collection::sortField`. Saw type `nonnull`.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Content/Collection.php"
+code = "mixed-return-statement"
+message = 'Could not infer a precise return type for function `Rkn\Cms\Content\Collection::template`. Saw type `mixed`.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Content/Collection.php"
+code = "mixed-return-statement"
+message = 'Could not infer a precise return type for function `Rkn\Cms\Content\Collection::urlPatternForLocale`. Saw type `nonnull`.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Content/Collection.php"
+code = "mixed-return-statement"
+message = 'Could not infer a precise return type for function `Rkn\Cms\Content\Collection::urlPattern`. Saw type `nonnull`.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Content/ContentScanner.php"
+code = "invalid-argument"
+message = "Invalid argument type for argument #2 of `RecursiveCallbackFilterIterator::__construct`: expected `(callable(RecursiveDirectoryIterator|SplFileInfo|string, string, RecursiveDirectoryIterator): bool)`, but found `(closure(SplFileInfo): bool)`."
+count = 2
+
+[[issues]]
+file = "src/Cms/Content/ContentScanner.php"
+code = "invalid-iterator"
+message = "The expression provided to `foreach` is not iterable. It resolved to type `truthy-mixed`, which is not iterable."
+count = 1
+
+[[issues]]
+file = "src/Cms/Content/ContentScanner.php"
+code = "less-specific-return-statement"
+message = '''Returned type `array<non-empty-string, array{'icon': null|string, 'meta': array<array-key, mixed>, 'order': int, 'section': non-empty-string, 'title': string, 'titles': array<string, string>}>` is less specific than the declared return type `array<string, array{'icon': null|string, 'meta': array<string, mixed>, 'order': int, 'section': string, 'title': string, 'titles': array<string, string>}>` for function `Rkn\Cms\Content\ContentScanner::discoverSections`.'''
+count = 1
+
+[[issues]]
+file = "src/Cms/Content/ContentScanner.php"
+code = "mixed-argument"
+message = "Invalid argument type for argument #1 of `substr`: expected `string`, but found `truthy-mixed`."
+count = 1
+
+[[issues]]
+file = "src/Cms/Content/ContentScanner.php"
+code = "mixed-argument"
+message = 'Invalid argument type for argument #2 of `Rkn\Cms\Content\ContentScanner::buildEntryKey`: expected `string`, but found `mixed`.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Content/ContentScanner.php"
+code = "mixed-argument"
+message = 'Invalid argument type for argument #3 of `Rkn\Cms\Content\ContentScanner::buildUrlPath`: expected `string`, but found `nonnull`.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Content/ContentScanner.php"
+code = "mixed-assignment"
+message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
+count = 6
+
+[[issues]]
+file = "src/Cms/Content/ContentScanner.php"
+code = "mixed-assignment"
+message = "Assigning `nonnull` type to a variable may lead to unexpected behavior."
+count = 1
+
+[[issues]]
+file = "src/Cms/Content/ContentScanner.php"
+code = "mixed-method-access"
+message = "Attempting to access a method on a non-object type (`mixed`)."
+count = 1
+
+[[issues]]
+file = "src/Cms/Content/ContentScanner.php"
+code = "mixed-operand"
+message = "Casting `mixed` to `bool`."
+count = 1
+
+[[issues]]
+file = "src/Cms/Content/ContentScanner.php"
+code = "mixed-operand"
+message = "Invalid middle operand: type `mixed` cannot be reliably used in string concatenation."
+count = 1
+
+[[issues]]
+file = "src/Cms/Content/ContentScanner.php"
+code = "mixed-operand"
+message = "Invalid right operand: type `mixed` cannot be reliably used in string concatenation."
+count = 2
+
+[[issues]]
+file = "src/Cms/Content/ContentScanner.php"
+code = "mixed-return-statement"
+message = 'Could not infer a precise return type for function `Rkn\Cms\Content\ContentScanner::fullSlug`. Saw type `mixed`.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Content/ContentScanner.php"
+code = "non-existent-method"
+message = 'Method `parseFile` does not exist on type `Symfony\Component\Yaml\Yaml`.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Content/ContentScanner.php"
+code = "non-existent-method"
+message = 'Method `parse` does not exist on type `Spatie\YamlFrontMatter\YamlFrontMatter`.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Content/ContentScanner.php"
+code = "reference-to-undefined-variable"
+message = "Reference created from a previously undefined variable `$matches`."
+count = 1
+
+[[issues]]
+file = "src/Cms/Content/ContentStorageFactory.php"
+code = "mixed-assignment"
+message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
+count = 1
+
+[[issues]]
+file = "src/Cms/Content/ContentStorageFactory.php"
+code = "mixed-assignment"
+message = "Assigning `nonnull` type to a variable may lead to unexpected behavior."
+count = 2
+
+[[issues]]
+file = "src/Cms/Content/DraftResolver.php"
+code = "invalid-operand"
+message = "Invalid type for left operand."
+count = 1
+
+[[issues]]
+file = "src/Cms/Content/DraftResolver.php"
+code = "mixed-argument"
+message = "Invalid argument type for argument #2 of `substr`: expected `int`, but found `mixed`."
+count = 1
+
+[[issues]]
+file = "src/Cms/Content/DraftResolver.php"
+code = "mixed-argument"
+message = "Invalid argument type for argument #3 of `substr`: expected `int|null`, but found `mixed`."
+count = 1
+
+[[issues]]
+file = "src/Cms/Content/DraftResolver.php"
+code = "mixed-assignment"
+message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
+count = 3
+
+[[issues]]
+file = "src/Cms/Content/DraftResolver.php"
+code = "mixed-method-access"
+message = "Attempting to access a method on a non-object type (`mixed`)."
+count = 1
+
+[[issues]]
+file = "src/Cms/Content/DraftResolver.php"
+code = "non-existent-method"
+message = 'Method `parse` does not exist on type `Spatie\YamlFrontMatter\YamlFrontMatter`.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Content/DraftResolver.php"
+code = "reference-to-undefined-variable"
+message = "Reference created from a previously undefined variable `$matches`."
+count = 1
+
+[[issues]]
+file = "src/Cms/Content/Entry.php"
+code = "mixed-argument"
+message = 'Invalid argument type for argument #1 of `Rkn\Cms\Content\Entry::__construct`: expected `string`, but found `nonnull`.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Content/Entry.php"
+code = "mixed-argument"
+message = 'Invalid argument type for argument #10 of `Rkn\Cms\Content\Entry::__construct`: expected `array<string, mixed>`, but found `nonnull`.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Content/Entry.php"
+code = "mixed-argument"
+message = 'Invalid argument type for argument #11 of `Rkn\Cms\Content\Entry::__construct`: expected `array<string, string>`, but found `nonnull`.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Content/Entry.php"
+code = "mixed-argument"
+message = 'Invalid argument type for argument #13 of `Rkn\Cms\Content\Entry::__construct`: expected `list<string>`, but found `nonnull`.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Content/Entry.php"
+code = "mixed-argument"
+message = 'Invalid argument type for argument #2 of `Rkn\Cms\Content\Entry::__construct`: expected `string`, but found `nonnull`.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Content/Entry.php"
+code = "mixed-argument"
+message = 'Invalid argument type for argument #3 of `Rkn\Cms\Content\Entry::__construct`: expected `string`, but found `nonnull`.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Content/Entry.php"
+code = "mixed-argument"
+message = 'Invalid argument type for argument #4 of `Rkn\Cms\Content\Entry::__construct`: expected `string`, but found `nonnull`.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Content/Entry.php"
+code = "mixed-argument"
+message = 'Invalid argument type for argument #5 of `Rkn\Cms\Content\Entry::__construct`: expected `string`, but found `nonnull`.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Content/Entry.php"
+code = "mixed-argument"
+message = 'Invalid argument type for argument #6 of `Rkn\Cms\Content\Entry::__construct`: expected `null|string`, but found `mixed`.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Content/Entry.php"
+code = "mixed-argument"
+message = 'Invalid argument type for argument #7 of `Rkn\Cms\Content\Entry::__construct`: expected `null|string`, but found `mixed`.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Content/Entry.php"
+code = "mixed-operand"
+message = "Casting `mixed` to `bool`."
+count = 1
+
+[[issues]]
+file = "src/Cms/Content/IndexStoreFactory.php"
+code = "mixed-assignment"
+message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
+count = 4
+
+[[issues]]
+file = "src/Cms/Content/IndexStoreFactory.php"
+code = "non-existent-method"
+message = 'Method `parseFile` does not exist on type `Symfony\Component\Yaml\Yaml`.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Content/Indexer.php"
+code = "mixed-argument"
+message = "Invalid argument type for argument #1 of `array_keys`: expected `array<('K.array_keys() extends array-key), ('V.array_keys() extends mixed)>`, but found `nonnull`."
+count = 1
+
+[[issues]]
+file = "src/Cms/Content/Indexer.php"
+code = "mixed-assignment"
+message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
+count = 2
+
+[[issues]]
+file = "src/Cms/Content/Indexer.php"
+code = "mixed-return-statement"
+message = 'Could not infer a precise return type for function `Rkn\Cms\Content\Indexer::load`. Saw type `mixed`.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Content/Indexer.php"
+code = "mixed-return-statement"
+message = 'Could not infer a precise return type for function `Rkn\Cms\Content\Indexer::resolveDefaultLocale`. Saw type `mixed`.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Content/Indexer.php"
+code = "non-existent-method"
+message = 'Method `parseFile` does not exist on type `Symfony\Component\Yaml\Yaml`.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Content/Paginator.php"
+code = "mixed-operand"
+message = "Invalid right operand: type `mixed` cannot be reliably used in string concatenation."
+count = 1
+
+[[issues]]
+file = "src/Cms/Content/Parser.php"
+code = "impossible-assignment"
+message = "Invalid assignment: the right-hand side has type `never` and cannot produce a value."
+count = 1
+
+[[issues]]
+file = "src/Cms/Content/Parser.php"
+code = "invalid-method-access"
+message = 'Attempting to access a method on a non-object type (`unknown-ref(League\CommonMark\MarkdownConverter)`).'
+count = 2
+
+[[issues]]
+file = "src/Cms/Content/Parser.php"
+code = "less-specific-return-statement"
+message = '''Returned type `array{'frontmatter': array<array-key, mixed>, 'html': mixed}` is less specific than the declared return type `array{'frontmatter': array<string, mixed>, 'html': string}` for function `Rkn\Cms\Content\Parser::parse`.'''
+count = 1
+
+[[issues]]
+file = "src/Cms/Content/Parser.php"
+code = "mixed-assignment"
+message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
+count = 3
+
+[[issues]]
+file = "src/Cms/Content/Parser.php"
+code = "mixed-method-access"
+message = "Attempting to access a method on a non-object type (`mixed`)."
+count = 2
+
+[[issues]]
+file = "src/Cms/Content/Parser.php"
+code = "mixed-operand"
+message = "Invalid left operand: type `truthy-mixed` cannot be reliably used in string concatenation."
+count = 1
+
+[[issues]]
+file = "src/Cms/Content/Parser.php"
+code = "mixed-return-statement"
+message = 'Could not infer a precise return type for function `Rkn\Cms\Content\Parser::renderString`. Saw type `mixed`.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Content/Parser.php"
+code = "non-existent-class"
+message = 'Class `League\CommonMark\Environment\Environment` not found.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Content/Parser.php"
+code = "non-existent-class"
+message = 'Class `League\CommonMark\Extension\CommonMark\CommonMarkCoreExtension` not found.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Content/Parser.php"
+code = "non-existent-class"
+message = 'Class `League\CommonMark\Extension\FrontMatter\FrontMatterExtension` not found.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Content/Parser.php"
+code = "non-existent-class"
+message = 'Class `League\CommonMark\Extension\GithubFlavoredMarkdownExtension` not found.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Content/Parser.php"
+code = "non-existent-class"
+message = 'Class `League\CommonMark\MarkdownConverter` not found.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Content/Parser.php"
+code = "non-existent-class-like"
+message = 'Cannot find class, interface, enum, or type alias `League\CommonMark\MarkdownConverter`.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Content/Parser.php"
+code = "non-existent-class-like"
+message = 'Class, Interface, or Trait `League\CommonMark\Extension\FrontMatter\Output\RenderedContentWithFrontMatter` does not exist.'
+count = 3
+
+[[issues]]
+file = "src/Cms/Content/Parser.php"
+code = "non-existent-method"
+message = 'Method `getfrontmatter` does not exist on type `League\CommonMark\Extension\FrontMatter\Output\RenderedContentWithFrontMatter`.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Content/Query.php"
+code = "impossible-condition"
+message = "This condition (type `false`) will always evaluate to false."
+count = 1
+
+[[issues]]
+file = "src/Cms/Content/Query.php"
+code = "less-specific-return-statement"
+message = '''Returned type `list<array{'icon': null|string, 'meta': array<array-key, mixed>, 'order': int, 'section': string, 'title': string, 'titles': array<array-key, mixed>}>` is less specific than the declared return type `list<array{'icon': null|string, 'meta': array<string, mixed>, 'order': int, 'section': string, 'title': string, 'titles': array<string, string>}>` for function `Rkn\Cms\Content\Query::sections`.'''
+count = 1
+
+[[issues]]
+file = "src/Cms/Content/Query.php"
+code = "mixed-assignment"
+message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
+count = 1
+
+[[issues]]
+file = "src/Cms/Content/Query.php"
+code = "mixed-assignment"
+message = "Assigning `nonnull` type to a variable may lead to unexpected behavior."
+count = 1
+
+[[issues]]
+file = "src/Cms/Content/Query.php"
+code = "redundant-type-comparison"
+message = "Redundant type assertion: `$descriptor` is already `array<string, mixed>`."
+count = 1
+
+[[issues]]
+file = "src/Cms/Content/ScheduleChecker.php"
+code = "less-specific-nested-return-statement"
+message = '''Returned type `array{}|list<array{'collection': non-empty-string, 'file': non-empty-string, 'title': nonnull}>` is less specific than the declared return type `list<array{'collection': string, 'file': string, 'title': string}>` for function `Rkn\Cms\Content\ScheduleChecker::findPublishableEntries` due to nested 'mixed'.'''
+count = 1
+
+[[issues]]
+file = "src/Cms/Content/ScheduleChecker.php"
+code = "mixed-assignment"
+message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
+count = 5
+
+[[issues]]
+file = "src/Cms/Content/ScheduleChecker.php"
+code = "mixed-method-access"
+message = "Attempting to access a method on a non-object type (`mixed`)."
+count = 1
+
+[[issues]]
+file = "src/Cms/Content/ScheduleChecker.php"
+code = "non-existent-method"
+message = 'Method `parse` does not exist on type `Spatie\YamlFrontMatter\YamlFrontMatter`.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Content/Storage/FileContentStorage.php"
+code = "invalid-method-access"
+message = "Attempting to access a method on a non-object type (`string`)."
+count = 7
+
+[[issues]]
+file = "src/Cms/Content/Storage/FileContentStorage.php"
+code = "less-specific-return-statement"
+message = 'Returned type `list{array<array-key, mixed>, string}` is less specific than the declared return type `array{0: array<string, mixed>, 1: string}` for function `Rkn\Cms\Content\Storage\FileContentStorage::parse`.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Content/Storage/FileContentStorage.php"
+code = "mixed-argument"
+message = 'Invalid argument type for argument #1 of `Rkn\Cms\Content\Storage\FileContentStorage::relative`: expected `string`, but found `mixed`.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Content/Storage/FileContentStorage.php"
+code = "mixed-argument"
+message = "Invalid argument type for argument #1 of `str_starts_with`: expected `string`, but found `mixed`."
+count = 1
+
+[[issues]]
+file = "src/Cms/Content/Storage/FileContentStorage.php"
+code = "mixed-argument"
+message = "Invalid argument type for argument #1 of `substr`: expected `string`, but found `mixed`."
+count = 1
+
+[[issues]]
+file = "src/Cms/Content/Storage/FileContentStorage.php"
+code = "mixed-assignment"
+message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
+count = 1
+
+[[issues]]
+file = "src/Cms/Content/Storage/FileContentStorage.php"
+code = "non-existent-method"
+message = 'Method `dump` does not exist on type `Symfony\Component\Yaml\Yaml`.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Content/Storage/FileContentStorage.php"
+code = "non-existent-method"
+message = 'Method `parse` does not exist on type `Symfony\Component\Yaml\Yaml`.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Content/Storage/FileContentStorage.php"
+code = "redundant-cast"
+message = "Redundant cast to `(string)`: the expression already has this type."
+count = 1
+
+[[issues]]
+file = "src/Cms/Content/Storage/MysqlContentStorage.php"
+code = "invalid-method-access"
+message = "Attempting to access a method on a non-object type (`false`)."
+count = 12
+
+[[issues]]
+file = "src/Cms/Content/Storage/MysqlContentStorage.php"
+code = "less-specific-return-statement"
+message = 'Returned type `array<array-key, mixed>` is less specific than the declared return type `array<string, mixed>` for function `Rkn\Cms\Content\Storage\MysqlContentStorage::decodeJson`.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Content/Storage/MysqlContentStorage.php"
+code = "mixed-array-access"
+message = "Unsafe array access on type `mixed`."
+count = 11
+
+[[issues]]
+file = "src/Cms/Content/Storage/MysqlContentStorage.php"
+code = "mixed-assignment"
+message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
+count = 6
+
+[[issues]]
+file = "src/Cms/Content/Storage/MysqlContentStorage.php"
+code = "mixed-operand"
+message = "Left operand in `>` comparison has `mixed` type."
+count = 1
+
+[[issues]]
+file = "src/Cms/Content/Storage/MysqlContentStorage.php"
+code = "unknown-iterator-type"
+message = "Cannot determine the type of the expression provided to `foreach`."
+count = 1
+
+[[issues]]
+file = "src/Cms/Content/Stores/PhpArrayIndexStore.php"
+code = "less-specific-nested-return-statement"
+message = '''Returned type `list<mixed>` is less specific than the declared return type `list<string>` for function `Rkn\Cms\Content\Stores\PhpArrayIndexStore::resolveKeys` due to nested 'mixed'.'''
+count = 1
+
+[[issues]]
+file = "src/Cms/Content/Stores/PhpArrayIndexStore.php"
+code = "less-specific-return-statement"
+message = 'Returned type `array<array-key, mixed>` is less specific than the declared return type `array<string, array<string, mixed>>` for function `Rkn\Cms\Content\Stores\PhpArrayIndexStore::sectionsFor`.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Content/Stores/PhpArrayIndexStore.php"
+code = "mixed-argument"
+message = "Invalid argument type for argument #1 of `array_intersect`: expected `array<('K.array_intersect() extends array-key), ('V.array_intersect() extends mixed)>`, but found `nonnull`."
+count = 1
+
+[[issues]]
+file = "src/Cms/Content/Stores/PhpArrayIndexStore.php"
+code = "mixed-argument"
+message = "Invalid argument type for argument #1 of `array_values`: expected `array<('K.array_values() extends array-key), ('V.array_values() extends mixed)>`, but found `nonnull`."
+count = 1
+
+[[issues]]
+file = "src/Cms/Content/Stores/PhpArrayIndexStore.php"
+code = "mixed-argument"
+message = "Invalid argument type for argument #2 of `array_intersect`: expected `array<array-key, mixed>`, but found `nonnull`."
+count = 1
+
+[[issues]]
+file = "src/Cms/Content/Stores/PhpArrayIndexStore.php"
+code = "mixed-assignment"
+message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
+count = 7
+
+[[issues]]
+file = "src/Cms/Content/Stores/PhpArrayIndexStore.php"
+code = "mixed-assignment"
+message = "Assigning `nonnull` type to a variable may lead to unexpected behavior."
+count = 6
+
+[[issues]]
+file = "src/Cms/Content/Stores/PhpArrayIndexStore.php"
+code = "mixed-operand"
+message = "Invalid right operand: type `mixed` cannot be reliably used in string concatenation."
+count = 1
+
+[[issues]]
+file = "src/Cms/Content/Stores/PhpArrayIndexStore.php"
+code = "mixed-operand"
+message = "Left operand in `!=` comparison has `mixed` type."
+count = 1
+
+[[issues]]
+file = "src/Cms/Content/Stores/PhpArrayIndexStore.php"
+code = "mixed-operand"
+message = "Left operand in `<=` comparison has `mixed` type."
+count = 1
+
+[[issues]]
+file = "src/Cms/Content/Stores/PhpArrayIndexStore.php"
+code = "mixed-operand"
+message = "Left operand in `<` comparison has `mixed` type."
+count = 1
+
+[[issues]]
+file = "src/Cms/Content/Stores/PhpArrayIndexStore.php"
+code = "mixed-operand"
+message = "Left operand in `==` comparison has `mixed` type."
+count = 1
+
+[[issues]]
+file = "src/Cms/Content/Stores/PhpArrayIndexStore.php"
+code = "mixed-operand"
+message = "Left operand in `>=` comparison has `mixed` type."
+count = 1
+
+[[issues]]
+file = "src/Cms/Content/Stores/PhpArrayIndexStore.php"
+code = "mixed-operand"
+message = "Left operand in `>` comparison has `mixed` type."
+count = 1
+
+[[issues]]
+file = "src/Cms/Content/Stores/PhpArrayIndexStore.php"
+code = "mixed-operand"
+message = "Right operand in `!=` comparison has `mixed` type."
+count = 1
+
+[[issues]]
+file = "src/Cms/Content/Stores/PhpArrayIndexStore.php"
+code = "mixed-operand"
+message = "Right operand in `<=` comparison has `mixed` type."
+count = 1
+
+[[issues]]
+file = "src/Cms/Content/Stores/PhpArrayIndexStore.php"
+code = "mixed-operand"
+message = "Right operand in `<` comparison has `mixed` type."
+count = 1
+
+[[issues]]
+file = "src/Cms/Content/Stores/PhpArrayIndexStore.php"
+code = "mixed-operand"
+message = "Right operand in `==` comparison has `mixed` type."
+count = 1
+
+[[issues]]
+file = "src/Cms/Content/Stores/PhpArrayIndexStore.php"
+code = "mixed-operand"
+message = "Right operand in `>=` comparison has `mixed` type."
+count = 1
+
+[[issues]]
+file = "src/Cms/Content/Stores/PhpArrayIndexStore.php"
+code = "mixed-operand"
+message = "Right operand in `>` comparison has `mixed` type."
+count = 1
+
+[[issues]]
+file = "src/Cms/Content/Stores/SqliteIndexStore.php"
+code = "invalid-method-access"
+message = "Attempting to access a method on a non-object type (`false`)."
+count = 30
+
+[[issues]]
+file = "src/Cms/Content/Stores/SqliteIndexStore.php"
+code = "invalid-return-statement"
+message = 'Invalid return type for function `Rkn\Cms\Content\Stores\SqliteIndexStore::allDatePeriods`: expected `list<string>`, but found `array<array-key, string>|list<string>`.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Content/Stores/SqliteIndexStore.php"
+code = "invalid-return-statement"
+message = 'Invalid return type for function `Rkn\Cms\Content\Stores\SqliteIndexStore::allTags`: expected `list<string>`, but found `array<array-key, string>|list<string>`.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Content/Stores/SqliteIndexStore.php"
+code = "invalid-return-statement"
+message = '''Invalid return type for function `Rkn\Cms\Content\Stores\SqliteIndexStore::sync`: expected `array{'deleted': int, 'inserted': int, 'scanned': int, 'updated': int}`, but found `array{'deleted': non-negative-int, 'inserted': non-negative-int, 'scanned': non-negative-int, 'skipped': non-negative-int, 'updated': non-negative-int}`.'''
+count = 1
+
+[[issues]]
+file = "src/Cms/Content/Stores/SqliteIndexStore.php"
+code = "less-specific-nested-argument-type"
+message = 'Argument type mismatch for argument #1 of `Rkn\Cms\Content\Stores\SqliteIndexStore::fetchByKeys`: expected `list<string>`, but provided type `non-empty-list<mixed>` is less specific.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Content/Stores/SqliteIndexStore.php"
+code = "less-specific-nested-return-statement"
+message = '''Returned type `list<mixed>` is less specific than the declared return type `list<array<string, mixed>>` for function `Rkn\Cms\Content\Stores\SqliteIndexStore::query` due to nested 'mixed'.'''
+count = 1
+
+[[issues]]
+file = "src/Cms/Content/Stores/SqliteIndexStore.php"
+code = "mixed-argument"
+message = 'Invalid argument type for argument #1 of `Rkn\Cms\Content\Stores\SqliteIndexStore::hydrate`: expected `array<string, mixed>`, but found `mixed`.'
+count = 7
+
+[[issues]]
+file = "src/Cms/Content/Stores/SqliteIndexStore.php"
+code = "mixed-argument"
+message = 'Invalid argument type for argument #1 of `Rkn\Cms\Content\Stores\SqliteIndexStore::slice`: expected `list<mixed>`, but found `mixed`.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Content/Stores/SqliteIndexStore.php"
+code = "mixed-argument"
+message = '''Invalid argument type for argument #1 of `Rkn\Cms\Content\Stores\SqliteIndexStore::sortPairs`: expected `list<array{'key': string, 'sv': mixed}>`, but found `mixed`.'''
+count = 1
+
+[[issues]]
+file = "src/Cms/Content/Stores/SqliteIndexStore.php"
+code = "mixed-argument"
+message = 'Invalid argument type for argument #1 of `Rkn\Cms\Content\Stores\SqliteIndexStore::upsertRow`: expected `string`, but found `nonnull`.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Content/Stores/SqliteIndexStore.php"
+code = "mixed-argument"
+message = 'Invalid argument type for argument #2 of `Rkn\Cms\Content\ContentScanner::buildEntryKey`: expected `string`, but found `mixed`.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Content/Stores/SqliteIndexStore.php"
+code = "mixed-argument"
+message = "Invalid argument type for argument #2 of `array_map`: expected `array<('K.array_map() extends array-key), ('V.array_map() extends mixed)>`, but found `mixed`."
+count = 1
+
+[[issues]]
+file = "src/Cms/Content/Stores/SqliteIndexStore.php"
+code = "mixed-argument"
+message = "Invalid argument type for argument #2 of `array_map`: expected `array<('K.array_map() extends array-key), mixed>`, but found `mixed`."
+count = 2
+
+[[issues]]
+file = "src/Cms/Content/Stores/SqliteIndexStore.php"
+code = "mixed-array-access"
+message = "Unsafe array access on type `mixed`."
+count = 9
+
+[[issues]]
+file = "src/Cms/Content/Stores/SqliteIndexStore.php"
+code = "mixed-assignment"
+message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
+count = 17
+
+[[issues]]
+file = "src/Cms/Content/Stores/SqliteIndexStore.php"
+code = "mixed-assignment"
+message = "Assigning `nonnull` type to a variable may lead to unexpected behavior."
+count = 5
+
+[[issues]]
+file = "src/Cms/Content/Stores/SqliteIndexStore.php"
+code = "mixed-method-access"
+message = "Attempting to access a method on a non-object type (`mixed`)."
+count = 2
+
+[[issues]]
+file = "src/Cms/Content/Stores/SqliteIndexStore.php"
+code = "mixed-operand"
+message = "Casting `mixed` to `bool`."
+count = 1
+
+[[issues]]
+file = "src/Cms/Content/Stores/SqliteIndexStore.php"
+code = "mixed-operand"
+message = "Left operand in `!=` comparison has `mixed` type."
+count = 1
+
+[[issues]]
+file = "src/Cms/Content/Stores/SqliteIndexStore.php"
+code = "mixed-operand"
+message = "Left operand in `<=` comparison has `mixed` type."
+count = 1
+
+[[issues]]
+file = "src/Cms/Content/Stores/SqliteIndexStore.php"
+code = "mixed-operand"
+message = "Left operand in `<` comparison has `mixed` type."
+count = 1
+
+[[issues]]
+file = "src/Cms/Content/Stores/SqliteIndexStore.php"
+code = "mixed-operand"
+message = "Left operand in `==` comparison has `mixed` type."
+count = 1
+
+[[issues]]
+file = "src/Cms/Content/Stores/SqliteIndexStore.php"
+code = "mixed-operand"
+message = "Left operand in `>=` comparison has `mixed` type."
+count = 1
+
+[[issues]]
+file = "src/Cms/Content/Stores/SqliteIndexStore.php"
+code = "mixed-operand"
+message = "Left operand in `>` comparison has `mixed` type."
+count = 1
+
+[[issues]]
+file = "src/Cms/Content/Stores/SqliteIndexStore.php"
+code = "mixed-operand"
+message = "Right operand in `!=` comparison has `mixed` type."
+count = 1
+
+[[issues]]
+file = "src/Cms/Content/Stores/SqliteIndexStore.php"
+code = "mixed-operand"
+message = "Right operand in `<=` comparison has `mixed` type."
+count = 1
+
+[[issues]]
+file = "src/Cms/Content/Stores/SqliteIndexStore.php"
+code = "mixed-operand"
+message = "Right operand in `<` comparison has `mixed` type."
+count = 1
+
+[[issues]]
+file = "src/Cms/Content/Stores/SqliteIndexStore.php"
+code = "mixed-operand"
+message = "Right operand in `==` comparison has `mixed` type."
+count = 1
+
+[[issues]]
+file = "src/Cms/Content/Stores/SqliteIndexStore.php"
+code = "mixed-operand"
+message = "Right operand in `>=` comparison has `mixed` type."
+count = 1
+
+[[issues]]
+file = "src/Cms/Content/Stores/SqliteIndexStore.php"
+code = "mixed-operand"
+message = "Right operand in `>` comparison has `mixed` type."
+count = 1
+
+[[issues]]
+file = "src/Cms/Content/Stores/SqliteIndexStore.php"
+code = "possible-method-access-on-null"
+message = "Attempting to call a method on `null`."
+count = 17
+
+[[issues]]
+file = "src/Cms/Content/Stores/SqliteIndexStore.php"
+code = "unknown-iterator-type"
+message = "Cannot determine the type of the expression provided to `foreach`."
+count = 3
+
+[[issues]]
+file = "src/Cms/Content/TaxonomyGenerator.php"
+code = "less-specific-nested-return-statement"
+message = '''Returned type `list<array{'collection': nonnull, 'entries': rkn\cms\content\query, 'locale': string, 'type': string('archive')|string('tag'), 'url': truthy-string, 'value': string}>` is less specific than the declared return type `list<array{'collection': string, 'entries': Rkn\Cms\Content\Query, 'locale': string, 'type': string, 'url': string, 'value': string}>` for function `Rkn\Cms\Content\TaxonomyGenerator::generate` due to nested 'mixed'.'''
+count = 1
+
+[[issues]]
+file = "src/Cms/Content/TaxonomyGenerator.php"
+code = "mixed-assignment"
+message = "Assigning `nonnull` type to a variable may lead to unexpected behavior."
+count = 2
+
+[[issues]]
+file = "src/Cms/Content/TaxonomyGenerator.php"
+code = "mixed-operand"
+message = "Invalid middle operand: type `nonnull` cannot be reliably used in string concatenation."
+count = 2
+
+[[issues]]
+file = "src/Cms/Deploy/ArtifactBuilder.php"
+code = "invalid-method-access"
+message = "Attempting to access a method on a non-object type (`string`)."
+count = 2
+
+[[issues]]
+file = "src/Cms/Deploy/ArtifactBuilder.php"
+code = "less-specific-nested-return-statement"
+message = '''Returned type `array{}|list<array{'is_dir': bool, 'real': mixed, 'relative': string, 'sha256': string, 'size': int}>` is less specific than the declared return type `array<array-key, array{'is_dir': bool, 'real': string, 'relative': string, 'sha256': string, 'size': int}>` for function `Rkn\Cms\Deploy\ArtifactBuilder::collectFiles` due to nested 'mixed'.'''
+count = 1
+
+[[issues]]
+file = "src/Cms/Deploy/ArtifactBuilder.php"
+code = "mixed-argument"
+message = "Invalid argument type for argument #1 of `filesize`: expected `string`, but found `mixed`."
+count = 1
+
+[[issues]]
+file = "src/Cms/Deploy/ArtifactBuilder.php"
+code = "mixed-argument"
+message = "Invalid argument type for argument #1 of `substr`: expected `string`, but found `mixed`."
+count = 1
+
+[[issues]]
+file = "src/Cms/Deploy/ArtifactBuilder.php"
+code = "mixed-argument"
+message = "Invalid argument type for argument #2 of `hash_file`: expected `string`, but found `mixed`."
+count = 1
+
+[[issues]]
+file = "src/Cms/Deploy/ArtifactBuilder.php"
+code = "mixed-assignment"
+message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
+count = 1
+
+[[issues]]
+file = "src/Cms/Deploy/ArtifactBuilder.php"
+code = "too-few-arguments"
+message = "Too few arguments provided for method `ZipArchive::addEmptyDir`."
+count = 1
+
+[[issues]]
+file = "src/Cms/Deploy/DeployConfig.php"
+code = "invalid-argument"
+message = "Invalid argument type for argument #2 of `preg_replace_callback`: expected `(callable(array<array-key, string>): string)`, but found `(closure(mixed): float|non-empty-list<string>|positive-int|string|true)`."
+count = 1
+
+[[issues]]
+file = "src/Cms/Deploy/DeployConfig.php"
+code = "mixed-assignment"
+message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
+count = 2
+
+[[issues]]
+file = "src/Cms/Deploy/DeployConfig.php"
+code = "mixed-operand"
+message = "Casting `mixed` to `bool`."
+count = 5
+
+[[issues]]
+file = "src/Cms/Deploy/DeployConfig.php"
+code = "mixed-property-type-coercion"
+message = "A value with a less specific type `mixed` is being assigned to property `$$composerBin` (null|string)."
+count = 1
+
+[[issues]]
+file = "src/Cms/Deploy/DeployConfig.php"
+code = "mixed-property-type-coercion"
+message = "A value with a less specific type `mixed` is being assigned to property `$$deploySecret` (null|string)."
+count = 1
+
+[[issues]]
+file = "src/Cms/Deploy/DeployConfig.php"
+code = "mixed-property-type-coercion"
+message = "A value with a less specific type `mixed` is being assigned to property `$$githubOwner` (null|string)."
+count = 1
+
+[[issues]]
+file = "src/Cms/Deploy/DeployConfig.php"
+code = "mixed-property-type-coercion"
+message = "A value with a less specific type `mixed` is being assigned to property `$$githubRepo` (null|string)."
+count = 1
+
+[[issues]]
+file = "src/Cms/Deploy/DeployConfig.php"
+code = "mixed-property-type-coercion"
+message = "A value with a less specific type `mixed` is being assigned to property `$$githubToken` (null|string)."
+count = 1
+
+[[issues]]
+file = "src/Cms/Deploy/DeployConfig.php"
+code = "mixed-property-type-coercion"
+message = "A value with a less specific type `mixed` is being assigned to property `$$healthUrl` (null|string)."
+count = 2
+
+[[issues]]
+file = "src/Cms/Deploy/DeployConfig.php"
+code = "mixed-property-type-coercion"
+message = "A value with a less specific type `mixed` is being assigned to property `$$identityFile` (null|string)."
+count = 1
+
+[[issues]]
+file = "src/Cms/Deploy/DeployConfig.php"
+code = "mixed-property-type-coercion"
+message = "A value with a less specific type `mixed` is being assigned to property `$$pass` (null|string)."
+count = 1
+
+[[issues]]
+file = "src/Cms/Deploy/DeployConfig.php"
+code = "mixed-property-type-coercion"
+message = "A value with a less specific type `mixed` is being assigned to property `$$pleskApiKey` (null|string)."
+count = 1
+
+[[issues]]
+file = "src/Cms/Deploy/DeployConfig.php"
+code = "mixed-property-type-coercion"
+message = "A value with a less specific type `mixed` is being assigned to property `$$pleskHost` (null|string)."
+count = 1
+
+[[issues]]
+file = "src/Cms/Deploy/DeployConfig.php"
+code = "mixed-property-type-coercion"
+message = "A value with a less specific type `mixed` is being assigned to property `$$pleskRepoName` (null|string)."
+count = 1
+
+[[issues]]
+file = "src/Cms/Deploy/DeployConfig.php"
+code = "mixed-property-type-coercion"
+message = "A value with a less specific type `mixed` is being assigned to property `$$user` (null|string)."
+count = 1
+
+[[issues]]
+file = "src/Cms/Deploy/DeployConfig.php"
+code = "mixed-property-type-coercion"
+message = "A value with a less specific type `mixed` is being assigned to property `$$webhookSecret` (null|string)."
+count = 1
+
+[[issues]]
+file = "src/Cms/Deploy/DeployConfig.php"
+code = "mixed-property-type-coercion"
+message = "A value with a less specific type `mixed` is being assigned to property `$$webhookUrl` (null|string)."
+count = 1
+
+[[issues]]
+file = "src/Cms/Deploy/DeployConfig.php"
+code = "mixed-property-type-coercion"
+message = "A value with a less specific type `nonnull` is being assigned to property `$$domain` (string)."
+count = 1
+
+[[issues]]
+file = "src/Cms/Deploy/DeployConfig.php"
+code = "mixed-property-type-coercion"
+message = "A value with a less specific type `nonnull` is being assigned to property `$$host` (string)."
+count = 1
+
+[[issues]]
+file = "src/Cms/Deploy/DeployConfig.php"
+code = "mixed-property-type-coercion"
+message = "A value with a less specific type `nonnull` is being assigned to property `$$method` (string)."
+count = 1
+
+[[issues]]
+file = "src/Cms/Deploy/DeployConfig.php"
+code = "mixed-property-type-coercion"
+message = "A value with a less specific type `nonnull` is being assigned to property `$$path` (string)."
+count = 1
+
+[[issues]]
+file = "src/Cms/Deploy/DeployConfig.php"
+code = "mixed-property-type-coercion"
+message = "A value with a less specific type `nonnull` is being assigned to property `$$remote` (null|string)."
+count = 2
+
+[[issues]]
+file = "src/Cms/Deploy/DeployConfig.php"
+code = "mixed-property-type-coercion"
+message = "A value with a less specific type `nonnull` is being assigned to property `$$sourceBranch` (string)."
+count = 2
+
+[[issues]]
+file = "src/Cms/Deploy/DeployConfig.php"
+code = "mixed-property-type-coercion"
+message = "A value with a less specific type `nonnull` is being assigned to property `$$strategy` (string)."
+count = 1
+
+[[issues]]
+file = "src/Cms/Deploy/DeployConfig.php"
+code = "mixed-property-type-coercion"
+message = "A value with a less specific type `nonnull` is being assigned to property `$$targetBranch` (string)."
+count = 2
+
+[[issues]]
+file = "src/Cms/Deploy/DeployConfig.php"
+code = "non-existent-method"
+message = 'Method `parse` does not exist on type `Symfony\Component\Yaml\Yaml`.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Deploy/DeployConfig.php"
+code = "property-type-coercion"
+message = "A value of a less specific type `array<array-key, mixed>` is being assigned to property `$$discovered` (array<string, mixed>|null)."
+count = 1
+
+[[issues]]
+file = "src/Cms/Deploy/DeployConfig.php"
+code = "redundant-comparison"
+message = "Redundant `!==` comparison: left-hand side is always not identical to right-hand side."
+count = 1
+
+[[issues]]
+file = "src/Cms/Deploy/DeployConfig.php"
+code = "redundant-logical-operation"
+message = "Redundant `&&` operation: left operand is evaluated and right operand is always truthy."
+count = 1
+
+[[issues]]
+file = "src/Cms/Deploy/DeployLock.php"
+code = "less-specific-return-statement"
+message = 'Returned type `array<array-key, mixed>|null` is less specific than the declared return type `array<string, mixed>|null` for function `Rkn\Cms\Deploy\DeployLock::readLockFile`.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Deploy/DeployLock.php"
+code = "mixed-assignment"
+message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
+count = 1
+
+[[issues]]
+file = "src/Cms/Deploy/DeployLock.php"
+code = "redundant-cast"
+message = "Redundant cast to `(string)`: the expression already has this type."
+count = 1
+
+[[issues]]
+file = "src/Cms/Deploy/Drivers/FtpDriver.php"
+code = "deprecated-function"
+message = "Call to deprecated function: `curl_close`."
+count = 1
+
+[[issues]]
+file = "src/Cms/Deploy/Drivers/FtpDriver.php"
+code = "mixed-assignment"
+message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
+count = 2
+
+[[issues]]
+file = "src/Cms/Deploy/Drivers/FtpDriver.php"
+code = "possibly-null-argument"
+message = 'Argument #1 of method `Rkn\Cms\Deploy\HealthChecker::check` is possibly `null`, but parameter type `string` does not accept it.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Deploy/Drivers/FtpDriver.php"
+code = "redundant-cast"
+message = "Redundant cast to `(string)`: the expression already has this type."
+count = 6
+
+[[issues]]
+file = "src/Cms/Deploy/Drivers/GitHubPullDriver.php"
+code = "possibly-invalid-argument"
+message = "Possible argument type mismatch for argument #1 of `sleep`: expected `non-negative-int`, but possibly received `int`."
+count = 1
+
+[[issues]]
+file = "src/Cms/Deploy/Drivers/GitHubPullDriver.php"
+code = "redundant-cast"
+message = "Redundant cast to `(string)`: the expression already has this type."
+count = 2
+
+[[issues]]
+file = "src/Cms/Deploy/Drivers/SftpDriver.php"
+code = "impossible-assignment"
+message = "Invalid assignment: the right-hand side has type `never` and cannot produce a value."
+count = 1
+
+[[issues]]
+file = "src/Cms/Deploy/Drivers/SftpDriver.php"
+code = "invalid-method-access"
+message = "Attempting to access a method on a non-object type (`string`)."
+count = 2
+
+[[issues]]
+file = "src/Cms/Deploy/Drivers/SftpDriver.php"
+code = "invalid-method-access"
+message = 'Attempting to access a method on a non-object type (`unknown-ref(phpseclib3\Net\SFTP)`).'
+count = 4
+
+[[issues]]
+file = "src/Cms/Deploy/Drivers/SftpDriver.php"
+code = "mixed-assignment"
+message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
+count = 1
+
+[[issues]]
+file = "src/Cms/Deploy/Drivers/SftpDriver.php"
+code = "non-existent-class"
+message = 'Class `phpseclib3\Net\SFTP` not found.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Deploy/Drivers/SftpDriver.php"
+code = "non-existent-class-like"
+message = 'Cannot find class, interface, enum, or type alias `phpseclib3\Net\SFTP`.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Deploy/Drivers/SftpDriver.php"
+code = "non-existent-class-like"
+message = 'Class, interface, enum, or trait `phpseclib3\Net\SFTP` not found.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Deploy/Drivers/SftpDriver.php"
+code = "redundant-cast"
+message = "Redundant cast to `(string)`: the expression already has this type."
+count = 3
+
+[[issues]]
+file = "src/Cms/Deploy/Drivers/WebhookDispatcher.php"
+code = "deprecated-function"
+message = "Call to deprecated function: `curl_close`."
+count = 1
+
+[[issues]]
+file = "src/Cms/Deploy/GitHost/CurlTransport.php"
+code = "deprecated-function"
+message = "Call to deprecated function: `curl_close`."
+count = 1
+
+[[issues]]
+file = "src/Cms/Deploy/GitHost/GitHubClient.php"
+code = "less-specific-return-statement"
+message = 'Returned type `array<array-key, mixed>` is less specific than the declared return type `array<string, mixed>` for function `Rkn\Cms\Deploy\GitHost\GitHubClient::addDeployKey`.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Deploy/GitHost/GitHubClient.php"
+code = "less-specific-return-statement"
+message = 'Returned type `array<array-key, mixed>` is less specific than the declared return type `array<string, mixed>` for function `Rkn\Cms\Deploy\GitHost\GitHubClient::addWebhook`.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Deploy/GitHost/GitHubClient.php"
+code = "less-specific-return-statement"
+message = 'Returned type `array<array-key, mixed>` is less specific than the declared return type `array<string, mixed>|null` for function `Rkn\Cms\Deploy\GitHost\GitHubClient::getRepo`.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Deploy/GitHost/GitHubClient.php"
+code = "mixed-assignment"
+message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
+count = 5
+
+[[issues]]
+file = "src/Cms/Deploy/HealthChecker.php"
+code = "deprecated-function"
+message = "Call to deprecated function: `curl_close`."
+count = 1
+
+[[issues]]
+file = "src/Cms/Deploy/HealthChecker.php"
+code = "possibly-invalid-argument"
+message = "Possible argument type mismatch for argument #1 of `sleep`: expected `non-negative-int`, but possibly received `int`."
+count = 1
+
+[[issues]]
+file = "src/Cms/Deploy/PleskApi/Client.php"
+code = "mixed-assignment"
+message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
+count = 2
+
+[[issues]]
+file = "src/Cms/Deploy/PleskApi/CurlTransport.php"
+code = "deprecated-function"
+message = "Call to deprecated function: `curl_close`."
+count = 1
+
+[[issues]]
+file = "src/Cms/Deploy/PleskApi/CurlTransport.php"
+code = "mixed-argument"
+message = "Invalid argument type for argument #2 of `substr`: expected `int`, but found `mixed`."
+count = 1
+
+[[issues]]
+file = "src/Cms/Deploy/PleskApi/CurlTransport.php"
+code = "mixed-argument"
+message = "Invalid argument type for argument #3 of `substr`: expected `int|null`, but found `mixed`."
+count = 1
+
+[[issues]]
+file = "src/Cms/Deploy/PleskApi/CurlTransport.php"
+code = "mixed-assignment"
+message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
+count = 1
+
+[[issues]]
+file = "src/Cms/Deploy/PleskApi/Inspector.php"
+code = "impossible-condition"
+message = "This condition (type `false`) will always evaluate to false."
+count = 1
+
+[[issues]]
+file = "src/Cms/Deploy/PleskApi/Inspector.php"
+code = "mixed-assignment"
+message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
+count = 4
+
+[[issues]]
+file = "src/Cms/Deploy/PleskApi/Inspector.php"
+code = "possibly-undefined-variable"
+message = "Variable `$m` might not have been defined on all execution paths leading to this point."
+count = 2
+
+[[issues]]
+file = "src/Cms/Deploy/PleskApi/Inspector.php"
+code = "redundant-type-comparison"
+message = "Redundant type assertion: `$item` is already `array<string, mixed>`."
+count = 1
+
+[[issues]]
+file = "src/Cms/Deploy/PleskApi/Inspector.php"
+code = "reference-to-undefined-variable"
+message = "Reference created from a previously undefined variable `$m`."
+count = 4
+
+[[issues]]
+file = "src/Cms/Deploy/PleskApi/Provisioner.php"
+code = "invalid-return-statement"
+message = 'Invalid return type for function `Rkn\Cms\Deploy\PleskApi\Provisioner::createGitPullRepo`: expected `Rkn\Cms\Deploy\PleskApi\GitRepoInfo`, but found `Rkn\Cms\Deploy\PleskApi\GitRepoInfo|null`.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Deploy/PleskApi/Provisioner.php"
+code = "mixed-assignment"
+message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
+count = 4
+
+[[issues]]
+file = "src/Cms/Deploy/PleskApi/Provisioner.php"
+code = "nullable-return-statement"
+message = 'Function `Rkn\Cms\Deploy\PleskApi\Provisioner::createGitPullRepo` is declared to return `Rkn\Cms\Deploy\PleskApi\GitRepoInfo` but possibly returns a nullable value (inferred as `Rkn\Cms\Deploy\PleskApi\GitRepoInfo|null`).'
+count = 1
+
+[[issues]]
+file = "src/Cms/Deploy/Process/Runner.php"
+code = "impossible-assignment"
+message = "Invalid assignment: the right-hand side has type `never` and cannot produce a value."
+count = 1
+
+[[issues]]
+file = "src/Cms/Deploy/Process/Runner.php"
+code = "impossible-condition"
+message = "This condition (type `false`) will always evaluate to false."
+count = 1
+
+[[issues]]
+file = "src/Cms/Deploy/Process/Runner.php"
+code = "mixed-argument"
+message = 'Invalid argument type for argument #1 of `Rkn\Cms\Deploy\Process\ProcessResult::__construct`: expected `int`, but found `mixed`.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Deploy/Process/Runner.php"
+code = "no-valid-catch-type-found"
+message = "None of the types specified in the `catch` declaration are valid catchable exceptions."
+count = 1
+
+[[issues]]
+file = "src/Cms/Deploy/Process/Runner.php"
+code = "non-existent-catch-type"
+message = 'Attempting to catch an undefined class or interface: `Symfony\Component\Process\Exception\ProcessTimedOutException`.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Deploy/Process/Runner.php"
+code = "non-existent-class"
+message = 'Class `Symfony\Component\Process\Process` not found.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Deploy/Process/Runner.php"
+code = "non-existent-class-like"
+message = 'Class, interface, enum, or trait `Symfony\Component\Process\Process` not found.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Deploy/Process/Runner.php"
+code = "redundant-comparison"
+message = "Redundant `===` comparison: left-hand side is never identical to right-hand side."
+count = 1
+
+[[issues]]
+file = "src/Cms/Deploy/ReleaseManifest.php"
+code = "invalid-method-access"
+message = "Attempting to access a method on a non-object type (`string`)."
+count = 3
+
+[[issues]]
+file = "src/Cms/Deploy/ReleaseManifest.php"
+code = "less-specific-nested-argument-type"
+message = '''Argument type mismatch for argument #7 of `Rkn\Cms\Deploy\ReleaseManifest::__construct`: expected `array<array-key, array{'path': string, 'sha256': string, 'size': int}>`, but provided type `list<array{'path': string, 'sha256': string, 'size': mixed}>` is less specific.'''
+count = 1
+
+[[issues]]
+file = "src/Cms/Deploy/ReleaseManifest.php"
+code = "mixed-argument"
+message = "Invalid argument type for argument #1 of `substr`: expected `string`, but found `mixed`."
+count = 1
+
+[[issues]]
+file = "src/Cms/Deploy/ReleaseManifest.php"
+code = "mixed-argument"
+message = "Invalid argument type for argument #2 of `hash_file`: expected `string`, but found `mixed`."
+count = 1
+
+[[issues]]
+file = "src/Cms/Deploy/ReleaseManifest.php"
+code = "mixed-argument"
+message = 'Invalid argument type for argument #6 of `Rkn\Cms\Deploy\ReleaseManifest::__construct`: expected `int`, but found `mixed`.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Deploy/ReleaseManifest.php"
+code = "mixed-assignment"
+message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
+count = 3
+
+[[issues]]
+file = "src/Cms/Deploy/ReleaseManifest.php"
+code = "mixed-operand"
+message = "Left operand in binary operation has type `mixed`."
+count = 1
+
+[[issues]]
+file = "src/Cms/Deploy/ReleaseManifest.php"
+code = "mixed-operand"
+message = "Right operand in binary operation has type `mixed`."
+count = 1
+
+[[issues]]
+file = "src/Cms/Events/WebhookListener.php"
+code = "invalid-iterator"
+message = "The expression provided to `foreach` is not iterable. It resolved to type `nonnull`, which is not iterable."
+count = 1
+
+[[issues]]
+file = "src/Cms/Events/WebhookListener.php"
+code = "less-specific-return-statement"
+message = '''Returned type `array{'Content-Type': string('application/json'), 'X-Webhook-Signature': string}|array{'Content-Type': string('application/json')}|array{'Content-Type': string, ...<array-key, string>}` is less specific than the declared return type `array<string, string>` for function `Rkn\Cms\Events\WebhookListener::buildHeaders`.'''
+count = 1
+
+[[issues]]
+file = "src/Cms/Events/WebhookListener.php"
+code = "mixed-argument"
+message = 'Invalid argument type for argument #1 of `Rkn\Cms\Events\EventDispatcher::listen`: expected `string`, but found `nonnull`.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Events/WebhookListener.php"
+code = "mixed-argument"
+message = "Invalid argument type for argument #3 of `hash_hmac`: expected `string`, but found `nonnull`."
+count = 1
+
+[[issues]]
+file = "src/Cms/Events/WebhookListener.php"
+code = "mixed-assignment"
+message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
+count = 2
+
+[[issues]]
+file = "src/Cms/Events/WebhookListener.php"
+code = "mixed-assignment"
+message = "Assigning `nonnull` type to a variable may lead to unexpected behavior."
+count = 3
+
+[[issues]]
+file = "src/Cms/Herd/RakunCmsValetDriver.php"
+code = "non-existent-class-like"
+message = 'Class `Valet\Drivers\Custom\RakunCmsValetDriver` cannot extend unknown type `ValetDriver`'
+count = 1
+
+[[issues]]
+file = "src/Cms/Http/Controllers/BoostApiController.php"
+code = "invalid-method-access"
+message = 'Attempting to access a method on a non-object type (`unknown-ref(Psr\Http\Message\ServerRequestInterface)`).'
+count = 1
+
+[[issues]]
+file = "src/Cms/Http/Controllers/BoostApiController.php"
+code = "mixed-assignment"
+message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
+count = 2
+
+[[issues]]
+file = "src/Cms/Http/Controllers/BoostApiController.php"
+code = "never-return"
+message = "Cannot return value with type 'never' from this function."
+count = 1
+
+[[issues]]
+file = "src/Cms/Http/Controllers/BoostApiController.php"
+code = "non-existent-class"
+message = 'Class `Nyholm\Psr7\Response` not found.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Http/Controllers/BoostApiController.php"
+code = "non-existent-class-like"
+message = 'Cannot find class, interface, enum, or type alias `Psr\Http\Message\ResponseInterface`.'
+count = 3
+
+[[issues]]
+file = "src/Cms/Http/Controllers/BoostApiController.php"
+code = "non-existent-class-like"
+message = 'Cannot find class, interface, enum, or type alias `Psr\Http\Message\ServerRequestInterface`.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Http/Controllers/BoostApiController.php"
+code = "non-existent-method"
+message = 'Method `dump` does not exist on type `Symfony\Component\Yaml\Yaml`.'
+count = 4
+
+[[issues]]
+file = "src/Cms/Http/Controllers/CommandApiController.php"
+code = "impossible-assignment"
+message = "Invalid assignment: the right-hand side has type `never` and cannot produce a value."
+count = 2
+
+[[issues]]
+file = "src/Cms/Http/Controllers/CommandApiController.php"
+code = "invalid-class-string-expression"
+message = 'Expression of type `class-string<unknown-ref(Symfony\Component\Console\Command\Command)>` cannot be used as a class name.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Http/Controllers/CommandApiController.php"
+code = "invalid-constant-value"
+message = 'Value for constant `Rkn\Cms\Http\Controllers\CommandApiController::ALLOWED` is not assignable to its declared type.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Http/Controllers/CommandApiController.php"
+code = "invalid-method-access"
+message = 'Attempting to access a method on a non-object type (`unknown-ref(Psr\Http\Message\ServerRequestInterface)`).'
+count = 3
+
+[[issues]]
+file = "src/Cms/Http/Controllers/CommandApiController.php"
+code = "mixed-argument"
+message = 'Invalid argument type for argument #1 of `Rkn\Cms\Http\Controllers\CommandApiController::stripAnsi`: expected `string`, but found `mixed`.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Http/Controllers/CommandApiController.php"
+code = "mixed-assignment"
+message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
+count = 4
+
+[[issues]]
+file = "src/Cms/Http/Controllers/CommandApiController.php"
+code = "never-return"
+message = "Cannot return value with type 'never' from this function."
+count = 1
+
+[[issues]]
+file = "src/Cms/Http/Controllers/CommandApiController.php"
+code = "no-value"
+message = 'Argument #1 passed to method `Rkn\Cms\Http\Controllers\CommandApiController::runConsole` has type `never`, meaning it cannot produce a value.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Http/Controllers/CommandApiController.php"
+code = "non-existent-class"
+message = 'Class `Nyholm\Psr7\Response` not found.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Http/Controllers/CommandApiController.php"
+code = "non-existent-class"
+message = 'Class `Symfony\Component\Console\Application` not found.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Http/Controllers/CommandApiController.php"
+code = "non-existent-class"
+message = 'Class `Symfony\Component\Console\Input\ArrayInput` not found.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Http/Controllers/CommandApiController.php"
+code = "non-existent-class"
+message = 'Class `Symfony\Component\Console\Output\BufferedOutput` not found.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Http/Controllers/CommandApiController.php"
+code = "non-existent-class-like"
+message = 'Cannot find class, interface, enum, or type alias `Psr\Http\Message\ResponseInterface`.'
+count = 4
+
+[[issues]]
+file = "src/Cms/Http/Controllers/CommandApiController.php"
+code = "non-existent-class-like"
+message = 'Cannot find class, interface, enum, or type alias `Psr\Http\Message\ServerRequestInterface`.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Http/Controllers/CommandApiController.php"
+code = "non-existent-class-like"
+message = 'Cannot find class, interface, enum, or type alias `Symfony\Component\Console\Command\Command`.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Http/Controllers/CommandApiController.php"
+code = "non-existent-class-like"
+message = 'Class, Interface, or Trait `Psr\Http\Message\UploadedFileInterface` does not exist.'
+count = 6
+
+[[issues]]
+file = "src/Cms/Http/Controllers/CommandApiController.php"
+code = "non-existent-method"
+message = 'Method `geterror` does not exist on type `Psr\Http\Message\UploadedFileInterface`.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Http/Controllers/CommandApiController.php"
+code = "non-existent-method"
+message = 'Method `getstream` does not exist on type `Psr\Http\Message\UploadedFileInterface`.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Http/Controllers/CommandApiController.php"
+code = "possibly-invalid-argument"
+message = 'Possible argument type mismatch for argument #1 of `Rkn\Cms\Http\Controllers\CommandApiController::runConsole`: expected `unknown-ref(Symfony\Component\Console\Command\Command)`, but possibly received `Rkn\Cms\Cli\WxrImportCommand`.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Http/Controllers/ContentApiController.php"
+code = "invalid-method-access"
+message = 'Attempting to access a method on a non-object type (`unknown-ref(Psr\Http\Message\ServerRequestInterface)`).'
+count = 3
+
+[[issues]]
+file = "src/Cms/Http/Controllers/ContentApiController.php"
+code = "less-specific-argument"
+message = 'Argument type mismatch for argument #1 of `Rkn\Cms\Http\Controllers\ContentApiController::normalizeStatus`: expected `array<string, mixed>`, but provided type `array<array-key, mixed>` is less specific.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Http/Controllers/ContentApiController.php"
+code = "less-specific-argument"
+message = 'Argument type mismatch for argument #2 of `Rkn\Cms\Http\Controllers\ContentApiController::json`: expected `array<string, mixed>`, but provided type `array<array-key, mixed>` is less specific.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Http/Controllers/ContentApiController.php"
+code = "less-specific-argument"
+message = 'Argument type mismatch for argument #4 of `Rkn\Cms\Content\ContentDraft::__construct`: expected `array<string, mixed>`, but provided type `array<array-key, mixed>` is less specific.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Http/Controllers/ContentApiController.php"
+code = "less-specific-argument"
+message = '''Argument type mismatch for argument #4 of `Rkn\Cms\Content\ContentDraft::__construct`: expected `array<string, mixed>`, but provided type `array{'date': string, 'title': non-empty-string, ...}` is less specific.'''
+count = 1
+
+[[issues]]
+file = "src/Cms/Http/Controllers/ContentApiController.php"
+code = "mixed-assignment"
+message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
+count = 8
+
+[[issues]]
+file = "src/Cms/Http/Controllers/ContentApiController.php"
+code = "mixed-assignment"
+message = "Assigning `nonnull` type to a variable may lead to unexpected behavior."
+count = 1
+
+[[issues]]
+file = "src/Cms/Http/Controllers/ContentApiController.php"
+code = "mixed-operand"
+message = "Casting `mixed` to `bool`."
+count = 3
+
+[[issues]]
+file = "src/Cms/Http/Controllers/ContentApiController.php"
+code = "never-return"
+message = "Cannot return value with type 'never' from this function."
+count = 1
+
+[[issues]]
+file = "src/Cms/Http/Controllers/ContentApiController.php"
+code = "non-existent-class"
+message = 'Class `Nyholm\Psr7\Response` not found.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Http/Controllers/ContentApiController.php"
+code = "non-existent-class-like"
+message = 'Cannot find class, interface, enum, or type alias `Psr\Http\Message\ResponseInterface`.'
+count = 9
+
+[[issues]]
+file = "src/Cms/Http/Controllers/ContentApiController.php"
+code = "non-existent-class-like"
+message = 'Cannot find class, interface, enum, or type alias `Psr\Http\Message\ServerRequestInterface`.'
+count = 3
+
+[[issues]]
+file = "src/Cms/Http/Controllers/ContentApiController.php"
+code = "redundant-cast"
+message = "Redundant cast to `(string)`: the expression already has this type."
+count = 1
+
+[[issues]]
+file = "src/Cms/Http/Controllers/FormController.php"
+code = "impossible-assignment"
+message = "Invalid assignment: the right-hand side has type `never` and cannot produce a value."
+count = 1
+
+[[issues]]
+file = "src/Cms/Http/Controllers/FormController.php"
+code = "invalid-method-access"
+message = 'Attempting to access a method on a non-object type (`unknown-ref(Psr\Http\Message\ServerRequestInterface)`).'
+count = 3
+
+[[issues]]
+file = "src/Cms/Http/Controllers/FormController.php"
+code = "less-specific-argument"
+message = 'Argument type mismatch for argument #1 of `Rkn\Cms\Http\Controllers\FormController::handleContact`: expected `array<string, mixed>`, but provided type `array<array-key, mixed>` is less specific.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Http/Controllers/FormController.php"
+code = "mixed-argument"
+message = "Invalid argument type for argument #1 of `array_filter`: expected `array<('K.array_filter() extends array-key), ('V.array_filter() extends mixed)>`, but found `nonnull`."
+count = 1
+
+[[issues]]
+file = "src/Cms/Http/Controllers/FormController.php"
+code = "mixed-argument"
+message = "Invalid argument type for argument #2 of `explode`: expected `string`, but found `mixed`."
+count = 1
+
+[[issues]]
+file = "src/Cms/Http/Controllers/FormController.php"
+code = "mixed-assignment"
+message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
+count = 7
+
+[[issues]]
+file = "src/Cms/Http/Controllers/FormController.php"
+code = "mixed-method-access"
+message = "Attempting to access a method on a non-object type (`mixed`)."
+count = 3
+
+[[issues]]
+file = "src/Cms/Http/Controllers/FormController.php"
+code = "mixed-operand"
+message = "Invalid left operand: type `mixed` cannot be reliably used in string concatenation."
+count = 1
+
+[[issues]]
+file = "src/Cms/Http/Controllers/FormController.php"
+code = "mixed-operand"
+message = "Left operand in `<` comparison has `mixed` type."
+count = 1
+
+[[issues]]
+file = "src/Cms/Http/Controllers/FormController.php"
+code = "mixed-operand"
+message = "Right operand in binary operation has type `mixed`."
+count = 1
+
+[[issues]]
+file = "src/Cms/Http/Controllers/FormController.php"
+code = "mixed-return-statement"
+message = 'Could not infer a precise return type for function `Rkn\Cms\Http\Controllers\FormController::json`. Saw type `mixed`.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Http/Controllers/FormController.php"
+code = "non-existent-class"
+message = 'Class `Nyholm\Psr7\Factory\Psr17Factory` not found.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Http/Controllers/FormController.php"
+code = "non-existent-class-like"
+message = 'Cannot find class, interface, enum, or type alias `Psr\Http\Message\ResponseInterface`.'
+count = 3
+
+[[issues]]
+file = "src/Cms/Http/Controllers/FormController.php"
+code = "non-existent-class-like"
+message = 'Cannot find class, interface, enum, or type alias `Psr\Http\Message\ServerRequestInterface`.'
+count = 4
+
+[[issues]]
+file = "src/Cms/Http/Controllers/GlobalsApiController.php"
+code = "invalid-method-access"
+message = 'Attempting to access a method on a non-object type (`unknown-ref(Psr\Http\Message\ServerRequestInterface)`).'
+count = 1
+
+[[issues]]
+file = "src/Cms/Http/Controllers/GlobalsApiController.php"
+code = "mixed-assignment"
+message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
+count = 3
+
+[[issues]]
+file = "src/Cms/Http/Controllers/GlobalsApiController.php"
+code = "never-return"
+message = "Cannot return value with type 'never' from this function."
+count = 1
+
+[[issues]]
+file = "src/Cms/Http/Controllers/GlobalsApiController.php"
+code = "non-existent-class"
+message = 'Class `Nyholm\Psr7\Response` not found.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Http/Controllers/GlobalsApiController.php"
+code = "non-existent-class-like"
+message = 'Cannot find class, interface, enum, or type alias `Psr\Http\Message\ResponseInterface`.'
+count = 3
+
+[[issues]]
+file = "src/Cms/Http/Controllers/GlobalsApiController.php"
+code = "non-existent-class-like"
+message = 'Cannot find class, interface, enum, or type alias `Psr\Http\Message\ServerRequestInterface`.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Http/Controllers/GlobalsApiController.php"
+code = "non-existent-method"
+message = 'Method `dump` does not exist on type `Symfony\Component\Yaml\Yaml`.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Http/Controllers/GlobalsApiController.php"
+code = "non-existent-method"
+message = 'Method `parseFile` does not exist on type `Symfony\Component\Yaml\Yaml`.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Http/Controllers/MediaApiController.php"
+code = "array-to-string-conversion"
+message = "Potential array in right operand of string concatenation."
+count = 1
+
+[[issues]]
+file = "src/Cms/Http/Controllers/MediaApiController.php"
+code = "deprecated-function"
+message = "Call to deprecated function: `finfo_close`."
+count = 1
+
+[[issues]]
+file = "src/Cms/Http/Controllers/MediaApiController.php"
+code = "invalid-method-access"
+message = "Attempting to access a method on a non-object type (`string`)."
+count = 5
+
+[[issues]]
+file = "src/Cms/Http/Controllers/MediaApiController.php"
+code = "invalid-method-access"
+message = 'Attempting to access a method on a non-object type (`unknown-ref(Psr\Http\Message\ServerRequestInterface)`).'
+count = 2
+
+[[issues]]
+file = "src/Cms/Http/Controllers/MediaApiController.php"
+code = "mismatched-array-index"
+message = "Invalid array key type: `false|string` is not a valid key for this array."
+count = 1
+
+[[issues]]
+file = "src/Cms/Http/Controllers/MediaApiController.php"
+code = "mixed-argument"
+message = 'Invalid argument type for argument #1 of `Rkn\Cms\Http\Controllers\MediaApiController::mimeFromExtension`: expected `string`, but found `mixed`.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Http/Controllers/MediaApiController.php"
+code = "mixed-argument"
+message = "Invalid argument type for argument #1 of `pathinfo`: expected `string`, but found `nonnull`."
+count = 1
+
+[[issues]]
+file = "src/Cms/Http/Controllers/MediaApiController.php"
+code = "mixed-argument"
+message = "Invalid argument type for argument #3 of `str_replace`: expected `array<array-key, string>|string`, but found `mixed`."
+count = 1
+
+[[issues]]
+file = "src/Cms/Http/Controllers/MediaApiController.php"
+code = "mixed-assignment"
+message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
+count = 3
+
+[[issues]]
+file = "src/Cms/Http/Controllers/MediaApiController.php"
+code = "mixed-assignment"
+message = "Assigning `nonnull` type to a variable may lead to unexpected behavior."
+count = 1
+
+[[issues]]
+file = "src/Cms/Http/Controllers/MediaApiController.php"
+code = "mixed-method-access"
+message = "Attempting to access a method on a non-object type (`nonnull`)."
+count = 3
+
+[[issues]]
+file = "src/Cms/Http/Controllers/MediaApiController.php"
+code = "never-return"
+message = "Cannot return value with type 'never' from this function."
+count = 1
+
+[[issues]]
+file = "src/Cms/Http/Controllers/MediaApiController.php"
+code = "non-existent-class"
+message = 'Class `Nyholm\Psr7\Response` not found.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Http/Controllers/MediaApiController.php"
+code = "non-existent-class-like"
+message = 'Cannot find class, interface, enum, or type alias `Psr\Http\Message\ResponseInterface`.'
+count = 4
+
+[[issues]]
+file = "src/Cms/Http/Controllers/MediaApiController.php"
+code = "non-existent-class-like"
+message = 'Cannot find class, interface, enum, or type alias `Psr\Http\Message\ServerRequestInterface`.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Http/Controllers/MediaApiController.php"
+code = "possibly-false-argument"
+message = "Argument #1 of function `file_put_contents` is possibly `false`, but parameter type `string` does not accept it."
+count = 1
+
+[[issues]]
+file = "src/Cms/Http/Controllers/MediaApiController.php"
+code = "possibly-false-argument"
+message = "Argument #1 of function `finfo_close` is possibly `false`, but parameter type `finfo` does not accept it."
+count = 1
+
+[[issues]]
+file = "src/Cms/Http/Controllers/MediaApiController.php"
+code = "possibly-false-argument"
+message = "Argument #1 of function `finfo_file` is possibly `false`, but parameter type `finfo` does not accept it."
+count = 1
+
+[[issues]]
+file = "src/Cms/Http/Controllers/MediaApiController.php"
+code = "possibly-false-argument"
+message = "Argument #1 of function `rename` is possibly `false`, but parameter type `string` does not accept it."
+count = 1
+
+[[issues]]
+file = "src/Cms/Http/Controllers/MediaApiController.php"
+code = "possibly-false-argument"
+message = "Argument #1 of function `str_starts_with` is possibly `false`, but parameter type `string` does not accept it."
+count = 2
+
+[[issues]]
+file = "src/Cms/Http/Controllers/MediaApiController.php"
+code = "possibly-false-argument"
+message = "Argument #1 of function `unlink` is possibly `false`, but parameter type `string` does not accept it."
+count = 1
+
+[[issues]]
+file = "src/Cms/Http/Controllers/MediaApiController.php"
+code = "possibly-false-argument"
+message = "Argument #2 of function `finfo_file` is possibly `false`, but parameter type `string` does not accept it."
+count = 1
+
+[[issues]]
+file = "src/Cms/Http/Controllers/RssController.php"
+code = "mixed-argument"
+message = 'Invalid argument type for argument #1 of `Rkn\Cms\Content\Query::locale`: expected `string`, but found `nonnull`.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Http/Controllers/RssController.php"
+code = "mixed-argument"
+message = "Invalid argument type for argument #1 of `htmlspecialchars`: expected `string`, but found `nonnull`."
+count = 2
+
+[[issues]]
+file = "src/Cms/Http/Controllers/RssController.php"
+code = "mixed-argument"
+message = "Invalid argument type for argument #1 of `htmlspecialchars`: expected `string`, but found `truthy-mixed`."
+count = 1
+
+[[issues]]
+file = "src/Cms/Http/Controllers/RssController.php"
+code = "mixed-argument"
+message = "Invalid argument type for argument #1 of `rtrim`: expected `string`, but found `nonnull`."
+count = 1
+
+[[issues]]
+file = "src/Cms/Http/Controllers/RssController.php"
+code = "mixed-assignment"
+message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
+count = 1
+
+[[issues]]
+file = "src/Cms/Http/Controllers/RssController.php"
+code = "mixed-assignment"
+message = "Assigning `nonnull` type to a variable may lead to unexpected behavior."
+count = 4
+
+[[issues]]
+file = "src/Cms/Http/Controllers/RssController.php"
+code = "mixed-operand"
+message = "Invalid middle operand: type `nonnull` cannot be reliably used in string concatenation."
+count = 1
+
+[[issues]]
+file = "src/Cms/Http/Controllers/RssController.php"
+code = "never-return"
+message = "Cannot return value with type 'never' from this function."
+count = 1
+
+[[issues]]
+file = "src/Cms/Http/Controllers/RssController.php"
+code = "non-existent-class"
+message = 'Class `Nyholm\Psr7\Response` not found.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Http/Controllers/RssController.php"
+code = "non-existent-class-like"
+message = 'Cannot find class, interface, enum, or type alias `Psr\Http\Message\ResponseInterface`.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Http/Controllers/RssController.php"
+code = "possibly-false-argument"
+message = "Argument #2 of function `date` is possibly `false`, but parameter type `int|null` does not accept it."
+count = 1
+
+[[issues]]
+file = "src/Cms/Http/Controllers/SearchApiController.php"
+code = "invalid-method-access"
+message = 'Attempting to access a method on a non-object type (`unknown-ref(Psr\Http\Message\ServerRequestInterface)`).'
+count = 1
+
+[[issues]]
+file = "src/Cms/Http/Controllers/SearchApiController.php"
+code = "mixed-argument"
+message = 'Invalid argument type for argument #1 of `Rkn\Cms\Search\SearchEngine::search`: expected `string`, but found `nonnull`.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Http/Controllers/SearchApiController.php"
+code = "mixed-argument"
+message = 'Invalid argument type for argument #2 of `Rkn\Cms\Search\SearchEngine::search`: expected `null|string`, but found `mixed`.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Http/Controllers/SearchApiController.php"
+code = "mixed-assignment"
+message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
+count = 2
+
+[[issues]]
+file = "src/Cms/Http/Controllers/SearchApiController.php"
+code = "mixed-assignment"
+message = "Assigning `nonnull` type to a variable may lead to unexpected behavior."
+count = 1
+
+[[issues]]
+file = "src/Cms/Http/Controllers/SearchApiController.php"
+code = "never-return"
+message = "Cannot return value with type 'never' from this function."
+count = 1
+
+[[issues]]
+file = "src/Cms/Http/Controllers/SearchApiController.php"
+code = "non-existent-class"
+message = 'Class `Nyholm\Psr7\Response` not found.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Http/Controllers/SearchApiController.php"
+code = "non-existent-class-like"
+message = 'Cannot find class, interface, enum, or type alias `Psr\Http\Message\ResponseInterface`.'
+count = 2
+
+[[issues]]
+file = "src/Cms/Http/Controllers/SearchApiController.php"
+code = "non-existent-class-like"
+message = 'Cannot find class, interface, enum, or type alias `Psr\Http\Message\ServerRequestInterface`.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Http/Controllers/SitemapController.php"
+code = "invalid-array-element-key"
+message = "Invalid array key type."
+count = 1
+
+[[issues]]
+file = "src/Cms/Http/Controllers/SitemapController.php"
+code = "less-specific-nested-return-statement"
+message = '''Returned type `list<non-empty-array<nonnull, array<string, mixed>>>` is less specific than the declared return type `list<array<string, array<string, mixed>>>` for function `Rkn\Cms\Http\Controllers\SitemapController::groupByContent` due to nested 'mixed'.'''
+count = 1
+
+[[issues]]
+file = "src/Cms/Http/Controllers/SitemapController.php"
+code = "mixed-argument"
+message = "Invalid argument type for argument #1 of `rtrim`: expected `string`, but found `nonnull`."
+count = 1
+
+[[issues]]
+file = "src/Cms/Http/Controllers/SitemapController.php"
+code = "mixed-argument"
+message = 'Invalid argument type for argument #2 of `Rkn\Cms\Http\Controllers\SitemapController::groupByContent`: expected `list<string>`, but found `nonnull`.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Http/Controllers/SitemapController.php"
+code = "mixed-argument"
+message = "Invalid argument type for argument #3 of `preg_replace`: expected `array<array-key, string>|string`, but found `nonnull`."
+count = 2
+
+[[issues]]
+file = "src/Cms/Http/Controllers/SitemapController.php"
+code = "mixed-assignment"
+message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
+count = 1
+
+[[issues]]
+file = "src/Cms/Http/Controllers/SitemapController.php"
+code = "mixed-assignment"
+message = "Assigning `nonnull` type to a variable may lead to unexpected behavior."
+count = 6
+
+[[issues]]
+file = "src/Cms/Http/Controllers/SitemapController.php"
+code = "mixed-operand"
+message = "Invalid left operand: type `mixed` cannot be reliably used in string concatenation."
+count = 1
+
+[[issues]]
+file = "src/Cms/Http/Controllers/SitemapController.php"
+code = "mixed-operand"
+message = "Invalid left operand: type `nonnull` cannot be reliably used in string concatenation."
+count = 1
+
+[[issues]]
+file = "src/Cms/Http/Controllers/SitemapController.php"
+code = "mixed-operand"
+message = "Invalid right operand: type `nonnull` cannot be reliably used in string concatenation."
+count = 3
+
+[[issues]]
+file = "src/Cms/Http/Controllers/SitemapController.php"
+code = "never-return"
+message = "Cannot return value with type 'never' from this function."
+count = 1
+
+[[issues]]
+file = "src/Cms/Http/Controllers/SitemapController.php"
+code = "non-existent-class"
+message = 'Class `Nyholm\Psr7\Response` not found.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Http/Controllers/SitemapController.php"
+code = "non-existent-class-like"
+message = 'Cannot find class, interface, enum, or type alias `Psr\Http\Message\ResponseInterface`.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Http/Controllers/SitemapController.php"
+code = "possibly-false-argument"
+message = "Argument #2 of function `date` is possibly `false`, but parameter type `int|null` does not accept it."
+count = 1
+
+[[issues]]
+file = "src/Cms/I18n/Translator.php"
+code = "less-specific-return-statement"
+message = 'Returned type `array<array-key, mixed>` is less specific than the declared return type `array<string, string>` for function `Rkn\Cms\I18n\Translator::loadMessages`.'
+count = 1
+
+[[issues]]
+file = "src/Cms/I18n/Translator.php"
+code = "mixed-assignment"
+message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
+count = 1
+
+[[issues]]
+file = "src/Cms/I18n/Translator.php"
+code = "property-type-coercion"
+message = "A value of a less specific type `array<string, array<array-key, mixed>>` is being assigned to property `$$loaded` (array<string, array<string, string>>)."
+count = 1
+
+[[issues]]
+file = "src/Cms/Integrations/GumroadButtonGenerator.php"
+code = "invalid-iterator"
+message = "The expression provided to `foreach` is not iterable. It resolved to type `nonnull`, which is not iterable."
+count = 1
+
+[[issues]]
+file = "src/Cms/Integrations/GumroadButtonGenerator.php"
+code = "invalid-iterator"
+message = "The expression provided to `foreach` is not iterable. It resolved to type `truthy-mixed`, which is not iterable."
+count = 1
+
+[[issues]]
+file = "src/Cms/Integrations/GumroadButtonGenerator.php"
+code = "mixed-argument"
+message = 'Invalid argument type for argument #1 of `Rkn\Cms\Integrations\GumroadButtonGenerator::renderButton`: expected `array<string, mixed>`, but found `mixed`.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Integrations/GumroadButtonGenerator.php"
+code = "mixed-assignment"
+message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
+count = 2
+
+[[issues]]
+file = "src/Cms/Integrations/GumroadButtonGenerator.php"
+code = "mixed-assignment"
+message = "Assigning `nonnull` type to a variable may lead to unexpected behavior."
+count = 2
+
+[[issues]]
+file = "src/Cms/Integrations/GumroadButtonGenerator.php"
+code = "mixed-operand"
+message = "Casting `mixed` to `bool`."
+count = 1
+
+[[issues]]
+file = "src/Cms/Integrations/GumroadButtonGenerator.php"
+code = "mixed-return-statement"
+message = 'Could not infer a precise return type for function `Rkn\Cms\Integrations\GumroadButtonGenerator::findProduct`. Saw type `mixed`.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Integrations/StripeButtonGenerator.php"
+code = "invalid-iterator"
+message = "The expression provided to `foreach` is not iterable. It resolved to type `nonnull`, which is not iterable."
+count = 1
+
+[[issues]]
+file = "src/Cms/Integrations/StripeButtonGenerator.php"
+code = "invalid-iterator"
+message = "The expression provided to `foreach` is not iterable. It resolved to type `truthy-mixed`, which is not iterable."
+count = 1
+
+[[issues]]
+file = "src/Cms/Integrations/StripeButtonGenerator.php"
+code = "mixed-argument"
+message = 'Invalid argument type for argument #1 of `Rkn\Cms\Integrations\StripeButtonGenerator::renderButton`: expected `array<string, mixed>`, but found `mixed`.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Integrations/StripeButtonGenerator.php"
+code = "mixed-assignment"
+message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
+count = 2
+
+[[issues]]
+file = "src/Cms/Integrations/StripeButtonGenerator.php"
+code = "mixed-assignment"
+message = "Assigning `nonnull` type to a variable may lead to unexpected behavior."
+count = 1
+
+[[issues]]
+file = "src/Cms/Integrations/StripeButtonGenerator.php"
+code = "mixed-return-statement"
+message = 'Could not infer a precise return type for function `Rkn\Cms\Integrations\StripeButtonGenerator::findLink`. Saw type `mixed`.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Mail/EmailRenderer.php"
+code = "mixed-assignment"
+message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
+count = 1
+
+[[issues]]
+file = "src/Cms/Mail/Mailer.php"
+code = "impossible-assignment"
+message = "Invalid assignment: the right-hand side has type `never` and cannot produce a value."
+count = 1
+
+[[issues]]
+file = "src/Cms/Mail/Mailer.php"
+code = "invalid-method-access"
+message = 'Attempting to access a method on a non-object type (`unknown-ref(PHPMailer\PHPMailer\PHPMailer)`).'
+count = 4
+
+[[issues]]
+file = "src/Cms/Mail/Mailer.php"
+code = "invalid-property-access"
+message = "Attempting to access a property on a non-object type (`never`)."
+count = 10
+
+[[issues]]
+file = "src/Cms/Mail/Mailer.php"
+code = "invalid-property-access"
+message = 'Attempting to access a property on a non-object type (`unknown-ref(PHPMailer\PHPMailer\PHPMailer)`).'
+count = 3
+
+[[issues]]
+file = "src/Cms/Mail/Mailer.php"
+code = "mixed-argument"
+message = 'Invalid argument type for argument #1 of `Rkn\Cms\Mail\Mailer::send`: expected `string`, but found `mixed`.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Mail/Mailer.php"
+code = "mixed-assignment"
+message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
+count = 2
+
+[[issues]]
+file = "src/Cms/Mail/Mailer.php"
+code = "never-return"
+message = "Cannot return value with type 'never' from this function."
+count = 1
+
+[[issues]]
+file = "src/Cms/Mail/Mailer.php"
+code = "non-existent-class"
+message = 'Class `PHPMailer\PHPMailer\PHPMailer` not found.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Mail/Mailer.php"
+code = "non-existent-class-like"
+message = 'Cannot find class, interface, enum, or type alias `PHPMailer\PHPMailer\PHPMailer`.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Mail/Mailer.php"
+code = "non-existent-class-like"
+message = 'Class, interface, enum, or trait `PHPMailer\PHPMailer\PHPMailer` not found.'
+count = 3
+
+[[issues]]
+file = "src/Cms/Mail/Mailer.php"
+code = "possibly-invalid-argument"
+message = '''Possible argument type mismatch for argument #1 of `Rkn\Cms\Mail\Mailer::renderPlainBody`: expected `array{'email': string, 'extras': array<string, string>, 'message': string, 'name': string, 'phone': string}`, but possibly received `array{'email': string, 'extras': array<string, false|string>, 'message': string, 'name': string, 'phone': string}`.'''
+count = 1
+
+[[issues]]
+file = "src/Cms/Mcp/JsonRpcHandler.php"
+code = "falsable-return-statement"
+message = '''Function `Rkn\Cms\Mcp\JsonRpcHandler::formatError` is declared to return `string` but possibly returns 'false' (inferred as `false|non-empty-string`).'''
+count = 1
+
+[[issues]]
+file = "src/Cms/Mcp/JsonRpcHandler.php"
+code = "falsable-return-statement"
+message = '''Function `Rkn\Cms\Mcp\JsonRpcHandler::formatResult` is declared to return `string` but possibly returns 'false' (inferred as `false|non-empty-string`).'''
+count = 1
+
+[[issues]]
+file = "src/Cms/Mcp/JsonRpcHandler.php"
+code = "invalid-return-statement"
+message = 'Invalid return type for function `Rkn\Cms\Mcp\JsonRpcHandler::formatError`: expected `string`, but found `false|non-empty-string`.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Mcp/JsonRpcHandler.php"
+code = "invalid-return-statement"
+message = 'Invalid return type for function `Rkn\Cms\Mcp\JsonRpcHandler::formatResult`: expected `string`, but found `false|non-empty-string`.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Mcp/JsonRpcHandler.php"
+code = "less-specific-nested-return-statement"
+message = '''Returned type `array{'id': mixed, 'method': non-empty-string, 'params': array<array-key, mixed>}` is less specific than the declared return type `array{'id': int|null|string, 'method': string, 'params': array<string, mixed>}` for function `Rkn\Cms\Mcp\JsonRpcHandler::parseRequest` due to nested 'mixed'.'''
+count = 1
+
+[[issues]]
+file = "src/Cms/Mcp/JsonRpcHandler.php"
+code = "mixed-assignment"
+message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
+count = 2
+
+[[issues]]
+file = "src/Cms/Mcp/McpServer.php"
+code = "less-specific-argument"
+message = 'Argument type mismatch for argument #1 of `Rkn\Cms\Mcp\PromptInterface::get`: expected `array<string, mixed>`, but provided type `array<array-key, mixed>` is less specific.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Mcp/McpServer.php"
+code = "less-specific-argument"
+message = 'Argument type mismatch for argument #1 of `Rkn\Cms\Mcp\ToolInterface::execute`: expected `array<string, mixed>`, but provided type `array<array-key, mixed>` is less specific.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Mcp/McpServer.php"
+code = "mixed-assignment"
+message = "Assigning `nonnull` type to a variable may lead to unexpected behavior."
+count = 5
+
+[[issues]]
+file = "src/Cms/Mcp/McpServer.php"
+code = "mixed-operand"
+message = "Invalid right operand: type `nonnull` cannot be reliably used in string concatenation."
+count = 3
+
+[[issues]]
+file = "src/Cms/Mcp/McpServer.php"
+code = "possibly-invalid-argument"
+message = 'Possible argument type mismatch for argument #2 of `Rkn\Cms\Mcp\JsonRpcHandler::formatError`: expected `int`, but possibly received `int|string`.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Mcp/McpServer.php"
+code = "possibly-invalid-argument"
+message = 'Possible argument type mismatch for argument #2 of `Rkn\Cms\Mcp\JsonRpcHandler::formatError`: expected `int`, but possibly received `int|truthy-string`.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Mcp/McpServer.php"
+code = "possibly-null-argument"
+message = 'Argument #1 of method `Rkn\Cms\Mcp\McpServer::dispatch` is possibly `null`, but parameter type `int|string` does not accept it.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Mcp/Prompts/CreateCollectionPrompt.php"
+code = "mixed-assignment"
+message = "Assigning `nonnull` type to a variable may lead to unexpected behavior."
+count = 1
+
+[[issues]]
+file = "src/Cms/Mcp/Prompts/CreateComponentPrompt.php"
+code = "mixed-argument"
+message = 'Invalid argument type for argument #1 of `Rkn\Cms\Mcp\Prompts\CreateComponentPrompt::toKebabCase`: expected `string`, but found `nonnull`.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Mcp/Prompts/CreateComponentPrompt.php"
+code = "mixed-assignment"
+message = "Assigning `nonnull` type to a variable may lead to unexpected behavior."
+count = 1
+
+[[issues]]
+file = "src/Cms/Mcp/Prompts/CreateEntryPrompt.php"
+code = "mixed-argument"
+message = 'Invalid argument type for argument #1 of `Rkn\Cms\Mcp\Prompts\CreateEntryPrompt::getExampleEntry`: expected `string`, but found `nonnull`.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Mcp/Prompts/CreateEntryPrompt.php"
+code = "mixed-argument"
+message = 'Invalid argument type for argument #1 of `Rkn\Cms\Mcp\Prompts\CreateEntryPrompt::slugify`: expected `string`, but found `nonnull`.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Mcp/Prompts/CreateEntryPrompt.php"
+code = "mixed-argument"
+message = "Invalid argument type for argument #1 of `array_keys`: expected `array<('K.array_keys() extends array-key), ('V.array_keys() extends mixed)>`, but found `truthy-mixed`."
+count = 1
+
+[[issues]]
+file = "src/Cms/Mcp/Prompts/CreateEntryPrompt.php"
+code = "mixed-argument"
+message = 'Invalid argument type for argument #2 of `Rkn\Cms\Mcp\Prompts\CreateEntryPrompt::getExampleEntry`: expected `string`, but found `nonnull`.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Mcp/Prompts/CreateEntryPrompt.php"
+code = "mixed-assignment"
+message = "Assigning `nonnull` type to a variable may lead to unexpected behavior."
+count = 3
+
+[[issues]]
+file = "src/Cms/Mcp/Prompts/CreateEntryPrompt.php"
+code = "mixed-operand"
+message = "Invalid middle operand: type `nonnull` cannot be reliably used in string concatenation."
+count = 1
+
+[[issues]]
+file = "src/Cms/Mcp/Resources/CollectionsResource.php"
+code = "invalid-iterator"
+message = "The expression provided to `foreach` is not iterable. It resolved to type `nonnull`, which is not iterable."
+count = 1
+
+[[issues]]
+file = "src/Cms/Mcp/Resources/CollectionsResource.php"
+code = "mixed-argument"
+message = "Invalid argument type for argument #1 of `count`: expected `Countable|array<array-key, mixed>`, but found `nonnull`."
+count = 1
+
+[[issues]]
+file = "src/Cms/Mcp/Resources/CollectionsResource.php"
+code = "mixed-assignment"
+message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
+count = 2
+
+[[issues]]
+file = "src/Cms/Mcp/Resources/CollectionsResource.php"
+code = "mixed-operand"
+message = "Invalid middle operand: type `mixed` cannot be reliably used in string concatenation."
+count = 1
+
+[[issues]]
+file = "src/Cms/Mcp/Resources/CollectionsResource.php"
+code = "non-existent-method"
+message = 'Method `parseFile` does not exist on type `Symfony\Component\Yaml\Yaml`.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Mcp/Resources/SiteInfoResource.php"
+code = "mixed-assignment"
+message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
+count = 1
+
+[[issues]]
+file = "src/Cms/Mcp/Resources/SiteInfoResource.php"
+code = "non-existent-method"
+message = 'Method `parseFile` does not exist on type `Symfony\Component\Yaml\Yaml`.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Mcp/Tools/AbstractAdminTool.php"
+code = "mixed-assignment"
+message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
+count = 1
+
+[[issues]]
+file = "src/Cms/Mcp/Tools/AbstractEntryMutationTool.php"
+code = "mixed-assignment"
+message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
+count = 4
+
+[[issues]]
+file = "src/Cms/Mcp/Tools/AbstractEntryMutationTool.php"
+code = "non-existent-method"
+message = 'Method `parseFile` does not exist on type `Symfony\Component\Yaml\Yaml`.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Mcp/Tools/AbstractEntryMutationTool.php"
+code = "redundant-cast"
+message = "Redundant cast to `(string)`: the expression already has this type."
+count = 1
+
+[[issues]]
+file = "src/Cms/Mcp/Tools/BoostApplyTool.php"
+code = "mixed-assignment"
+message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
+count = 2
+
+[[issues]]
+file = "src/Cms/Mcp/Tools/BoostApplyTool.php"
+code = "non-existent-method"
+message = 'Method `dump` does not exist on type `Symfony\Component\Yaml\Yaml`.'
+count = 4
+
+[[issues]]
+file = "src/Cms/Mcp/Tools/CreateEntryTool.php"
+code = "less-specific-argument"
+message = '''Argument type mismatch for argument #4 of `Rkn\Cms\Mcp\Tools\AbstractEntryMutationTool::writeEntry`: expected `array<string, mixed>`, but provided type `array{'date': string, 'status': string, 'title': string, ...}` is less specific.'''
+count = 1
+
+[[issues]]
+file = "src/Cms/Mcp/Tools/GetConfigTool.php"
+code = "less-specific-argument"
+message = 'Argument type mismatch for argument #1 of `Rkn\Cms\Mcp\Tools\GetConfigTool::dotGet`: expected `array<string, mixed>`, but provided type `array<array-key, mixed>` is less specific.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Mcp/Tools/GetConfigTool.php"
+code = "mixed-argument"
+message = 'Invalid argument type for argument #2 of `Rkn\Cms\Mcp\Tools\GetConfigTool::dotGet`: expected `string`, but found `nonnull`.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Mcp/Tools/GetConfigTool.php"
+code = "mixed-assignment"
+message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
+count = 4
+
+[[issues]]
+file = "src/Cms/Mcp/Tools/GetConfigTool.php"
+code = "non-existent-method"
+message = 'Method `parseFile` does not exist on type `Symfony\Component\Yaml\Yaml`.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Mcp/Tools/ListCollectionsTool.php"
+code = "invalid-iterator"
+message = "The expression provided to `foreach` is not iterable. It resolved to type `nonnull`, which is not iterable."
+count = 1
+
+[[issues]]
+file = "src/Cms/Mcp/Tools/ListCollectionsTool.php"
+code = "mixed-argument"
+message = "Invalid argument type for argument #1 of `count`: expected `Countable|array<array-key, mixed>`, but found `nonnull`."
+count = 1
+
+[[issues]]
+file = "src/Cms/Mcp/Tools/ListCollectionsTool.php"
+code = "mixed-assignment"
+message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
+count = 2
+
+[[issues]]
+file = "src/Cms/Mcp/Tools/ListCollectionsTool.php"
+code = "mixed-assignment"
+message = "Assigning `nonnull` type to a variable may lead to unexpected behavior."
+count = 2
+
+[[issues]]
+file = "src/Cms/Mcp/Tools/ListCollectionsTool.php"
+code = "mixed-operand"
+message = "Invalid middle operand: type `mixed` cannot be reliably used in string concatenation."
+count = 1
+
+[[issues]]
+file = "src/Cms/Mcp/Tools/ListCollectionsTool.php"
+code = "non-existent-method"
+message = 'Method `parseFile` does not exist on type `Symfony\Component\Yaml\Yaml`.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Mcp/Tools/ListComponentsTool.php"
+code = "invalid-return-statement"
+message = 'Invalid return type for function `Rkn\Cms\Mcp\Tools\ListComponentsTool::parseProperties`: expected `list<string>`, but found `array<array-key, string>`.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Mcp/Tools/ListComponentsTool.php"
+code = "possibly-false-argument"
+message = 'Argument #1 of method `Rkn\Cms\Mcp\Tools\ListComponentsTool::parseMethods` is possibly `false`, but parameter type `string` does not accept it.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Mcp/Tools/ListComponentsTool.php"
+code = "possibly-false-argument"
+message = 'Argument #1 of method `Rkn\Cms\Mcp\Tools\ListComponentsTool::parseProperties` is possibly `false`, but parameter type `string` does not accept it.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Mcp/Tools/ListComponentsTool.php"
+code = "reference-to-undefined-variable"
+message = "Reference created from a previously undefined variable `$matches`."
+count = 2
+
+[[issues]]
+file = "src/Cms/Mcp/Tools/ListEntriesTool.php"
+code = "mixed-argument"
+message = 'Invalid argument type for argument #1 of `Rkn\Cms\Content\Query::collection`: expected `string`, but found `nonnull`.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Mcp/Tools/ListEntriesTool.php"
+code = "mixed-argument"
+message = 'Invalid argument type for argument #1 of `Rkn\Cms\Content\Query::locale`: expected `string`, but found `truthy-mixed`.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Mcp/Tools/ListEntriesTool.php"
+code = "mixed-argument"
+message = 'Invalid argument type for argument #1 of `Rkn\Cms\Content\Query::sort`: expected `string`, but found `truthy-mixed`.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Mcp/Tools/ListEntriesTool.php"
+code = "mixed-argument"
+message = 'Invalid argument type for argument #2 of `Rkn\Cms\Content\Query::sort`: expected `string`, but found `nonnull`.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Mcp/Tools/ListEntriesTool.php"
+code = "mixed-assignment"
+message = "Assigning `nonnull` type to a variable may lead to unexpected behavior."
+count = 2
+
+[[issues]]
+file = "src/Cms/Mcp/Tools/ListMediaTool.php"
+code = "array-to-string-conversion"
+message = "Potential array in right operand of string concatenation."
+count = 1
+
+[[issues]]
+file = "src/Cms/Mcp/Tools/ListMediaTool.php"
+code = "invalid-method-access"
+message = "Attempting to access a method on a non-object type (`string`)."
+count = 5
+
+[[issues]]
+file = "src/Cms/Mcp/Tools/ListMediaTool.php"
+code = "mixed-argument"
+message = 'Invalid argument type for argument #1 of `Rkn\Cms\Mcp\Tools\AbstractMediaTool::mimeFromExtension`: expected `string`, but found `mixed`.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Mcp/Tools/ListMediaTool.php"
+code = "mixed-argument"
+message = "Invalid argument type for argument #3 of `str_replace`: expected `array<array-key, string>|string`, but found `mixed`."
+count = 1
+
+[[issues]]
+file = "src/Cms/Mcp/Tools/ListTemplatesTool.php"
+code = "possibly-false-argument"
+message = "Argument #2 of function `preg_match_all` is possibly `false`, but parameter type `string` does not accept it."
+count = 2
+
+[[issues]]
+file = "src/Cms/Mcp/Tools/ListTemplatesTool.php"
+code = "possibly-false-argument"
+message = "Argument #2 of function `preg_match` is possibly `false`, but parameter type `string` does not accept it."
+count = 1
+
+[[issues]]
+file = "src/Cms/Mcp/Tools/ListTemplatesTool.php"
+code = "possibly-undefined-variable"
+message = "Variable `$matches` might not have been defined on all execution paths leading to this point."
+count = 1
+
+[[issues]]
+file = "src/Cms/Mcp/Tools/ProjectInfoTool.php"
+code = "mixed-argument"
+message = "Invalid argument type for argument #1 of `array_keys`: expected `array<('K.array_keys() extends array-key), ('V.array_keys() extends mixed)>`, but found `nonnull`."
+count = 2
+
+[[issues]]
+file = "src/Cms/Mcp/Tools/ProjectInfoTool.php"
+code = "mixed-argument"
+message = "Invalid argument type for argument #1 of `count`: expected `Countable|array<array-key, mixed>`, but found `nonnull`."
+count = 1
+
+[[issues]]
+file = "src/Cms/Mcp/Tools/ProjectInfoTool.php"
+code = "mixed-assignment"
+message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
+count = 2
+
+[[issues]]
+file = "src/Cms/Mcp/Tools/ProjectInfoTool.php"
+code = "possibly-false-argument"
+message = "Argument #1 of function `json_decode` is possibly `false`, but parameter type `string` does not accept it."
+count = 2
+
+[[issues]]
+file = "src/Cms/Mcp/Tools/ReadEntryTool.php"
+code = "mixed-argument"
+message = 'Invalid argument type for argument #1 of `Rkn\Cms\Content\Query::findBySlug`: expected `string`, but found `nonnull`.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Mcp/Tools/ReadEntryTool.php"
+code = "mixed-argument"
+message = 'Invalid argument type for argument #2 of `Rkn\Cms\Content\Query::findBySlug`: expected `string`, but found `nonnull`.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Mcp/Tools/ReadEntryTool.php"
+code = "mixed-argument"
+message = 'Invalid argument type for argument #3 of `Rkn\Cms\Content\Query::findBySlug`: expected `string`, but found `nonnull`.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Mcp/Tools/ReadEntryTool.php"
+code = "mixed-assignment"
+message = "Assigning `nonnull` type to a variable may lead to unexpected behavior."
+count = 3
+
+[[issues]]
+file = "src/Cms/Mcp/Tools/ReadTemplateTool.php"
+code = "mixed-argument"
+message = "Invalid argument type for argument #1 of `str_contains`: expected `string`, but found `nonnull`."
+count = 1
+
+[[issues]]
+file = "src/Cms/Mcp/Tools/ReadTemplateTool.php"
+code = "mixed-assignment"
+message = "Assigning `nonnull` type to a variable may lead to unexpected behavior."
+count = 1
+
+[[issues]]
+file = "src/Cms/Mcp/Tools/ReadTemplateTool.php"
+code = "mixed-operand"
+message = "Invalid right operand: type `nonnull` cannot be reliably used in string concatenation."
+count = 2
+
+[[issues]]
+file = "src/Cms/Mcp/Tools/RunCommandTool.php"
+code = "impossible-assignment"
+message = "Invalid assignment: the right-hand side has type `never` and cannot produce a value."
+count = 2
+
+[[issues]]
+file = "src/Cms/Mcp/Tools/RunCommandTool.php"
+code = "invalid-class-string-expression"
+message = 'Expression of type `class-string<unknown-ref(Symfony\Component\Console\Command\Command)>` cannot be used as a class name.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Mcp/Tools/RunCommandTool.php"
+code = "invalid-constant-value"
+message = 'Value for constant `Rkn\Cms\Mcp\Tools\RunCommandTool::ALLOWED` is not assignable to its declared type.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Mcp/Tools/RunCommandTool.php"
+code = "mixed-argument"
+message = 'Invalid argument type for argument #1 of `Rkn\Cms\Mcp\Tools\RunCommandTool::stripAnsi`: expected `string`, but found `mixed`.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Mcp/Tools/RunCommandTool.php"
+code = "mixed-assignment"
+message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
+count = 1
+
+[[issues]]
+file = "src/Cms/Mcp/Tools/RunCommandTool.php"
+code = "no-value"
+message = 'Argument #1 passed to method `Rkn\Cms\Mcp\Tools\RunCommandTool::runConsole` has type `never`, meaning it cannot produce a value.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Mcp/Tools/RunCommandTool.php"
+code = "non-existent-class"
+message = 'Class `Symfony\Component\Console\Application` not found.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Mcp/Tools/RunCommandTool.php"
+code = "non-existent-class"
+message = 'Class `Symfony\Component\Console\Input\ArrayInput` not found.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Mcp/Tools/RunCommandTool.php"
+code = "non-existent-class"
+message = 'Class `Symfony\Component\Console\Output\BufferedOutput` not found.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Mcp/Tools/RunCommandTool.php"
+code = "non-existent-class-like"
+message = 'Cannot find class, interface, enum, or type alias `Symfony\Component\Console\Command\Command`.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Mcp/Tools/ScheduleEntryTool.php"
+code = "mixed-array-assignment"
+message = "Unsafe array assignment on type `mixed`."
+count = 2
+
+[[issues]]
+file = "src/Cms/Mcp/Tools/SearchContentTool.php"
+code = "mixed-argument"
+message = "Invalid argument type for argument #1 of `trim`: expected `string`, but found `nonnull`."
+count = 1
+
+[[issues]]
+file = "src/Cms/Mcp/Tools/SearchContentTool.php"
+code = "mixed-assignment"
+message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
+count = 4
+
+[[issues]]
+file = "src/Cms/Mcp/Tools/SearchContentTool.php"
+code = "mixed-assignment"
+message = "Assigning `nonnull` type to a variable may lead to unexpected behavior."
+count = 1
+
+[[issues]]
+file = "src/Cms/Mcp/Tools/UpdateEntryTool.php"
+code = "less-specific-argument"
+message = 'Argument type mismatch for argument #4 of `Rkn\Cms\Mcp\Tools\AbstractEntryMutationTool::writeEntry`: expected `array<string, mixed>`, but provided type `array<array-key, mixed>` is less specific.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Mcp/Tools/UploadMediaTool.php"
+code = "deprecated-function"
+message = "Call to deprecated function: `finfo_close`."
+count = 1
+
+[[issues]]
+file = "src/Cms/Middleware/AnalyticsMiddleware.php"
+code = "non-existent-class-like"
+message = 'Class `Rkn\Cms\Middleware\AnalyticsMiddleware` cannot implement unknown type `MiddlewareInterface`'
+count = 1
+
+[[issues]]
+file = "src/Cms/Middleware/ApiAuthMiddleware.php"
+code = "non-existent-class-like"
+message = 'Class `Rkn\Cms\Middleware\ApiAuthMiddleware` cannot implement unknown type `MiddlewareInterface`'
+count = 1
+
+[[issues]]
+file = "src/Cms/Middleware/ApiDispatcher.php"
+code = "non-existent-class-like"
+message = 'Class `Rkn\Cms\Middleware\ApiDispatcher` cannot implement unknown type `MiddlewareInterface`'
+count = 1
+
+[[issues]]
+file = "src/Cms/Middleware/ContentApiDispatcher.php"
+code = "non-existent-class-like"
+message = 'Class `Rkn\Cms\Middleware\ContentApiDispatcher` cannot implement unknown type `MiddlewareInterface`'
+count = 1
+
+[[issues]]
+file = "src/Cms/Middleware/ContentRouter.php"
+code = "non-existent-class-like"
+message = 'Class `Rkn\Cms\Middleware\ContentRouter` cannot implement unknown type `MiddlewareInterface`'
+count = 1
+
+[[issues]]
+file = "src/Cms/Middleware/CsrfProtection.php"
+code = "non-existent-class-like"
+message = 'Class `Rkn\Cms\Middleware\CsrfProtection` cannot implement unknown type `MiddlewareInterface`'
+count = 1
+
+[[issues]]
+file = "src/Cms/Middleware/DevReloadMiddleware.php"
+code = "non-existent-class-like"
+message = 'Class `Rkn\Cms\Middleware\DevReloadMiddleware` cannot implement unknown type `MiddlewareInterface`'
+count = 1
+
+[[issues]]
+file = "src/Cms/Middleware/ErrorHandler.php"
+code = "non-existent-class-like"
+message = 'Class `Rkn\Cms\Middleware\ErrorHandler` cannot implement unknown type `MiddlewareInterface`'
+count = 1
+
+[[issues]]
+file = "src/Cms/Middleware/JsonBodyParser.php"
+code = "non-existent-class-like"
+message = 'Class `Rkn\Cms\Middleware\JsonBodyParser` cannot implement unknown type `MiddlewareInterface`'
+count = 1
+
+[[issues]]
+file = "src/Cms/Middleware/LocaleDetector.php"
+code = "non-existent-class-like"
+message = 'Class `Rkn\Cms\Middleware\LocaleDetector` cannot implement unknown type `MiddlewareInterface`'
+count = 1
+
+[[issues]]
+file = "src/Cms/Middleware/NotFoundMiddleware.php"
+code = "non-existent-class-like"
+message = 'Class `Rkn\Cms\Middleware\NotFoundMiddleware` cannot implement unknown type `MiddlewareInterface`'
+count = 1
+
+[[issues]]
+file = "src/Cms/Middleware/PageCacheReader.php"
+code = "non-existent-class-like"
+message = 'Class `Rkn\Cms\Middleware\PageCacheReader` cannot implement unknown type `MiddlewareInterface`'
+count = 1
+
+[[issues]]
+file = "src/Cms/Middleware/PageCacheWriter.php"
+code = "non-existent-class-like"
+message = 'Class `Rkn\Cms\Middleware\PageCacheWriter` cannot implement unknown type `MiddlewareInterface`'
+count = 1
+
+[[issues]]
+file = "src/Cms/Middleware/RedirectMiddleware.php"
+code = "non-existent-class-like"
+message = 'Class `Rkn\Cms\Middleware\RedirectMiddleware` cannot implement unknown type `MiddlewareInterface`'
+count = 1
+
+[[issues]]
+file = "src/Cms/Middleware/WpApiDispatcher.php"
+code = "non-existent-class-like"
+message = 'Class `Rkn\Cms\Middleware\WpApiDispatcher` cannot implement unknown type `MiddlewareInterface`'
+count = 1
+
+[[issues]]
+file = "src/Cms/Middleware/YoyoHandler.php"
+code = "non-existent-class-like"
+message = 'Class `Rkn\Cms\Middleware\YoyoHandler` cannot implement unknown type `MiddlewareInterface`'
+count = 1
+
+[[issues]]
+file = "src/Cms/Queue/FileQueue.php"
+code = "less-specific-return-statement"
+message = '''Returned type `array{'attempts': mixed, 'updated_at': int, ...}` is less specific than the declared return type `array<string, mixed>|null` for function `Rkn\Cms\Queue\FileQueue::reserve`.'''
+count = 1
+
+[[issues]]
+file = "src/Cms/Queue/FileQueue.php"
+code = "mixed-assignment"
+message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
+count = 2
+
+[[issues]]
+file = "src/Cms/Queue/FileQueue.php"
+code = "mixed-operand"
+message = "Left operand in `<` comparison has `mixed` type."
+count = 1
+
+[[issues]]
+file = "src/Cms/Queue/FileQueue.php"
+code = "mixed-operand"
+message = "Left operand in binary operation has type `mixed`."
+count = 1
+
+[[issues]]
+file = "src/Cms/Queue/FileQueue.php"
+code = "mixed-operand"
+message = "Right operand in `<` comparison has `mixed` type."
+count = 1
+
+[[issues]]
+file = "src/Cms/Search/SearchEngine.php"
+code = "invalid-iterator"
+message = "The expression provided to `foreach` is not iterable. It resolved to type `nonnull`, which is not iterable."
+count = 1
+
+[[issues]]
+file = "src/Cms/Search/SearchEngine.php"
+code = "less-specific-nested-return-statement"
+message = '''Returned type `list<array{'key': string, 'score': float, 'snippet': nonnull, 'title': nonnull, 'url': nonnull}>` is less specific than the declared return type `list<array{'key': string, 'score': float, 'snippet': string, 'title': string, 'url': string}>` for function `Rkn\Cms\Search\SearchEngine::search` due to nested 'mixed'.'''
+count = 1
+
+[[issues]]
+file = "src/Cms/Search/SearchEngine.php"
+code = "mixed-argument"
+message = "Invalid argument type for argument #1 of `mb_strtolower`: expected `string`, but found `mixed`."
+count = 3
+
+[[issues]]
+file = "src/Cms/Search/SearchEngine.php"
+code = "mixed-argument"
+message = "Invalid argument type for argument #1 of `mb_strtolower`: expected `string`, but found `nonnull`."
+count = 2
+
+[[issues]]
+file = "src/Cms/Search/SearchEngine.php"
+code = "mixed-argument"
+message = "Invalid argument type for argument #2 of `in_array`: expected `array<array-key, ('V.in_array() extends mixed)>`, but found `nonnull`."
+count = 2
+
+[[issues]]
+file = "src/Cms/Search/SearchEngine.php"
+code = "mixed-assignment"
+message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
+count = 1
+
+[[issues]]
+file = "src/Cms/Search/SearchEngine.php"
+code = "mixed-assignment"
+message = "Assigning `nonnull` type to a variable may lead to unexpected behavior."
+count = 1
+
+[[issues]]
+file = "src/Cms/Search/SearchEngine.php"
+code = "redundant-cast"
+message = "Redundant cast to `(string)`: the expression already has this type."
+count = 1
+
+[[issues]]
+file = "src/Cms/Search/SearchIndexer.php"
+code = "mixed-argument"
+message = 'Invalid argument type for argument #1 of `Rkn\Cms\Search\SearchIndexer::tokenize`: expected `string`, but found `nonnull`.'
+count = 2
+
+[[issues]]
+file = "src/Cms/Search/SearchIndexer.php"
+code = "mixed-assignment"
+message = "Assigning `nonnull` type to a variable may lead to unexpected behavior."
+count = 3
+
+[[issues]]
+file = "src/Cms/Search/SearchIndexer.php"
+code = "mixed-operand"
+message = "Invalid middle operand: type `nonnull` cannot be reliably used in string concatenation."
+count = 4
+
+[[issues]]
+file = "src/Cms/Search/SearchIndexer.php"
+code = "mixed-operand"
+message = "Invalid right operand: type `mixed` cannot be reliably used in string concatenation."
+count = 1
+
+[[issues]]
+file = "src/Cms/Search/SearchIndexer.php"
+code = "mixed-operand"
+message = "Invalid right operand: type `nonnull` cannot be reliably used in string concatenation."
+count = 2
+
+[[issues]]
+file = "src/Cms/Search/SearchIndexer.php"
+code = "mixed-return-statement"
+message = 'Could not infer a precise return type for function `Rkn\Cms\Search\SearchIndexer::load`. Saw type `mixed`.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Seo/ConsentManager.php"
+code = "mixed-argument"
+message = 'Invalid argument type for argument #1 of `Rkn\Cms\Seo\ConsentManager::escape`: expected `string`, but found `nonnull`.'
+count = 7
+
+[[issues]]
+file = "src/Cms/Seo/ConsentManager.php"
+code = "mixed-assignment"
+message = "Assigning `nonnull` type to a variable may lead to unexpected behavior."
+count = 5
+
+[[issues]]
+file = "src/Cms/Seo/JsonLdGenerator.php"
+code = "mixed-argument"
+message = "Invalid argument type for argument #1 of `ltrim`: expected `string`, but found `mixed`."
+count = 1
+
+[[issues]]
+file = "src/Cms/Seo/JsonLdGenerator.php"
+code = "mixed-argument"
+message = "Invalid argument type for argument #1 of `ltrim`: expected `string`, but found `nonnull`."
+count = 1
+
+[[issues]]
+file = "src/Cms/Seo/JsonLdGenerator.php"
+code = "mixed-argument"
+message = "Invalid argument type for argument #1 of `rtrim`: expected `string`, but found `mixed`."
+count = 1
+
+[[issues]]
+file = "src/Cms/Seo/JsonLdGenerator.php"
+code = "mixed-argument"
+message = "Invalid argument type for argument #1 of `rtrim`: expected `string`, but found `nonnull`."
+count = 6
+
+[[issues]]
+file = "src/Cms/Seo/JsonLdGenerator.php"
+code = "mixed-argument"
+message = "Invalid argument type for argument #1 of `str_starts_with`: expected `string`, but found `mixed`."
+count = 2
+
+[[issues]]
+file = "src/Cms/Seo/JsonLdGenerator.php"
+code = "mixed-argument"
+message = "Invalid argument type for argument #1 of `str_starts_with`: expected `string`, but found `nonnull`."
+count = 2
+
+[[issues]]
+file = "src/Cms/Seo/JsonLdGenerator.php"
+code = "mixed-assignment"
+message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
+count = 7
+
+[[issues]]
+file = "src/Cms/Seo/JsonLdGenerator.php"
+code = "mixed-assignment"
+message = "Assigning `nonnull` type to a variable may lead to unexpected behavior."
+count = 9
+
+[[issues]]
+file = "src/Cms/Seo/JsonLdGenerator.php"
+code = "possibly-false-operand"
+message = "Possibly false middle operand used in string concatenation (type `false|non-empty-string`)."
+count = 1
+
+[[issues]]
+file = "src/Cms/Seo/MetaTagGenerator.php"
+code = "invalid-iterator"
+message = "The expression provided to `foreach` is not iterable. It resolved to type `nonnull`, which is not iterable."
+count = 1
+
+[[issues]]
+file = "src/Cms/Seo/MetaTagGenerator.php"
+code = "less-specific-nested-argument-type"
+message = "Argument type mismatch for argument #2 of `implode`: expected `array<array-key, Stringable|null|scalar>|null`, but provided type `array<array-key, mixed>` is less specific."
+count = 1
+
+[[issues]]
+file = "src/Cms/Seo/MetaTagGenerator.php"
+code = "mixed-argument"
+message = 'Invalid argument type for argument #1 of `Rkn\Cms\Seo\MetaTagGenerator::authorTag`: expected `Rkn\Cms\Content\Entry|null`, but found `mixed`.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Seo/MetaTagGenerator.php"
+code = "mixed-argument"
+message = 'Invalid argument type for argument #1 of `Rkn\Cms\Seo\MetaTagGenerator::canonicalTag`: expected `Rkn\Cms\Content\Entry|null`, but found `mixed`.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Seo/MetaTagGenerator.php"
+code = "mixed-argument"
+message = 'Invalid argument type for argument #1 of `Rkn\Cms\Seo\MetaTagGenerator::descriptionTag`: expected `Rkn\Cms\Content\Entry|null`, but found `mixed`.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Seo/MetaTagGenerator.php"
+code = "mixed-argument"
+message = 'Invalid argument type for argument #1 of `Rkn\Cms\Seo\MetaTagGenerator::escape`: expected `string`, but found `mixed`.'
+count = 9
+
+[[issues]]
+file = "src/Cms/Seo/MetaTagGenerator.php"
+code = "mixed-argument"
+message = 'Invalid argument type for argument #1 of `Rkn\Cms\Seo\MetaTagGenerator::escape`: expected `string`, but found `nonnull`.'
+count = 11
+
+[[issues]]
+file = "src/Cms/Seo/MetaTagGenerator.php"
+code = "mixed-argument"
+message = 'Invalid argument type for argument #1 of `Rkn\Cms\Seo\MetaTagGenerator::keywordsTag`: expected `Rkn\Cms\Content\Entry|null`, but found `mixed`.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Seo/MetaTagGenerator.php"
+code = "mixed-argument"
+message = 'Invalid argument type for argument #1 of `Rkn\Cms\Seo\MetaTagGenerator::openGraphTags`: expected `Rkn\Cms\Content\Entry|null`, but found `mixed`.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Seo/MetaTagGenerator.php"
+code = "mixed-argument"
+message = 'Invalid argument type for argument #1 of `Rkn\Cms\Seo\MetaTagGenerator::robotsTag`: expected `Rkn\Cms\Content\Entry|null`, but found `mixed`.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Seo/MetaTagGenerator.php"
+code = "mixed-argument"
+message = 'Invalid argument type for argument #1 of `Rkn\Cms\Seo\MetaTagGenerator::twitterCardTags`: expected `Rkn\Cms\Content\Entry|null`, but found `mixed`.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Seo/MetaTagGenerator.php"
+code = "mixed-argument"
+message = "Invalid argument type for argument #1 of `ltrim`: expected `string`, but found `mixed`."
+count = 2
+
+[[issues]]
+file = "src/Cms/Seo/MetaTagGenerator.php"
+code = "mixed-argument"
+message = "Invalid argument type for argument #1 of `rtrim`: expected `string`, but found `nonnull`."
+count = 3
+
+[[issues]]
+file = "src/Cms/Seo/MetaTagGenerator.php"
+code = "mixed-argument"
+message = "Invalid argument type for argument #1 of `str_starts_with`: expected `string`, but found `mixed`."
+count = 2
+
+[[issues]]
+file = "src/Cms/Seo/MetaTagGenerator.php"
+code = "mixed-argument"
+message = 'Invalid argument type for argument #2 of `Rkn\Cms\Seo\MetaTagGenerator::canonicalTag`: expected `string`, but found `nonnull`.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Seo/MetaTagGenerator.php"
+code = "mixed-assignment"
+message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
+count = 15
+
+[[issues]]
+file = "src/Cms/Seo/MetaTagGenerator.php"
+code = "mixed-assignment"
+message = "Assigning `nonnull` type to a variable may lead to unexpected behavior."
+count = 18
+
+[[issues]]
+file = "src/Cms/Seo/MetaTagGenerator.php"
+code = "reference-to-undefined-variable"
+message = "Reference created from a previously undefined variable `$imgMatches`."
+count = 2
+
+[[issues]]
+file = "src/Cms/Seo/WebMcpGenerator.php"
+code = "less-specific-nested-return-statement"
+message = '''Returned type `list<array{'collection': nonnull, 'title': nonnull, 'url': nonnull}>` is less specific than the declared return type `array<int, array<string, string>>` for function `Rkn\Cms\Seo\WebMcpGenerator::buildEntriesList` due to nested 'mixed'.'''
+count = 1
+
+[[issues]]
+file = "src/Cms/Seo/WebMcpGenerator.php"
+code = "less-specific-nested-return-statement"
+message = '''Returned type `list<array{'description': mixed, 'title': nonnull, 'url': nonnull}>` is less specific than the declared return type `array<int, array<string, string>>` for function `Rkn\Cms\Seo\WebMcpGenerator::buildSearchIndex` due to nested 'mixed'.'''
+count = 1
+
+[[issues]]
+file = "src/Cms/Seo/WebMcpGenerator.php"
+code = "mixed-argument"
+message = 'Invalid argument type for argument #1 of `Rkn\Cms\Seo\WebMcpGenerator::buildCurrentPage`: expected `Rkn\Cms\Content\Entry|null`, but found `mixed`.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Seo/WebMcpGenerator.php"
+code = "mixed-argument"
+message = 'Invalid argument type for argument #1 of `Rkn\Cms\Seo\WebMcpGenerator::buildEntriesList`: expected `array<int, array<string, mixed>>|array<string, mixed>`, but found `nonnull`.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Seo/WebMcpGenerator.php"
+code = "mixed-argument"
+message = 'Invalid argument type for argument #1 of `Rkn\Cms\Seo\WebMcpGenerator::buildSearchIndex`: expected `array<int, array<string, mixed>>|array<string, mixed>`, but found `nonnull`.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Seo/WebMcpGenerator.php"
+code = "mixed-argument"
+message = 'Invalid argument type for argument #2 of `Rkn\Cms\Seo\WebMcpGenerator::buildCurrentPage`: expected `string`, but found `nonnull`.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Seo/WebMcpGenerator.php"
+code = "mixed-argument"
+message = 'Invalid argument type for argument #2 of `Rkn\Cms\Seo\WebMcpGenerator::buildEntriesList`: expected `Rkn\Cms\Content\Entry|null`, but found `mixed`.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Seo/WebMcpGenerator.php"
+code = "mixed-argument"
+message = 'Invalid argument type for argument #2 of `Rkn\Cms\Seo\WebMcpGenerator::buildSearchIndex`: expected `Rkn\Cms\Content\Entry|null`, but found `mixed`.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Seo/WebMcpGenerator.php"
+code = "mixed-argument"
+message = 'Invalid argument type for argument #3 of `Rkn\Cms\Seo\WebMcpGenerator::buildCurrentPage`: expected `string`, but found `nonnull`.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Seo/WebMcpGenerator.php"
+code = "mixed-assignment"
+message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
+count = 3
+
+[[issues]]
+file = "src/Cms/Seo/WebMcpGenerator.php"
+code = "mixed-assignment"
+message = "Assigning `nonnull` type to a variable may lead to unexpected behavior."
+count = 4
+
+[[issues]]
+file = "src/Cms/Template/Engine.php"
+code = "impossible-assignment"
+message = "Invalid assignment: the right-hand side has type `never` and cannot produce a value."
+count = 3
+
+[[issues]]
+file = "src/Cms/Template/Engine.php"
+code = "invalid-method-access"
+message = 'Attempting to access a method on a non-object type (`unknown-ref(Twig\Environment)`).'
+count = 1
+
+[[issues]]
+file = "src/Cms/Template/Engine.php"
+code = "mixed-argument"
+message = 'Invalid argument type for argument #1 of `Rkn\Cms\Template\Extensions\CsrfExtension::__construct`: expected `Rkn\Cms\Middleware\CsrfProtection`, but found `mixed`.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Template/Engine.php"
+code = "mixed-assignment"
+message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
+count = 1
+
+[[issues]]
+file = "src/Cms/Template/Engine.php"
+code = "mixed-method-access"
+message = "Attempting to access a method on a non-object type (`mixed`)."
+count = 3
+
+[[issues]]
+file = "src/Cms/Template/Engine.php"
+code = "mixed-operand"
+message = "Casting `mixed` to `bool`."
+count = 1
+
+[[issues]]
+file = "src/Cms/Template/Engine.php"
+code = "mixed-return-statement"
+message = 'Could not infer a precise return type for function `Rkn\Cms\Template\Engine::render`. Saw type `mixed`.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Template/Engine.php"
+code = "no-value"
+message = 'Argument #1 passed to method `Rkn\Cms\Template\Engine::__construct` has type `never`, meaning it cannot produce a value.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Template/Engine.php"
+code = "non-existent-class"
+message = 'Class `Clickfwd\Yoyo\Services\Configuration` not found.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Template/Engine.php"
+code = "non-existent-class"
+message = 'Class `Clickfwd\Yoyo\Twig\YoyoTwigExtension` not found.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Template/Engine.php"
+code = "non-existent-class"
+message = 'Class `Clickfwd\Yoyo\ViewProviders\TwigViewProvider` not found.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Template/Engine.php"
+code = "non-existent-class"
+message = 'Class `Twig\Environment` not found.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Template/Engine.php"
+code = "non-existent-class"
+message = 'Class `Twig\Extension\DebugExtension` not found.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Template/Engine.php"
+code = "non-existent-class"
+message = 'Class `Twig\Loader\FilesystemLoader` not found.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Template/Engine.php"
+code = "non-existent-class-like"
+message = 'Cannot find class, interface, enum, or type alias `Twig\Environment`.'
+count = 3
+
+[[issues]]
+file = "src/Cms/Template/Engine.php"
+code = "non-existent-method"
+message = 'Method `getInstance` does not exist on type `Clickfwd\Yoyo\Yoyo`.'
+count = 1
+
+[[issues]]
+file = "src/Cms/Template/Extensions/AssetExtension.php"
+code = "non-existent-class-like"
+message = 'Class `Rkn\Cms\Template\Extensions\AssetExtension` cannot extend unknown type `AbstractExtension`'
+count = 1
+
+[[issues]]
+file = "src/Cms/Template/Extensions/ContentExtension.php"
+code = "non-existent-class-like"
+message = 'Class `Rkn\Cms\Template\Extensions\ContentExtension` cannot extend unknown type `AbstractExtension`'
+count = 1
+
+[[issues]]
+file = "src/Cms/Template/Extensions/CsrfExtension.php"
+code = "non-existent-class-like"
+message = 'Class `Rkn\Cms\Template\Extensions\CsrfExtension` cannot extend unknown type `AbstractExtension`'
+count = 1
+
+[[issues]]
+file = "src/Cms/Template/Extensions/I18nExtension.php"
+code = "non-existent-class-like"
+message = 'Class `Rkn\Cms\Template\Extensions\I18nExtension` cannot extend unknown type `AbstractExtension`'
+count = 1
+
+[[issues]]
+file = "src/Cms/Template/Extensions/I18nExtension.php"
+code = "non-existent-class-like"
+message = 'Class `Rkn\Cms\Template\Extensions\I18nExtension` cannot implement unknown type `GlobalsInterface`'
+count = 1
+
+[[issues]]
+file = "src/Cms/Template/Extensions/IntegrationsExtension.php"
+code = "non-existent-class-like"
+message = 'Class `Rkn\Cms\Template\Extensions\IntegrationsExtension` cannot extend unknown type `AbstractExtension`'
+count = 1
+
+[[issues]]
+file = "src/Cms/Template/Extensions/MarkdownExtension.php"
+code = "non-existent-class-like"
+message = 'Class `Rkn\Cms\Template\Extensions\MarkdownExtension` cannot extend unknown type `AbstractExtension`'
+count = 1
+
+[[issues]]
+file = "src/Cms/Template/Extensions/SeoExtension.php"
+code = "non-existent-class-like"
+message = 'Class `Rkn\Cms\Template\Extensions\SeoExtension` cannot extend unknown type `AbstractExtension`'
+count = 1
+
+[[issues]]
+file = "src/Framework/Application.php"
+code = "impossible-assignment"
+message = "Invalid assignment: the right-hand side has type `never` and cannot produce a value."
+count = 5
+
+[[issues]]
+file = "src/Framework/Application.php"
+code = "invalid-argument"
+message = "Invalid argument type for argument #2 of `preg_replace_callback`: expected `(callable(array<array-key, string>): string)`, but found `(closure(mixed): float|non-empty-list<string>|positive-int|string|true)`."
+count = 1
+
+[[issues]]
+file = "src/Framework/Application.php"
+code = "mixed-argument"
+message = 'Invalid argument type for argument #1 of `Rkn\Cms\Events\WebhookListener::registerFromConfig`: expected `list<array<string, mixed>>`, but found `truthy-mixed`.'
+count = 1
+
+[[issues]]
+file = "src/Framework/Application.php"
+code = "mixed-argument"
+message = 'Invalid argument type for argument #1 of `Rkn\Cms\Mail\Mailer::__construct`: expected `array<string, mixed>`, but found `nonnull`.'
+count = 1
+
+[[issues]]
+file = "src/Framework/Application.php"
+code = "mixed-argument"
+message = 'Invalid argument type for argument #1 of `Rkn\Framework\Dispatcher::handle`: expected `unknown-ref(Psr\Http\Message\ServerRequestInterface)`, but found `mixed`.'
+count = 1
+
+[[issues]]
+file = "src/Framework/Application.php"
+code = "mixed-argument"
+message = "Invalid argument type for argument #1 of `htmlspecialchars`: expected `string`, but found `nonnull`."
+count = 2
+
+[[issues]]
+file = "src/Framework/Application.php"
+code = "mixed-assignment"
+message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
+count = 7
+
+[[issues]]
+file = "src/Framework/Application.php"
+code = "mixed-assignment"
+message = "Assigning `nonnull` type to a variable may lead to unexpected behavior."
+count = 4
+
+[[issues]]
+file = "src/Framework/Application.php"
+code = "mixed-method-access"
+message = "Attempting to access a method on a non-object type (`mixed`)."
+count = 1
+
+[[issues]]
+file = "src/Framework/Application.php"
+code = "mixed-return-statement"
+message = 'Could not infer a precise return type for function `Rkn\Framework\Application::getBasePath`. Saw type `mixed`.'
+count = 1
+
+[[issues]]
+file = "src/Framework/Application.php"
+code = "never-return"
+message = "Cannot return value with type 'never' from this function."
+count = 1
+
+[[issues]]
+file = "src/Framework/Application.php"
+code = "no-value"
+message = 'Argument #2 passed to method `Rkn\Framework\Container::set` has type `never`, meaning it cannot produce a value.'
+count = 1
+
+[[issues]]
+file = "src/Framework/Application.php"
+code = "non-existent-class"
+message = 'Class `Laminas\HttpHandlerRunner\Emitter\SapiEmitter` not found.'
+count = 1
+
+[[issues]]
+file = "src/Framework/Application.php"
+code = "non-existent-class"
+message = 'Class `Nyholm\Psr7Server\ServerRequestCreator` not found.'
+count = 1
+
+[[issues]]
+file = "src/Framework/Application.php"
+code = "non-existent-class"
+message = 'Class `Nyholm\Psr7\Factory\Psr17Factory` not found.'
+count = 2
+
+[[issues]]
+file = "src/Framework/Application.php"
+code = "non-existent-class"
+message = 'Class `Twig\Environment` not found.'
+count = 1
+
+[[issues]]
+file = "src/Framework/Application.php"
+code = "non-existent-class"
+message = 'Class `Twig\Extension\DebugExtension` not found.'
+count = 1
+
+[[issues]]
+file = "src/Framework/Application.php"
+code = "non-existent-class"
+message = 'Class `Twig\Loader\FilesystemLoader` not found.'
+count = 1
+
+[[issues]]
+file = "src/Framework/Application.php"
+code = "non-existent-class"
+message = 'Class `Twig\TwigFunction` not found.'
+count = 1
+
+[[issues]]
+file = "src/Framework/Application.php"
+code = "non-existent-class-like"
+message = 'Cannot find class, interface, enum, or type alias `Psr\Http\Server\MiddlewareInterface`.'
+count = 2
+
+[[issues]]
+file = "src/Framework/Application.php"
+code = "non-existent-class-like"
+message = 'Class, interface, enum, or trait `Dotenv\Dotenv` not found.'
+count = 1
+
+[[issues]]
+file = "src/Framework/Application.php"
+code = "non-existent-class-like"
+message = 'Class, interface, enum, or trait `Nyholm\Psr7\Factory\Psr17Factory` not found.'
+count = 1
+
+[[issues]]
+file = "src/Framework/Application.php"
+code = "non-existent-class-like"
+message = 'Class, interface, enum, or trait `Twig\Environment` not found.'
+count = 1
+
+[[issues]]
+file = "src/Framework/Application.php"
+code = "non-existent-method"
+message = 'Method `createImmutable` does not exist on type `Dotenv\Dotenv`.'
+count = 1
+
+[[issues]]
+file = "src/Framework/Application.php"
+code = "non-existent-method"
+message = 'Method `parse` does not exist on type `Symfony\Component\Yaml\Yaml`.'
+count = 1
+
+[[issues]]
+file = "src/Framework/Application.php"
+code = "possibly-false-iterator"
+message = "Expression being iterated (type `false|list<non-empty-string>`) might be `false` at runtime."
+count = 1
+
+[[issues]]
+file = "src/Framework/Application.php"
+code = "possibly-invalid-argument"
+message = 'Possible argument type mismatch for argument #1 of `Rkn\Framework\Dispatcher::__construct`: expected `list<unknown-ref(Psr\Http\Server\MiddlewareInterface)>`, but possibly received `list<Rkn\Cms\Middleware\DevReloadMiddleware|unknown-ref(Psr\Http\Server\MiddlewareInterface)>`.'
+count = 1
+
+[[issues]]
+file = "src/Framework/Application.php"
+code = "redundant-comparison"
+message = "Redundant `!==` comparison: left-hand side is always not identical to right-hand side."
+count = 1
+
+[[issues]]
+file = "src/Framework/Application.php"
+code = "redundant-logical-operation"
+message = "Redundant `&&` operation: left operand is evaluated and right operand is always truthy."
+count = 1
+
+[[issues]]
+file = "src/Framework/Container.php"
+code = "non-existent-class-like"
+message = 'Class `Rkn\Framework\Container` cannot implement unknown type `ContainerInterface`'
+count = 1
+
+[[issues]]
+file = "src/Framework/Dispatcher.php"
+code = "non-existent-class-like"
+message = 'Class `Rkn\Framework\Dispatcher` cannot implement unknown type `RequestHandlerInterface`'
+count = 1
+
+[[issues]]
+file = "src/Framework/NotFoundException.php"
+code = "non-existent-class-like"
+message = 'Class `Rkn\Framework\NotFoundException` cannot implement unknown type `NotFoundExceptionInterface`'
+count = 1
+
+[[issues]]
+file = "src/Framework/Router.php"
+code = "impossible-condition"
+message = "This condition (type `false`) will always evaluate to false."
+count = 1
+
+[[issues]]
+file = "src/Framework/Router.php"
+code = "invalid-method-access"
+message = 'Attempting to access a method on a non-object type (`unknown-ref(FastRoute\RouteCollector)`).'
+count = 1
+
+[[issues]]
+file = "src/Framework/Router.php"
+code = "invalid-return-statement"
+message = '''Invalid return type for function `Rkn\Framework\Router::match`: expected `array{'handler': mixed, 'vars': array<string, string>}|null`, but found `array{'handler': mixed, 'vars': array<string, string>|null}`.'''
+count = 1
+
+[[issues]]
+file = "src/Framework/Router.php"
+code = "mixed-assignment"
+message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
+count = 3
+
+[[issues]]
+file = "src/Framework/Router.php"
+code = "mixed-method-access"
+message = "Attempting to access a method on a non-object type (`mixed`)."
+count = 1
+
+[[issues]]
+file = "src/Framework/Router.php"
+code = "mixed-return-statement"
+message = 'Could not infer a precise return type for function `Rkn\Framework\Router::dispatch`. Saw type `mixed`.'
+count = 1
+
+[[issues]]
+file = "src/Framework/Router.php"
+code = "non-existent-class-like"
+message = 'Cannot find class, interface, enum, or type alias `FastRoute\RouteCollector`.'
+count = 1
+
+[[issues]]
+file = "src/Framework/Router.php"
+code = "non-existent-class-like"
+message = 'Class, interface, enum, or trait `FastRoute\Dispatcher` not found.'
+count = 1
+
+[[issues]]
+file = "src/Framework/Router.php"
+code = "non-existent-function"
+message = 'Function `FastRoute\simpleDispatcher` could not be found.'
+count = 1
+
+[[issues]]
+file = "src/Framework/Router.php"
+code = "possibly-undefined-int-array-index"
+message = "Possibly undefined array key 1 accessed on `array{0: int, 1?: mixed, 2?: array<string, string>}`."
+count = 1
+
+[[issues]]
+file = "src/Framework/Router.php"
+code = "possibly-undefined-int-array-index"
+message = "Possibly undefined array key 2 accessed on `array{0: int, 1?: mixed, 2?: array<string, string>}`."
+count = 1
+
+[[issues]]
+file = "src/Framework/Router.php"
+code = "redundant-comparison"
+message = "Redundant `===` comparison: left-hand side is never identical to right-hand side."
+count = 1
+
+[[issues]]
+file = "src/Framework/helpers.php"
+code = "array-to-string-conversion"
+message = "Potentially casting `array` to `string`."
+count = 2
+
+[[issues]]
+file = "src/Framework/helpers.php"
+code = "mixed-argument"
+message = "Invalid argument type for argument #1 of `rtrim`: expected `string`, but found `mixed`."
+count = 1
+
+[[issues]]
+file = "src/Framework/helpers.php"
+code = "mixed-argument"
+message = 'Invalid argument type for argument #2 of `Rkn\Cms\Content\IndexStore::findEntryByPath`: expected `null|string`, but found `mixed`.'
+count = 1
+
+[[issues]]
+file = "src/Framework/helpers.php"
+code = "mixed-assignment"
+message = "Assigning `mixed` type to a variable may lead to unexpected behavior."
+count = 3
+
+[[issues]]
+file = "src/Framework/helpers.php"
+code = "mixed-operand"
+message = "Invalid left operand: type `mixed` cannot be reliably used in string concatenation."
+count = 1
+
+[[issues]]
+file = "src/Framework/helpers.php"
+code = "mixed-return-statement"
+message = "Could not infer a precise return type for function `index_store`. Saw type `mixed`."
+count = 1

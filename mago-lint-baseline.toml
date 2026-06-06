@@ -1,0 +1,4687 @@
+variant = "loose"
+
+[[issues]]
+file = "src/Cms/Boost/AbstractArchetype.php"
+code = "no-shorthand-ternary"
+message = "Use of the shorthand ternary operator."
+count = 2
+
+[[issues]]
+file = "src/Cms/Boost/ArchetypeRegistry.php"
+code = "no-isset"
+message = "Use of the `isset` construct."
+count = 1
+
+[[issues]]
+file = "src/Cms/Boost/Archetypes/MultilingualArchetype.php"
+code = "cyclomatic-complexity"
+message = "Class has high complexity."
+count = 1
+
+[[issues]]
+file = "src/Cms/Cache/Invalidator.php"
+code = "explicit-octal"
+message = "Use explicit octal numeral notation."
+count = 1
+
+[[issues]]
+file = "src/Cms/Cache/Invalidator.php"
+code = "no-empty"
+message = "Use of the `empty` construct."
+count = 1
+
+[[issues]]
+file = "src/Cms/Cache/Invalidator.php"
+code = "prefer-early-continue"
+message = "Consider using early continue pattern to reduce nesting."
+count = 1
+
+[[issues]]
+file = "src/Cms/Cache/PageCache.php"
+code = "block-statement"
+message = "`if` statement should use a block body."
+count = 1
+
+[[issues]]
+file = "src/Cms/Cache/PageCache.php"
+code = "explicit-octal"
+message = "Use explicit octal numeral notation."
+count = 2
+
+[[issues]]
+file = "src/Cms/Cache/PageCache.php"
+code = "no-boolean-flag-parameter"
+message = "Avoid boolean flag parameters."
+count = 1
+
+[[issues]]
+file = "src/Cms/Cache/PageCache.php"
+code = "no-else-clause"
+message = "Avoid `else` clauses."
+count = 1
+
+[[issues]]
+file = "src/Cms/Cache/PhpFileCache.php"
+code = "block-statement"
+message = "`if` statement should use a block body."
+count = 1
+
+[[issues]]
+file = "src/Cms/Cache/PhpFileCache.php"
+code = "explicit-octal"
+message = "Use explicit octal numeral notation."
+count = 2
+
+[[issues]]
+file = "src/Cms/Cache/PhpFileCache.php"
+code = "no-boolean-flag-parameter"
+message = "Avoid boolean flag parameters."
+count = 1
+
+[[issues]]
+file = "src/Cms/Cache/PhpFileCache.php"
+code = "no-else-clause"
+message = "Avoid `else` clauses."
+count = 1
+
+[[issues]]
+file = "src/Cms/Cache/PhpFileCache.php"
+code = "no-else-clause"
+message = "Avoid `elseif` clauses."
+count = 1
+
+[[issues]]
+file = "src/Cms/Cache/PhpFileCache.php"
+code = "no-isset"
+message = "Use of the `isset` construct."
+count = 1
+
+[[issues]]
+file = "src/Cms/Cache/PhpFileCache.php"
+code = "prefer-early-continue"
+message = "Consider using early continue pattern to reduce nesting."
+count = 2
+
+[[issues]]
+file = "src/Cms/Cli/BackupCreateCommand.php"
+code = "explicit-octal"
+message = "Use explicit octal numeral notation."
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/BackupCreateCommand.php"
+code = "inline-variable-return"
+message = "Variable assignment can be inlined into the return statement."
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/BackupCreateCommand.php"
+code = "no-else-clause"
+message = "Avoid `else` clauses."
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/BackupCreateCommand.php"
+code = "no-empty-catch-clause"
+message = "Do not use empty `catch` blocks."
+count = 2
+
+[[issues]]
+file = "src/Cms/Cli/BackupCreateCommand.php"
+code = "no-shorthand-ternary"
+message = "Use of the shorthand ternary operator."
+count = 2
+
+[[issues]]
+file = "src/Cms/Cli/BackupCreateCommand.php"
+code = "readable-literal"
+message = "Numeric literal could use underscore separators for readability."
+count = 2
+
+[[issues]]
+file = "src/Cms/Cli/BackupListCommand.php"
+code = "no-empty"
+message = "Use of the `empty` construct."
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/BackupListCommand.php"
+code = "no-empty-catch-clause"
+message = "Do not use empty `catch` blocks."
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/BackupListCommand.php"
+code = "no-shorthand-ternary"
+message = "Use of the shorthand ternary operator."
+count = 3
+
+[[issues]]
+file = "src/Cms/Cli/BackupListCommand.php"
+code = "prefer-static-closure"
+message = "This arrow function does not use `$this` and should be declared static."
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/BackupListCommand.php"
+code = "readable-literal"
+message = "Numeric literal could use underscore separators for readability."
+count = 2
+
+[[issues]]
+file = "src/Cms/Cli/BackupRestoreCommand.php"
+code = "explicit-octal"
+message = "Use explicit octal numeral notation."
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/BackupRestoreCommand.php"
+code = "no-empty-catch-clause"
+message = "Do not use empty `catch` blocks."
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/BackupRestoreCommand.php"
+code = "no-shorthand-ternary"
+message = "Use of the shorthand ternary operator."
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/BoostCommand.php"
+code = "explicit-octal"
+message = "Use explicit octal numeral notation."
+count = 8
+
+[[issues]]
+file = "src/Cms/Cli/BoostCommand.php"
+code = "inline-variable-return"
+message = "Variable assignment can be inlined into the return statement."
+count = 2
+
+[[issues]]
+file = "src/Cms/Cli/BoostInstallCommand.php"
+code = "no-else-clause"
+message = "Avoid `else` clauses."
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/BoostInstallCommand.php"
+code = "no-empty"
+message = "Use of the `empty` construct."
+count = 5
+
+[[issues]]
+file = "src/Cms/Cli/BoostInstallCommand.php"
+code = "no-empty-catch-clause"
+message = "Do not use empty `catch` blocks."
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/BoostInstallCommand.php"
+code = "no-shorthand-ternary"
+message = "Use of the shorthand ternary operator."
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/BuildCommand.php"
+code = "cyclomatic-complexity"
+message = "Class has high complexity."
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/BuildCommand.php"
+code = "explicit-octal"
+message = "Use explicit octal numeral notation."
+count = 3
+
+[[issues]]
+file = "src/Cms/Cli/BuildCommand.php"
+code = "no-else-clause"
+message = "Avoid `else` clauses."
+count = 2
+
+[[issues]]
+file = "src/Cms/Cli/BuildCommand.php"
+code = "no-empty-catch-clause"
+message = "Do not use empty `catch` blocks."
+count = 2
+
+[[issues]]
+file = "src/Cms/Cli/BuildCommand.php"
+code = "no-redundant-use"
+message = "Unused import: `Query`."
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/BuildCommand.php"
+code = "no-shorthand-ternary"
+message = "Use of the shorthand ternary operator."
+count = 2
+
+[[issues]]
+file = "src/Cms/Cli/CacheClearCommand.php"
+code = "block-statement"
+message = "`if` statement should use a block body."
+count = 2
+
+[[issues]]
+file = "src/Cms/Cli/CacheClearCommand.php"
+code = "no-boolean-flag-parameter"
+message = "Avoid boolean flag parameters."
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/CacheClearCommand.php"
+code = "no-else-clause"
+message = "Avoid `else` clauses."
+count = 2
+
+[[issues]]
+file = "src/Cms/Cli/CacheClearCommand.php"
+code = "no-empty"
+message = "Use of the `empty` construct."
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/CacheWarmupCommand.php"
+code = "explicit-octal"
+message = "Use explicit octal numeral notation."
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/CacheWarmupCommand.php"
+code = "prefer-early-continue"
+message = "Consider using early continue pattern to reduce nesting."
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/ContentImportCommand.php"
+code = "no-empty-catch-clause"
+message = "Do not use empty `catch` blocks."
+count = 2
+
+[[issues]]
+file = "src/Cms/Cli/ContentImportCommand.php"
+code = "no-shorthand-ternary"
+message = "Use of the shorthand ternary operator."
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/ContentImportCommand.php"
+code = "prefer-static-closure"
+message = "This closure does not use `$this` and should be declared static."
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/ContentRebuildCacheCommand.php"
+code = "no-empty-catch-clause"
+message = "Do not use empty `catch` blocks."
+count = 2
+
+[[issues]]
+file = "src/Cms/Cli/ContentRebuildCacheCommand.php"
+code = "no-shorthand-ternary"
+message = "Use of the shorthand ternary operator."
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/DeployCheckCommand.php"
+code = "cyclomatic-complexity"
+message = "Class has high complexity."
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/DeployCheckCommand.php"
+code = "no-else-clause"
+message = "Avoid `else` clauses."
+count = 3
+
+[[issues]]
+file = "src/Cms/Cli/DeployCheckCommand.php"
+code = "no-else-clause"
+message = "Avoid `elseif` clauses."
+count = 3
+
+[[issues]]
+file = "src/Cms/Cli/DeployCheckCommand.php"
+code = "no-shorthand-ternary"
+message = "Use of the shorthand ternary operator."
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/DeployCommand.php"
+code = "no-else-clause"
+message = "Avoid `else` clauses."
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/DeployCommand.php"
+code = "no-else-clause"
+message = "Avoid `elseif` clauses."
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/DeployCommand.php"
+code = "no-empty"
+message = "Use of the `empty` construct."
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/DeployCommand.php"
+code = "no-empty-catch-clause"
+message = "Do not use empty `catch` blocks."
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/DeployCommand.php"
+code = "no-shorthand-ternary"
+message = "Use of the shorthand ternary operator."
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/DeployCommand.php"
+code = "prefer-static-closure"
+message = "This closure does not use `$this` and should be declared static."
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/DeployDiffCommand.php"
+code = "no-boolean-flag-parameter"
+message = "Avoid boolean flag parameters."
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/DeployDiffCommand.php"
+code = "no-empty"
+message = "Use of the `empty` construct."
+count = 2
+
+[[issues]]
+file = "src/Cms/Cli/DeployDiffCommand.php"
+code = "no-empty-catch-clause"
+message = "Do not use empty `catch` blocks."
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/DeployDiffCommand.php"
+code = "no-isset"
+message = "Use of the `isset` construct."
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/DeployDiffCommand.php"
+code = "no-redundant-method-override"
+message = "Redundant method override."
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/DeployDiffCommand.php"
+code = "no-shorthand-ternary"
+message = "Use of the shorthand ternary operator."
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/DeployDiffCommand.php"
+code = "prefer-early-continue"
+message = "Consider using early continue pattern to reduce nesting."
+count = 2
+
+[[issues]]
+file = "src/Cms/Cli/DeployDiffCommand.php"
+code = "sensitive-parameter"
+message = "Parameters that may contain sensitive information should be marked with the `#[SensitiveParameter]` attribute."
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/DeployInitCommand.php"
+code = "cyclomatic-complexity"
+message = "Class has high complexity."
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/DeployInitCommand.php"
+code = "explicit-octal"
+message = "Use explicit octal numeral notation."
+count = 2
+
+[[issues]]
+file = "src/Cms/Cli/DeployInitCommand.php"
+code = "no-boolean-flag-parameter"
+message = "Avoid boolean flag parameters."
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/DeployInitCommand.php"
+code = "no-else-clause"
+message = "Avoid `else` clauses."
+count = 3
+
+[[issues]]
+file = "src/Cms/Cli/DeployInitCommand.php"
+code = "no-empty-catch-clause"
+message = "Do not use empty `catch` blocks."
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/DeployInitCommand.php"
+code = "no-error-control-operator"
+message = "Unsafe use of error control operator `@`."
+count = 2
+
+[[issues]]
+file = "src/Cms/Cli/DeployInitCommand.php"
+code = "no-isset"
+message = "Use of the `isset` construct."
+count = 2
+
+[[issues]]
+file = "src/Cms/Cli/DeployInitCommand.php"
+code = "no-literal-password"
+message = "Literal passwords or sensitive data should not be stored in code."
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/DeployInitCommand.php"
+code = "no-nested-ternary"
+message = "Nested ternary expressions are confusing due to PHP's operator associativity rules."
+count = 2
+
+[[issues]]
+file = "src/Cms/Cli/DeployInitCommand.php"
+code = "no-shorthand-ternary"
+message = "Use of the shorthand ternary operator."
+count = 2
+
+[[issues]]
+file = "src/Cms/Cli/DeployInitCommand.php"
+code = "prefer-early-continue"
+message = "Consider using early continue pattern to reduce nesting."
+count = 2
+
+[[issues]]
+file = "src/Cms/Cli/DeployInitCommand.php"
+code = "sensitive-parameter"
+message = "Parameters that may contain sensitive information should be marked with the `#[SensitiveParameter]` attribute."
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/DeployInstallCommand.php"
+code = "no-else-clause"
+message = "Avoid `else` clauses."
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/DeployInstallCommand.php"
+code = "no-empty"
+message = "Use of the `empty` construct."
+count = 2
+
+[[issues]]
+file = "src/Cms/Cli/DeployInstallCommand.php"
+code = "no-empty-catch-clause"
+message = "Do not use empty `catch` blocks."
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/DeployInstallCommand.php"
+code = "no-error-control-operator"
+message = "Unsafe use of error control operator `@`."
+count = 7
+
+[[issues]]
+file = "src/Cms/Cli/DeployInstallCommand.php"
+code = "no-shorthand-ternary"
+message = "Use of the shorthand ternary operator."
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/DeployInstallCommand.php"
+code = "sensitive-parameter"
+message = "Parameters that may contain sensitive information should be marked with the `#[SensitiveParameter]` attribute."
+count = 2
+
+[[issues]]
+file = "src/Cms/Cli/DeployRollbackCommand.php"
+code = "no-empty-catch-clause"
+message = "Do not use empty `catch` blocks."
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/DeployRollbackCommand.php"
+code = "no-shorthand-ternary"
+message = "Use of the shorthand ternary operator."
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/DeployRollbackCommand.php"
+code = "prefer-first-class-callable"
+message = "Use first-class callable syntax `...` instead of a arrow function."
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/DeployRollbackCommand.php"
+code = "prefer-static-closure"
+message = "This arrow function does not use `$this` and should be declared static."
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/DeploySetupGitCommand.php"
+code = "no-else-clause"
+message = "Avoid `else` clauses."
+count = 6
+
+[[issues]]
+file = "src/Cms/Cli/DeploySetupGitCommand.php"
+code = "no-isset"
+message = "Use of the `isset` construct."
+count = 2
+
+[[issues]]
+file = "src/Cms/Cli/DeploySetupGitCommand.php"
+code = "no-shorthand-ternary"
+message = "Use of the shorthand ternary operator."
+count = 2
+
+[[issues]]
+file = "src/Cms/Cli/DeploySetupGitCommand.php"
+code = "prefer-early-continue"
+message = "Consider using early continue pattern to reduce nesting."
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/DeploySetupGithubCommand.php"
+code = "cyclomatic-complexity"
+message = "Class has high complexity."
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/DeploySetupGithubCommand.php"
+code = "halstead"
+message = "Method has a high halstead volume and effort"
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/DeploySetupGithubCommand.php"
+code = "no-else-clause"
+message = "Avoid `else` clauses."
+count = 3
+
+[[issues]]
+file = "src/Cms/Cli/DeploySetupGithubCommand.php"
+code = "no-empty-catch-clause"
+message = "Do not use empty `catch` blocks."
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/DeploySetupGithubCommand.php"
+code = "no-literal-password"
+message = "Literal passwords or sensitive data should not be stored in code."
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/DeploySetupGithubCommand.php"
+code = "no-shorthand-ternary"
+message = "Use of the shorthand ternary operator."
+count = 2
+
+[[issues]]
+file = "src/Cms/Cli/DeployStatusCommand.php"
+code = "no-boolean-flag-parameter"
+message = "Avoid boolean flag parameters."
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/DeployStatusCommand.php"
+code = "no-empty"
+message = "Use of the `empty` construct."
+count = 3
+
+[[issues]]
+file = "src/Cms/Cli/DeployStatusCommand.php"
+code = "no-empty-catch-clause"
+message = "Do not use empty `catch` blocks."
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/DeployStatusCommand.php"
+code = "no-isset"
+message = "Use of the `isset` construct."
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/DeployStatusCommand.php"
+code = "no-redundant-method-override"
+message = "Redundant method override."
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/DeployStatusCommand.php"
+code = "no-shorthand-ternary"
+message = "Use of the shorthand ternary operator."
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/DeployStatusCommand.php"
+code = "sensitive-parameter"
+message = "Parameters that may contain sensitive information should be marked with the `#[SensitiveParameter]` attribute."
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/EmailPublishCommand.php"
+code = "explicit-octal"
+message = "Use explicit octal numeral notation."
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/EmailPublishCommand.php"
+code = "no-else-clause"
+message = "Avoid `else` clauses."
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/EmailPublishCommand.php"
+code = "no-empty-catch-clause"
+message = "Do not use empty `catch` blocks."
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/EmailPublishCommand.php"
+code = "no-shorthand-ternary"
+message = "Use of the shorthand ternary operator."
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/HerdInstallCommand.php"
+code = "no-empty-catch-clause"
+message = "Do not use empty `catch` blocks."
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/HerdInstallCommand.php"
+code = "no-shorthand-ternary"
+message = "Use of the shorthand ternary operator."
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/IndexRebuildCommand.php"
+code = "no-empty"
+message = "Use of the `empty` construct."
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/IndexRebuildCommand.php"
+code = "no-empty-catch-clause"
+message = "Do not use empty `catch` blocks."
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/IndexRebuildCommand.php"
+code = "no-shorthand-ternary"
+message = "Use of the shorthand ternary operator."
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/InitCommand.php"
+code = "explicit-octal"
+message = "Use explicit octal numeral notation."
+count = 2
+
+[[issues]]
+file = "src/Cms/Cli/LlmsGenerateCommand.php"
+code = "braced-string-interpolation"
+message = "Unbraced variable in string interpolation."
+count = 4
+
+[[issues]]
+file = "src/Cms/Cli/LlmsGenerateCommand.php"
+code = "no-else-clause"
+message = "Avoid `else` clauses."
+count = 2
+
+[[issues]]
+file = "src/Cms/Cli/LlmsGenerateCommand.php"
+code = "no-else-clause"
+message = "Avoid `elseif` clauses."
+count = 3
+
+[[issues]]
+file = "src/Cms/Cli/LlmsGenerateCommand.php"
+code = "no-empty"
+message = "Use of the `empty` construct."
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/LlmsGenerateCommand.php"
+code = "no-empty-catch-clause"
+message = "Do not use empty `catch` blocks."
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/LlmsGenerateCommand.php"
+code = "no-shorthand-ternary"
+message = "Use of the shorthand ternary operator."
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/MagazineProcessCommand.php"
+code = "block-statement"
+message = "`if` statement should use a block body."
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/MagazineProcessCommand.php"
+code = "braced-string-interpolation"
+message = "Unbraced variable in string interpolation."
+count = 12
+
+[[issues]]
+file = "src/Cms/Cli/MagazineProcessCommand.php"
+code = "explicit-octal"
+message = "Use explicit octal numeral notation."
+count = 2
+
+[[issues]]
+file = "src/Cms/Cli/MagazineProcessCommand.php"
+code = "no-else-clause"
+message = "Avoid `else` clauses."
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/MagazineProcessCommand.php"
+code = "no-sprintf-concat"
+message = "String concatenation with `sprintf` can be simplified."
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/MakeCollectionCommand.php"
+code = "explicit-octal"
+message = "Use explicit octal numeral notation."
+count = 2
+
+[[issues]]
+file = "src/Cms/Cli/MakeCollectionCommand.php"
+code = "no-empty-catch-clause"
+message = "Do not use empty `catch` blocks."
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/MakeCollectionCommand.php"
+code = "no-shorthand-ternary"
+message = "Use of the shorthand ternary operator."
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/MakeComponentCommand.php"
+code = "explicit-octal"
+message = "Use explicit octal numeral notation."
+count = 2
+
+[[issues]]
+file = "src/Cms/Cli/MakeComponentCommand.php"
+code = "no-empty-catch-clause"
+message = "Do not use empty `catch` blocks."
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/MakeComponentCommand.php"
+code = "no-shorthand-ternary"
+message = "Use of the shorthand ternary operator."
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/McpServeCommand.php"
+code = "no-empty-catch-clause"
+message = "Do not use empty `catch` blocks."
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/McpServeCommand.php"
+code = "no-shorthand-ternary"
+message = "Use of the shorthand ternary operator."
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/MediaImportCommand.php"
+code = "block-statement"
+message = "`foreach` statement should use a block body."
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/MediaImportCommand.php"
+code = "block-statement"
+message = "`if` statement should use a block body."
+count = 7
+
+[[issues]]
+file = "src/Cms/Cli/MediaImportCommand.php"
+code = "explicit-octal"
+message = "Use explicit octal numeral notation."
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/MediaImportCommand.php"
+code = "no-else-clause"
+message = "Avoid `else` clauses."
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/MediaImportCommand.php"
+code = "no-error-control-operator"
+message = "Unsafe use of error control operator `@`."
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/MediaImportCommand.php"
+code = "prefer-early-continue"
+message = "Consider using early continue pattern to reduce nesting."
+count = 2
+
+[[issues]]
+file = "src/Cms/Cli/MediaImportCommand.php"
+code = "str-starts-with"
+message = "Consider replacing `strpos` with `str_starts_with` for improved readability and intent clarity."
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/MediaStatsCommand.php"
+code = "no-else-clause"
+message = "Avoid `else` clauses."
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/MediaStatsCommand.php"
+code = "no-isset"
+message = "Use of the `isset` construct."
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/MediaStatsCommand.php"
+code = "prefer-early-continue"
+message = "Consider using early continue pattern to reduce nesting."
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/PublishCheckCommand.php"
+code = "no-empty"
+message = "Use of the `empty` construct."
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/PublishCheckCommand.php"
+code = "no-empty-catch-clause"
+message = "Do not use empty `catch` blocks."
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/PublishCheckCommand.php"
+code = "no-error-control-operator"
+message = "Unsafe use of error control operator `@`."
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/PublishCheckCommand.php"
+code = "no-shorthand-ternary"
+message = "Use of the shorthand ternary operator."
+count = 2
+
+[[issues]]
+file = "src/Cms/Cli/QueueProcessCommand.php"
+code = "no-else-clause"
+message = "Avoid `else` clauses."
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/QueueProcessCommand.php"
+code = "no-empty-catch-clause"
+message = "Do not use empty `catch` blocks."
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/QueueProcessCommand.php"
+code = "no-shorthand-ternary"
+message = "Use of the shorthand ternary operator."
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/SearchIndexCommand.php"
+code = "explicit-octal"
+message = "Use explicit octal numeral notation."
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/SearchIndexCommand.php"
+code = "no-empty-catch-clause"
+message = "Do not use empty `catch` blocks."
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/SearchIndexCommand.php"
+code = "no-shorthand-ternary"
+message = "Use of the shorthand ternary operator."
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/ServeCommand.php"
+code = "block-statement"
+message = "`if` statement should use a block body."
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/ServeCommand.php"
+code = "braced-string-interpolation"
+message = "Unbraced variable in string interpolation."
+count = 2
+
+[[issues]]
+file = "src/Cms/Cli/ServeCommand.php"
+code = "cyclomatic-complexity"
+message = "Class has high complexity."
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/ServeCommand.php"
+code = "explicit-octal"
+message = "Use explicit octal numeral notation."
+count = 2
+
+[[issues]]
+file = "src/Cms/Cli/ServeCommand.php"
+code = "identity-comparison"
+message = "Use identity comparison `===` instead of equality comparison `==`."
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/ServeCommand.php"
+code = "no-else-clause"
+message = "Avoid `else` clauses."
+count = 2
+
+[[issues]]
+file = "src/Cms/Cli/ServeCommand.php"
+code = "no-else-clause"
+message = "Avoid `elseif` clauses."
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/ServeCommand.php"
+code = "no-empty-catch-clause"
+message = "Do not use empty `catch` blocks."
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/ServeCommand.php"
+code = "no-error-control-operator"
+message = "Unsafe use of error control operator `@`."
+count = 3
+
+[[issues]]
+file = "src/Cms/Cli/ServeCommand.php"
+code = "no-shorthand-ternary"
+message = "Use of the shorthand ternary operator."
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/ServeCommand.php"
+code = "str-contains"
+message = "Consider replacing `strpos` with `str_contains` for improved readability and intent clarity."
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/SitemapGenerateCommand.php"
+code = "explicit-octal"
+message = "Use explicit octal numeral notation."
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/SitemapGenerateCommand.php"
+code = "no-empty-catch-clause"
+message = "Do not use empty `catch` blocks."
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/SitemapGenerateCommand.php"
+code = "no-shorthand-ternary"
+message = "Use of the shorthand ternary operator."
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/TemplateWarmupCommand.php"
+code = "explicit-octal"
+message = "Use explicit octal numeral notation."
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/TemplateWarmupCommand.php"
+code = "prefer-early-continue"
+message = "Consider using early continue pattern to reduce nesting."
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/WxrImportCommand.php"
+code = "block-statement"
+message = "`if` statement should use a block body."
+count = 4
+
+[[issues]]
+file = "src/Cms/Cli/WxrImportCommand.php"
+code = "cyclomatic-complexity"
+message = "Class has high complexity."
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/WxrImportCommand.php"
+code = "explicit-octal"
+message = "Use explicit octal numeral notation."
+count = 2
+
+[[issues]]
+file = "src/Cms/Cli/WxrImportCommand.php"
+code = "inline-variable-return"
+message = "Variable assignment can be inlined into the return statement."
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/WxrImportCommand.php"
+code = "kan-defect"
+message = "Class has a high kan defect score."
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/WxrImportCommand.php"
+code = "no-boolean-flag-parameter"
+message = "Avoid boolean flag parameters."
+count = 2
+
+[[issues]]
+file = "src/Cms/Cli/WxrImportCommand.php"
+code = "no-else-clause"
+message = "Avoid `else` clauses."
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/WxrImportCommand.php"
+code = "no-else-clause"
+message = "Avoid `elseif` clauses."
+count = 2
+
+[[issues]]
+file = "src/Cms/Cli/WxrImportCommand.php"
+code = "no-empty"
+message = "Use of the `empty` construct."
+count = 2
+
+[[issues]]
+file = "src/Cms/Cli/WxrImportCommand.php"
+code = "no-error-control-operator"
+message = "Unsafe use of error control operator `@`."
+count = 2
+
+[[issues]]
+file = "src/Cms/Cli/WxrImportCommand.php"
+code = "no-ini-set"
+message = "ini_set should not be used."
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/WxrImportCommand.php"
+code = "no-isset"
+message = "Use of the `isset` construct."
+count = 2
+
+[[issues]]
+file = "src/Cms/Cli/WxrImportCommand.php"
+code = "no-redundant-use"
+message = "Unused import: `SimpleXMLElement`."
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/WxrImportCommand.php"
+code = "no-shorthand-ternary"
+message = "Use of the shorthand ternary operator."
+count = 2
+
+[[issues]]
+file = "src/Cms/Cli/WxrImportCommand.php"
+code = "prefer-early-continue"
+message = "Consider using early continue pattern to reduce nesting."
+count = 1
+
+[[issues]]
+file = "src/Cms/Cli/WxrImportCommand.php"
+code = "strict-behavior"
+message = "Call to `in_array` must enforce strict comparison."
+count = 1
+
+[[issues]]
+file = "src/Cms/Components/Search.php"
+code = "no-isset"
+message = "Use of the `isset` construct."
+count = 1
+
+[[issues]]
+file = "src/Cms/Content/ContentScanner.php"
+code = "cyclomatic-complexity"
+message = "Class has high complexity."
+count = 1
+
+[[issues]]
+file = "src/Cms/Content/ContentScanner.php"
+code = "no-else-clause"
+message = "Avoid `else` clauses."
+count = 1
+
+[[issues]]
+file = "src/Cms/Content/ContentScanner.php"
+code = "no-empty"
+message = "Use of the `empty` construct."
+count = 2
+
+[[issues]]
+file = "src/Cms/Content/ContentScanner.php"
+code = "no-isset"
+message = "Use of the `isset` construct."
+count = 6
+
+[[issues]]
+file = "src/Cms/Content/ContentScanner.php"
+code = "no-shorthand-ternary"
+message = "Use of the shorthand ternary operator."
+count = 2
+
+[[issues]]
+file = "src/Cms/Content/ContentScanner.php"
+code = "prefer-arrow-function"
+message = "This closure can be simplified to a more concise arrow function."
+count = 1
+
+[[issues]]
+file = "src/Cms/Content/ContentScanner.php"
+code = "prefer-early-continue"
+message = "Consider using early continue pattern to reduce nesting."
+count = 2
+
+[[issues]]
+file = "src/Cms/Content/ContentScanner.php"
+code = "prefer-static-closure"
+message = "This arrow function does not use `$this` and should be declared static."
+count = 1
+
+[[issues]]
+file = "src/Cms/Content/ContentScanner.php"
+code = "prefer-static-closure"
+message = "This closure does not use `$this` and should be declared static."
+count = 2
+
+[[issues]]
+file = "src/Cms/Content/DraftResolver.php"
+code = "no-empty"
+message = "Use of the `empty` construct."
+count = 1
+
+[[issues]]
+file = "src/Cms/Content/DraftResolver.php"
+code = "no-empty-catch-clause"
+message = "Do not use empty `catch` blocks."
+count = 1
+
+[[issues]]
+file = "src/Cms/Content/DraftResolver.php"
+code = "no-isset"
+message = "Use of the `isset` construct."
+count = 1
+
+[[issues]]
+file = "src/Cms/Content/DraftResolver.php"
+code = "no-shorthand-ternary"
+message = "Use of the shorthand ternary operator."
+count = 2
+
+[[issues]]
+file = "src/Cms/Content/DraftResolver.php"
+code = "sensitive-parameter"
+message = "Parameters that may contain sensitive information should be marked with the `#[SensitiveParameter]` attribute."
+count = 1
+
+[[issues]]
+file = "src/Cms/Content/Entry.php"
+code = "excessive-parameter-list"
+message = "Parameter list is too long."
+count = 1
+
+[[issues]]
+file = "src/Cms/Content/Entry.php"
+code = "no-isset"
+message = "Use of the `isset` construct."
+count = 2
+
+[[issues]]
+file = "src/Cms/Content/IndexStoreFactory.php"
+code = "no-empty-catch-clause"
+message = "Do not use empty `catch` blocks."
+count = 2
+
+[[issues]]
+file = "src/Cms/Content/IndexStoreFactory.php"
+code = "no-isset"
+message = "Use of the `isset` construct."
+count = 1
+
+[[issues]]
+file = "src/Cms/Content/Indexer.php"
+code = "explicit-octal"
+message = "Use explicit octal numeral notation."
+count = 1
+
+[[issues]]
+file = "src/Cms/Content/Indexer.php"
+code = "no-empty-catch-clause"
+message = "Do not use empty `catch` blocks."
+count = 1
+
+[[issues]]
+file = "src/Cms/Content/Indexer.php"
+code = "no-isset"
+message = "Use of the `isset` construct."
+count = 1
+
+[[issues]]
+file = "src/Cms/Content/Paginator.php"
+code = "no-shorthand-ternary"
+message = "Use of the shorthand ternary operator."
+count = 1
+
+[[issues]]
+file = "src/Cms/Content/Paginator.php"
+code = "prefer-static-closure"
+message = "This arrow function does not use `$this` and should be declared static."
+count = 1
+
+[[issues]]
+file = "src/Cms/Content/Parser.php"
+code = "no-empty-catch-clause"
+message = "Do not use empty `catch` blocks."
+count = 1
+
+[[issues]]
+file = "src/Cms/Content/Query.php"
+code = "no-isset"
+message = "Use of the `isset` construct."
+count = 2
+
+[[issues]]
+file = "src/Cms/Content/Query.php"
+code = "prefer-first-class-callable"
+message = "Use first-class callable syntax `...` instead of a arrow function."
+count = 1
+
+[[issues]]
+file = "src/Cms/Content/Query.php"
+code = "prefer-static-closure"
+message = "This arrow function does not use `$this` and should be declared static."
+count = 2
+
+[[issues]]
+file = "src/Cms/Content/QuerySpec.php"
+code = "excessive-parameter-list"
+message = "Parameter list is too long."
+count = 1
+
+[[issues]]
+file = "src/Cms/Content/ScheduleChecker.php"
+code = "no-shorthand-ternary"
+message = "Use of the shorthand ternary operator."
+count = 2
+
+[[issues]]
+file = "src/Cms/Content/Storage/FileContentStorage.php"
+code = "explicit-octal"
+message = "Use explicit octal numeral notation."
+count = 2
+
+[[issues]]
+file = "src/Cms/Content/Storage/FileContentStorage.php"
+code = "no-else-clause"
+message = "Avoid `else` clauses."
+count = 1
+
+[[issues]]
+file = "src/Cms/Content/Storage/MysqlContentStorage.php"
+code = "no-empty"
+message = "Use of the `empty` construct."
+count = 1
+
+[[issues]]
+file = "src/Cms/Content/Storage/MysqlContentStorage.php"
+code = "no-isset"
+message = "Use of the `isset` construct."
+count = 8
+
+[[issues]]
+file = "src/Cms/Content/Storage/MysqlContentStorage.php"
+code = "no-shorthand-ternary"
+message = "Use of the shorthand ternary operator."
+count = 1
+
+[[issues]]
+file = "src/Cms/Content/Stores/PhpArrayIndexStore.php"
+code = "cyclomatic-complexity"
+message = "Class has high complexity."
+count = 1
+
+[[issues]]
+file = "src/Cms/Content/Stores/PhpArrayIndexStore.php"
+code = "identity-comparison"
+message = "Use identity comparison `===` instead of equality comparison `==`."
+count = 1
+
+[[issues]]
+file = "src/Cms/Content/Stores/PhpArrayIndexStore.php"
+code = "identity-comparison"
+message = "Use identity inequality `!==` instead of inequality comparison `!=`."
+count = 1
+
+[[issues]]
+file = "src/Cms/Content/Stores/PhpArrayIndexStore.php"
+code = "no-else-clause"
+message = "Avoid `else` clauses."
+count = 2
+
+[[issues]]
+file = "src/Cms/Content/Stores/PhpArrayIndexStore.php"
+code = "no-else-clause"
+message = "Avoid `elseif` clauses."
+count = 1
+
+[[issues]]
+file = "src/Cms/Content/Stores/PhpArrayIndexStore.php"
+code = "no-empty"
+message = "Use of the `empty` construct."
+count = 1
+
+[[issues]]
+file = "src/Cms/Content/Stores/PhpArrayIndexStore.php"
+code = "no-isset"
+message = "Use of the `isset` construct."
+count = 2
+
+[[issues]]
+file = "src/Cms/Content/Stores/PhpArrayIndexStore.php"
+code = "prefer-static-closure"
+message = "This closure does not use `$this` and should be declared static."
+count = 1
+
+[[issues]]
+file = "src/Cms/Content/Stores/PhpArrayIndexStore.php"
+code = "strict-behavior"
+message = "Call to `in_array` must enforce strict comparison."
+count = 2
+
+[[issues]]
+file = "src/Cms/Content/Stores/SqliteIndexStore.php"
+code = "cyclomatic-complexity"
+message = "Class has high complexity."
+count = 1
+
+[[issues]]
+file = "src/Cms/Content/Stores/SqliteIndexStore.php"
+code = "explicit-octal"
+message = "Use explicit octal numeral notation."
+count = 1
+
+[[issues]]
+file = "src/Cms/Content/Stores/SqliteIndexStore.php"
+code = "identity-comparison"
+message = "Use identity comparison `===` instead of equality comparison `==`."
+count = 1
+
+[[issues]]
+file = "src/Cms/Content/Stores/SqliteIndexStore.php"
+code = "identity-comparison"
+message = "Use identity inequality `!==` instead of inequality comparison `!=`."
+count = 1
+
+[[issues]]
+file = "src/Cms/Content/Stores/SqliteIndexStore.php"
+code = "kan-defect"
+message = "Class has a high kan defect score."
+count = 1
+
+[[issues]]
+file = "src/Cms/Content/Stores/SqliteIndexStore.php"
+code = "no-else-clause"
+message = "Avoid `else` clauses."
+count = 2
+
+[[issues]]
+file = "src/Cms/Content/Stores/SqliteIndexStore.php"
+code = "no-else-clause"
+message = "Avoid `elseif` clauses."
+count = 2
+
+[[issues]]
+file = "src/Cms/Content/Stores/SqliteIndexStore.php"
+code = "no-empty"
+message = "Use of the `empty` construct."
+count = 2
+
+[[issues]]
+file = "src/Cms/Content/Stores/SqliteIndexStore.php"
+code = "no-isset"
+message = "Use of the `isset` construct."
+count = 4
+
+[[issues]]
+file = "src/Cms/Content/Stores/SqliteIndexStore.php"
+code = "no-shorthand-ternary"
+message = "Use of the shorthand ternary operator."
+count = 1
+
+[[issues]]
+file = "src/Cms/Content/Stores/SqliteIndexStore.php"
+code = "prefer-early-continue"
+message = "Consider using early continue pattern to reduce nesting."
+count = 2
+
+[[issues]]
+file = "src/Cms/Content/Stores/SqliteIndexStore.php"
+code = "prefer-first-class-callable"
+message = "Use first-class callable syntax `...` instead of a arrow function."
+count = 1
+
+[[issues]]
+file = "src/Cms/Content/Stores/SqliteIndexStore.php"
+code = "prefer-static-closure"
+message = "This arrow function does not use `$this` and should be declared static."
+count = 1
+
+[[issues]]
+file = "src/Cms/Content/Stores/SqliteIndexStore.php"
+code = "prefer-static-closure"
+message = "This closure does not use `$this` and should be declared static."
+count = 2
+
+[[issues]]
+file = "src/Cms/Content/Stores/SqliteIndexStore.php"
+code = "strict-behavior"
+message = "Call to `in_array` must enforce strict comparison."
+count = 2
+
+[[issues]]
+file = "src/Cms/Deploy/ArtifactBuilder.php"
+code = "explicit-octal"
+message = "Use explicit octal numeral notation."
+count = 1
+
+[[issues]]
+file = "src/Cms/Deploy/ArtifactBuilder.php"
+code = "no-else-clause"
+message = "Avoid `else` clauses."
+count = 2
+
+[[issues]]
+file = "src/Cms/Deploy/ArtifactBuilder.php"
+code = "prefer-static-closure"
+message = "This arrow function does not use `$this` and should be declared static."
+count = 1
+
+[[issues]]
+file = "src/Cms/Deploy/ArtifactBuilder.php"
+code = "sensitive-parameter"
+message = "Parameters that may contain sensitive information should be marked with the `#[SensitiveParameter]` attribute."
+count = 1
+
+[[issues]]
+file = "src/Cms/Deploy/DeployConfig.php"
+code = "braced-string-interpolation"
+message = "Unbraced variable in string interpolation."
+count = 1
+
+[[issues]]
+file = "src/Cms/Deploy/DeployConfig.php"
+code = "cyclomatic-complexity"
+message = "Class has high complexity."
+count = 1
+
+[[issues]]
+file = "src/Cms/Deploy/DeployConfig.php"
+code = "no-isset"
+message = "Use of the `isset` construct."
+count = 3
+
+[[issues]]
+file = "src/Cms/Deploy/DeployConfig.php"
+code = "no-shorthand-ternary"
+message = "Use of the shorthand ternary operator."
+count = 2
+
+[[issues]]
+file = "src/Cms/Deploy/DeployConfig.php"
+code = "prefer-static-closure"
+message = "This closure does not use `$this` and should be declared static."
+count = 1
+
+[[issues]]
+file = "src/Cms/Deploy/DeployConfig.php"
+code = "too-many-properties"
+message = "Class has too many properties."
+count = 1
+
+[[issues]]
+file = "src/Cms/Deploy/DeployLock.php"
+code = "explicit-octal"
+message = "Use explicit octal numeral notation."
+count = 1
+
+[[issues]]
+file = "src/Cms/Deploy/DeployLock.php"
+code = "no-error-control-operator"
+message = "Unsafe use of error control operator `@`."
+count = 1
+
+[[issues]]
+file = "src/Cms/Deploy/DeployLock.php"
+code = "no-redundant-use"
+message = "Unused import: `RuntimeException`."
+count = 1
+
+[[issues]]
+file = "src/Cms/Deploy/Drivers/FtpDriver.php"
+code = "cyclomatic-complexity"
+message = "Class has high complexity."
+count = 1
+
+[[issues]]
+file = "src/Cms/Deploy/Drivers/FtpDriver.php"
+code = "no-empty"
+message = "Use of the `empty` construct."
+count = 6
+
+[[issues]]
+file = "src/Cms/Deploy/Drivers/FtpDriver.php"
+code = "no-error-control-operator"
+message = "Unsafe use of error control operator `@`."
+count = 7
+
+[[issues]]
+file = "src/Cms/Deploy/Drivers/FtpDriver.php"
+code = "no-isset"
+message = "Use of the `isset` construct."
+count = 1
+
+[[issues]]
+file = "src/Cms/Deploy/Drivers/FtpDriver.php"
+code = "sensitive-parameter"
+message = "Parameters that may contain sensitive information should be marked with the `#[SensitiveParameter]` attribute."
+count = 1
+
+[[issues]]
+file = "src/Cms/Deploy/Drivers/GitHubPullDriver.php"
+code = "no-else-clause"
+message = "Avoid `else` clauses."
+count = 2
+
+[[issues]]
+file = "src/Cms/Deploy/Drivers/GitHubPullDriver.php"
+code = "no-else-clause"
+message = "Avoid `elseif` clauses."
+count = 1
+
+[[issues]]
+file = "src/Cms/Deploy/Drivers/GitHubPullDriver.php"
+code = "prefer-early-continue"
+message = "Consider using early continue pattern to reduce nesting."
+count = 1
+
+[[issues]]
+file = "src/Cms/Deploy/Drivers/SftpDriver.php"
+code = "cyclomatic-complexity"
+message = "Class has high complexity."
+count = 1
+
+[[issues]]
+file = "src/Cms/Deploy/Drivers/SftpDriver.php"
+code = "inline-variable-return"
+message = "Variable assignment can be inlined into the return statement."
+count = 2
+
+[[issues]]
+file = "src/Cms/Deploy/Drivers/SftpDriver.php"
+code = "no-else-clause"
+message = "Avoid `else` clauses."
+count = 1
+
+[[issues]]
+file = "src/Cms/Deploy/Drivers/SftpDriver.php"
+code = "no-empty"
+message = "Use of the `empty` construct."
+count = 1
+
+[[issues]]
+file = "src/Cms/Deploy/Drivers/WebhookDispatcher.php"
+code = "no-else-clause"
+message = "Avoid `else` clauses."
+count = 1
+
+[[issues]]
+file = "src/Cms/Deploy/Drivers/WebhookDispatcher.php"
+code = "sensitive-parameter"
+message = "Parameters that may contain sensitive information should be marked with the `#[SensitiveParameter]` attribute."
+count = 1
+
+[[issues]]
+file = "src/Cms/Deploy/GitHost/FakeTransport.php"
+code = "no-empty"
+message = "Use of the `empty` construct."
+count = 1
+
+[[issues]]
+file = "src/Cms/Deploy/GitHost/GitHubClient.php"
+code = "cyclomatic-complexity"
+message = "Class has high complexity."
+count = 1
+
+[[issues]]
+file = "src/Cms/Deploy/GitHost/GitHubClient.php"
+code = "no-boolean-flag-parameter"
+message = "Avoid boolean flag parameters."
+count = 4
+
+[[issues]]
+file = "src/Cms/Deploy/GitHost/GitHubClient.php"
+code = "no-isset"
+message = "Use of the `isset` construct."
+count = 1
+
+[[issues]]
+file = "src/Cms/Deploy/GitHost/GitHubClient.php"
+code = "no-shorthand-ternary"
+message = "Use of the shorthand ternary operator."
+count = 1
+
+[[issues]]
+file = "src/Cms/Deploy/GitHost/GitHubClient.php"
+code = "prefer-early-continue"
+message = "Consider using early continue pattern to reduce nesting."
+count = 2
+
+[[issues]]
+file = "src/Cms/Deploy/GitHost/GitHubClient.php"
+code = "sensitive-parameter"
+message = "Parameters that may contain sensitive information should be marked with the `#[SensitiveParameter]` attribute."
+count = 3
+
+[[issues]]
+file = "src/Cms/Deploy/HealthChecker.php"
+code = "no-else-clause"
+message = "Avoid `else` clauses."
+count = 1
+
+[[issues]]
+file = "src/Cms/Deploy/PleskApi/Client.php"
+code = "cyclomatic-complexity"
+message = "Class has high complexity."
+count = 1
+
+[[issues]]
+file = "src/Cms/Deploy/PleskApi/Client.php"
+code = "no-boolean-flag-parameter"
+message = "Avoid boolean flag parameters."
+count = 1
+
+[[issues]]
+file = "src/Cms/Deploy/PleskApi/Client.php"
+code = "no-else-clause"
+message = "Avoid `else` clauses."
+count = 1
+
+[[issues]]
+file = "src/Cms/Deploy/PleskApi/Client.php"
+code = "no-empty"
+message = "Use of the `empty` construct."
+count = 1
+
+[[issues]]
+file = "src/Cms/Deploy/PleskApi/Client.php"
+code = "no-isset"
+message = "Use of the `isset` construct."
+count = 4
+
+[[issues]]
+file = "src/Cms/Deploy/PleskApi/Client.php"
+code = "sensitive-parameter"
+message = "Parameters that may contain sensitive information should be marked with the `#[SensitiveParameter]` attribute."
+count = 2
+
+[[issues]]
+file = "src/Cms/Deploy/PleskApi/FakeTransport.php"
+code = "no-empty"
+message = "Use of the `empty` construct."
+count = 1
+
+[[issues]]
+file = "src/Cms/Deploy/PleskApi/GitRepoInfo.php"
+code = "excessive-parameter-list"
+message = "Parameter list is too long."
+count = 1
+
+[[issues]]
+file = "src/Cms/Deploy/PleskApi/Inspector.php"
+code = "cyclomatic-complexity"
+message = "Class has high complexity."
+count = 1
+
+[[issues]]
+file = "src/Cms/Deploy/PleskApi/Inspector.php"
+code = "kan-defect"
+message = "Class has a high kan defect score."
+count = 1
+
+[[issues]]
+file = "src/Cms/Deploy/PleskApi/Inspector.php"
+code = "no-empty-catch-clause"
+message = "Do not use empty `catch` blocks."
+count = 4
+
+[[issues]]
+file = "src/Cms/Deploy/PleskApi/Inspector.php"
+code = "no-isset"
+message = "Use of the `isset` construct."
+count = 5
+
+[[issues]]
+file = "src/Cms/Deploy/PleskApi/Inspector.php"
+code = "no-shorthand-ternary"
+message = "Use of the shorthand ternary operator."
+count = 1
+
+[[issues]]
+file = "src/Cms/Deploy/PleskApi/Inspector.php"
+code = "prefer-early-continue"
+message = "Consider using early continue pattern to reduce nesting."
+count = 1
+
+[[issues]]
+file = "src/Cms/Deploy/PleskApi/Provisioner.php"
+code = "cyclomatic-complexity"
+message = "Class has high complexity."
+count = 1
+
+[[issues]]
+file = "src/Cms/Deploy/PleskApi/Provisioner.php"
+code = "no-boolean-flag-parameter"
+message = "Avoid boolean flag parameters."
+count = 2
+
+[[issues]]
+file = "src/Cms/Deploy/PleskApi/Provisioner.php"
+code = "no-isset"
+message = "Use of the `isset` construct."
+count = 3
+
+[[issues]]
+file = "src/Cms/Deploy/PleskApi/Provisioner.php"
+code = "prefer-early-continue"
+message = "Consider using early continue pattern to reduce nesting."
+count = 1
+
+[[issues]]
+file = "src/Cms/Deploy/PleskApi/Provisioner.php"
+code = "sensitive-parameter"
+message = "Parameters that may contain sensitive information should be marked with the `#[SensitiveParameter]` attribute."
+count = 1
+
+[[issues]]
+file = "src/Cms/Deploy/Process/Runner.php"
+code = "no-else-clause"
+message = "Avoid `else` clauses."
+count = 1
+
+[[issues]]
+file = "src/Cms/Deploy/Process/Runner.php"
+code = "no-empty"
+message = "Use of the `empty` construct."
+count = 1
+
+[[issues]]
+file = "src/Cms/Deploy/Process/Runner.php"
+code = "prefer-static-closure"
+message = "This closure does not use `$this` and should be declared static."
+count = 1
+
+[[issues]]
+file = "src/Cms/Deploy/ReleaseManifest.php"
+code = "no-isset"
+message = "Use of the `isset` construct."
+count = 3
+
+[[issues]]
+file = "src/Cms/Deploy/ReleaseManifest.php"
+code = "prefer-early-continue"
+message = "Consider using early continue pattern to reduce nesting."
+count = 1
+
+[[issues]]
+file = "src/Cms/Deploy/ReleaseManifest.php"
+code = "prefer-static-closure"
+message = "This arrow function does not use `$this` and should be declared static."
+count = 1
+
+[[issues]]
+file = "src/Cms/Events/EventDispatcher.php"
+code = "no-else-clause"
+message = "Avoid `else` clauses."
+count = 1
+
+[[issues]]
+file = "src/Cms/Events/EventDispatcher.php"
+code = "no-empty"
+message = "Use of the `empty` construct."
+count = 2
+
+[[issues]]
+file = "src/Cms/Events/WebhookListener.php"
+code = "no-empty"
+message = "Use of the `empty` construct."
+count = 1
+
+[[issues]]
+file = "src/Cms/Events/WebhookListener.php"
+code = "no-shorthand-ternary"
+message = "Use of the shorthand ternary operator."
+count = 1
+
+[[issues]]
+file = "src/Cms/Http/Controllers/BoostApiController.php"
+code = "explicit-octal"
+message = "Use explicit octal numeral notation."
+count = 7
+
+[[issues]]
+file = "src/Cms/Http/Controllers/BoostApiController.php"
+code = "no-shorthand-ternary"
+message = "Use of the shorthand ternary operator."
+count = 1
+
+[[issues]]
+file = "src/Cms/Http/Controllers/BoostApiController.php"
+code = "prefer-static-closure"
+message = "This arrow function does not use `$this` and should be declared static."
+count = 1
+
+[[issues]]
+file = "src/Cms/Http/Controllers/CommandApiController.php"
+code = "explicit-octal"
+message = "Use explicit octal numeral notation."
+count = 1
+
+[[issues]]
+file = "src/Cms/Http/Controllers/CommandApiController.php"
+code = "no-error-control-operator"
+message = "Unsafe use of error control operator `@`."
+count = 3
+
+[[issues]]
+file = "src/Cms/Http/Controllers/CommandApiController.php"
+code = "no-ini-set"
+message = "ini_set should not be used."
+count = 1
+
+[[issues]]
+file = "src/Cms/Http/Controllers/CommandApiController.php"
+code = "no-isset"
+message = "Use of the `isset` construct."
+count = 1
+
+[[issues]]
+file = "src/Cms/Http/Controllers/CommandApiController.php"
+code = "no-shorthand-ternary"
+message = "Use of the shorthand ternary operator."
+count = 2
+
+[[issues]]
+file = "src/Cms/Http/Controllers/ContentApiController.php"
+code = "cyclomatic-complexity"
+message = "Class has high complexity."
+count = 1
+
+[[issues]]
+file = "src/Cms/Http/Controllers/ContentApiController.php"
+code = "kan-defect"
+message = "Class has a high kan defect score."
+count = 1
+
+[[issues]]
+file = "src/Cms/Http/Controllers/ContentApiController.php"
+code = "no-boolean-flag-parameter"
+message = "Avoid boolean flag parameters."
+count = 2
+
+[[issues]]
+file = "src/Cms/Http/Controllers/ContentApiController.php"
+code = "no-else-clause"
+message = "Avoid `else` clauses."
+count = 2
+
+[[issues]]
+file = "src/Cms/Http/Controllers/ContentApiController.php"
+code = "no-else-clause"
+message = "Avoid `elseif` clauses."
+count = 1
+
+[[issues]]
+file = "src/Cms/Http/Controllers/ContentApiController.php"
+code = "no-empty"
+message = "Use of the `empty` construct."
+count = 2
+
+[[issues]]
+file = "src/Cms/Http/Controllers/ContentApiController.php"
+code = "no-empty-catch-clause"
+message = "Do not use empty `catch` blocks."
+count = 2
+
+[[issues]]
+file = "src/Cms/Http/Controllers/ContentApiController.php"
+code = "no-isset"
+message = "Use of the `isset` construct."
+count = 6
+
+[[issues]]
+file = "src/Cms/Http/Controllers/ContentApiController.php"
+code = "no-shorthand-ternary"
+message = "Use of the shorthand ternary operator."
+count = 2
+
+[[issues]]
+file = "src/Cms/Http/Controllers/ContentApiController.php"
+code = "prefer-early-continue"
+message = "Consider using early continue pattern to reduce nesting."
+count = 1
+
+[[issues]]
+file = "src/Cms/Http/Controllers/ContentApiController.php"
+code = "prefer-first-class-callable"
+message = "Use first-class callable syntax `...` instead of a arrow function."
+count = 3
+
+[[issues]]
+file = "src/Cms/Http/Controllers/FormController.php"
+code = "explicit-octal"
+message = "Use explicit octal numeral notation."
+count = 1
+
+[[issues]]
+file = "src/Cms/Http/Controllers/FormController.php"
+code = "no-empty"
+message = "Use of the `empty` construct."
+count = 3
+
+[[issues]]
+file = "src/Cms/Http/Controllers/GlobalsApiController.php"
+code = "explicit-octal"
+message = "Use explicit octal numeral notation."
+count = 1
+
+[[issues]]
+file = "src/Cms/Http/Controllers/GlobalsApiController.php"
+code = "no-shorthand-ternary"
+message = "Use of the shorthand ternary operator."
+count = 1
+
+[[issues]]
+file = "src/Cms/Http/Controllers/MediaApiController.php"
+code = "block-statement"
+message = "`if` statement should use a block body."
+count = 1
+
+[[issues]]
+file = "src/Cms/Http/Controllers/MediaApiController.php"
+code = "braced-string-interpolation"
+message = "Unbraced variable in string interpolation."
+count = 1
+
+[[issues]]
+file = "src/Cms/Http/Controllers/MediaApiController.php"
+code = "explicit-octal"
+message = "Use explicit octal numeral notation."
+count = 1
+
+[[issues]]
+file = "src/Cms/Http/Controllers/MediaApiController.php"
+code = "no-error-control-operator"
+message = "Unsafe use of error control operator `@`."
+count = 2
+
+[[issues]]
+file = "src/Cms/Http/Controllers/MediaApiController.php"
+code = "no-isset"
+message = "Use of the `isset` construct."
+count = 2
+
+[[issues]]
+file = "src/Cms/Http/Controllers/MediaApiController.php"
+code = "no-shorthand-ternary"
+message = "Use of the shorthand ternary operator."
+count = 3
+
+[[issues]]
+file = "src/Cms/Http/Controllers/RssController.php"
+code = "no-redundant-use"
+message = "Unused import: `Indexer`."
+count = 1
+
+[[issues]]
+file = "src/Cms/Http/Controllers/SearchApiController.php"
+code = "no-shorthand-ternary"
+message = "Use of the shorthand ternary operator."
+count = 1
+
+[[issues]]
+file = "src/Cms/Http/Controllers/SitemapController.php"
+code = "no-else-clause"
+message = "Avoid `else` clauses."
+count = 1
+
+[[issues]]
+file = "src/Cms/Http/Controllers/SitemapController.php"
+code = "no-empty"
+message = "Use of the `empty` construct."
+count = 1
+
+[[issues]]
+file = "src/Cms/Http/Controllers/SitemapController.php"
+code = "no-redundant-use"
+message = "Unused import: `Entry`."
+count = 1
+
+[[issues]]
+file = "src/Cms/Http/Controllers/SitemapController.php"
+code = "no-redundant-use"
+message = "Unused import: `Indexer`."
+count = 1
+
+[[issues]]
+file = "src/Cms/I18n/Translator.php"
+code = "no-else-clause"
+message = "Avoid `else` clauses."
+count = 1
+
+[[issues]]
+file = "src/Cms/I18n/Translator.php"
+code = "no-isset"
+message = "Use of the `isset` construct."
+count = 2
+
+[[issues]]
+file = "src/Cms/Integrations/GumroadButtonGenerator.php"
+code = "no-empty"
+message = "Use of the `empty` construct."
+count = 2
+
+[[issues]]
+file = "src/Cms/Integrations/StripeButtonGenerator.php"
+code = "no-empty"
+message = "Use of the `empty` construct."
+count = 1
+
+[[issues]]
+file = "src/Cms/Mail/EmailRenderer.php"
+code = "no-else-clause"
+message = "Avoid `else` clauses."
+count = 1
+
+[[issues]]
+file = "src/Cms/Mail/EmailRenderer.php"
+code = "no-else-clause"
+message = "Avoid `elseif` clauses."
+count = 1
+
+[[issues]]
+file = "src/Cms/Mail/EmailRenderer.php"
+code = "no-shorthand-ternary"
+message = "Use of the shorthand ternary operator."
+count = 1
+
+[[issues]]
+file = "src/Cms/Mail/EmailRenderer.php"
+code = "prefer-static-closure"
+message = "This arrow function does not use `$this` and should be declared static."
+count = 1
+
+[[issues]]
+file = "src/Cms/Mail/Mailer.php"
+code = "cyclomatic-complexity"
+message = "Class has high complexity."
+count = 1
+
+[[issues]]
+file = "src/Cms/Mail/Mailer.php"
+code = "no-else-clause"
+message = "Avoid `else` clauses."
+count = 2
+
+[[issues]]
+file = "src/Cms/Mail/Mailer.php"
+code = "no-else-clause"
+message = "Avoid `elseif` clauses."
+count = 1
+
+[[issues]]
+file = "src/Cms/Mail/Mailer.php"
+code = "no-empty"
+message = "Use of the `empty` construct."
+count = 2
+
+[[issues]]
+file = "src/Cms/Mcp/JsonRpcHandler.php"
+code = "readable-literal"
+message = "Numeric literal could use underscore separators for readability."
+count = 6
+
+[[issues]]
+file = "src/Cms/Mcp/McpServer.php"
+code = "no-isset"
+message = "Use of the `isset` construct."
+count = 3
+
+[[issues]]
+file = "src/Cms/Mcp/McpServer.php"
+code = "no-shorthand-ternary"
+message = "Use of the shorthand ternary operator."
+count = 1
+
+[[issues]]
+file = "src/Cms/Mcp/Prompts/BoostWizardPrompt.php"
+code = "prefer-static-closure"
+message = "This arrow function does not use `$this` and should be declared static."
+count = 1
+
+[[issues]]
+file = "src/Cms/Mcp/Prompts/CreateCollectionPrompt.php"
+code = "no-redundant-string-concat"
+message = "String concatenation can be simplified."
+count = 7
+
+[[issues]]
+file = "src/Cms/Mcp/Prompts/CreateEntryPrompt.php"
+code = "no-empty"
+message = "Use of the `empty` construct."
+count = 1
+
+[[issues]]
+file = "src/Cms/Mcp/Resources/SiteInfoResource.php"
+code = "no-shorthand-ternary"
+message = "Use of the shorthand ternary operator."
+count = 1
+
+[[issues]]
+file = "src/Cms/Mcp/Tools/AbstractEntryMutationTool.php"
+code = "no-else-clause"
+message = "Avoid `else` clauses."
+count = 1
+
+[[issues]]
+file = "src/Cms/Mcp/Tools/AbstractEntryMutationTool.php"
+code = "no-empty-catch-clause"
+message = "Do not use empty `catch` blocks."
+count = 2
+
+[[issues]]
+file = "src/Cms/Mcp/Tools/BoostApplyTool.php"
+code = "explicit-octal"
+message = "Use explicit octal numeral notation."
+count = 7
+
+[[issues]]
+file = "src/Cms/Mcp/Tools/BoostApplyTool.php"
+code = "no-redundant-use"
+message = "Unused import: `ArchetypeInterface`."
+count = 1
+
+[[issues]]
+file = "src/Cms/Mcp/Tools/BoostArchetypesTool.php"
+code = "prefer-static-closure"
+message = "This arrow function does not use `$this` and should be declared static."
+count = 1
+
+[[issues]]
+file = "src/Cms/Mcp/Tools/DeleteMediaTool.php"
+code = "no-shorthand-ternary"
+message = "Use of the shorthand ternary operator."
+count = 1
+
+[[issues]]
+file = "src/Cms/Mcp/Tools/ListComponentsTool.php"
+code = "no-else-clause"
+message = "Avoid `else` clauses."
+count = 1
+
+[[issues]]
+file = "src/Cms/Mcp/Tools/ListComponentsTool.php"
+code = "no-empty-catch-clause"
+message = "Do not use empty `catch` blocks."
+count = 1
+
+[[issues]]
+file = "src/Cms/Mcp/Tools/ListComponentsTool.php"
+code = "no-shorthand-ternary"
+message = "Use of the shorthand ternary operator."
+count = 1
+
+[[issues]]
+file = "src/Cms/Mcp/Tools/ListComponentsTool.php"
+code = "prefer-early-continue"
+message = "Consider using early continue pattern to reduce nesting."
+count = 2
+
+[[issues]]
+file = "src/Cms/Mcp/Tools/ListComponentsTool.php"
+code = "prefer-static-closure"
+message = "This arrow function does not use `$this` and should be declared static."
+count = 1
+
+[[issues]]
+file = "src/Cms/Mcp/Tools/ListEntriesTool.php"
+code = "no-empty"
+message = "Use of the `empty` construct."
+count = 4
+
+[[issues]]
+file = "src/Cms/Mcp/Tools/ListEntriesTool.php"
+code = "no-isset"
+message = "Use of the `isset` construct."
+count = 1
+
+[[issues]]
+file = "src/Cms/Mcp/Tools/ListEntriesTool.php"
+code = "prefer-static-closure"
+message = "This arrow function does not use `$this` and should be declared static."
+count = 1
+
+[[issues]]
+file = "src/Cms/Mcp/Tools/ListTemplatesTool.php"
+code = "no-empty"
+message = "Use of the `empty` construct."
+count = 2
+
+[[issues]]
+file = "src/Cms/Mcp/Tools/ListTemplatesTool.php"
+code = "no-shorthand-ternary"
+message = "Use of the shorthand ternary operator."
+count = 2
+
+[[issues]]
+file = "src/Cms/Mcp/Tools/ProjectInfoTool.php"
+code = "no-shorthand-ternary"
+message = "Use of the shorthand ternary operator."
+count = 5
+
+[[issues]]
+file = "src/Cms/Mcp/Tools/RunCommandTool.php"
+code = "no-error-control-operator"
+message = "Unsafe use of error control operator `@`."
+count = 2
+
+[[issues]]
+file = "src/Cms/Mcp/Tools/RunCommandTool.php"
+code = "no-ini-set"
+message = "ini_set should not be used."
+count = 1
+
+[[issues]]
+file = "src/Cms/Mcp/Tools/RunCommandTool.php"
+code = "no-isset"
+message = "Use of the `isset` construct."
+count = 1
+
+[[issues]]
+file = "src/Cms/Mcp/Tools/SearchContentTool.php"
+code = "cyclomatic-complexity"
+message = "Class has high complexity."
+count = 1
+
+[[issues]]
+file = "src/Cms/Mcp/Tools/SearchContentTool.php"
+code = "no-shorthand-ternary"
+message = "Use of the shorthand ternary operator."
+count = 1
+
+[[issues]]
+file = "src/Cms/Mcp/Tools/SearchContentTool.php"
+code = "prefer-static-closure"
+message = "This arrow function does not use `$this` and should be declared static."
+count = 1
+
+[[issues]]
+file = "src/Cms/Mcp/Tools/UploadMediaTool.php"
+code = "explicit-octal"
+message = "Use explicit octal numeral notation."
+count = 1
+
+[[issues]]
+file = "src/Cms/Mcp/Tools/UploadMediaTool.php"
+code = "no-error-control-operator"
+message = "Unsafe use of error control operator `@`."
+count = 1
+
+[[issues]]
+file = "src/Cms/Mcp/Tools/UploadMediaTool.php"
+code = "no-isset"
+message = "Use of the `isset` construct."
+count = 2
+
+[[issues]]
+file = "src/Cms/Mcp/Tools/UploadMediaTool.php"
+code = "no-shorthand-ternary"
+message = "Use of the shorthand ternary operator."
+count = 4
+
+[[issues]]
+file = "src/Cms/Middleware/AnalyticsMiddleware.php"
+code = "explicit-octal"
+message = "Use explicit octal numeral notation."
+count = 1
+
+[[issues]]
+file = "src/Cms/Middleware/AnalyticsMiddleware.php"
+code = "no-empty-catch-clause"
+message = "Do not use empty `catch` blocks."
+count = 1
+
+[[issues]]
+file = "src/Cms/Middleware/ApiAuthMiddleware.php"
+code = "no-isset"
+message = "Use of the `isset` construct."
+count = 1
+
+[[issues]]
+file = "src/Cms/Middleware/ApiAuthMiddleware.php"
+code = "no-shorthand-ternary"
+message = "Use of the shorthand ternary operator."
+count = 1
+
+[[issues]]
+file = "src/Cms/Middleware/ApiAuthMiddleware.php"
+code = "prefer-early-continue"
+message = "Consider using early continue pattern to reduce nesting."
+count = 1
+
+[[issues]]
+file = "src/Cms/Middleware/ApiDispatcher.php"
+code = "no-redundant-use"
+message = "Unused import: `Response`."
+count = 1
+
+[[issues]]
+file = "src/Cms/Middleware/ContentApiDispatcher.php"
+code = "block-statement"
+message = "`if` statement should use a block body."
+count = 9
+
+[[issues]]
+file = "src/Cms/Middleware/ContentApiDispatcher.php"
+code = "cyclomatic-complexity"
+message = "Class has high complexity."
+count = 1
+
+[[issues]]
+file = "src/Cms/Middleware/ContentApiDispatcher.php"
+code = "halstead"
+message = "Method has a high halstead effort"
+count = 1
+
+[[issues]]
+file = "src/Cms/Middleware/ContentApiDispatcher.php"
+code = "no-assign-in-condition"
+message = "Avoid assignments in conditions."
+count = 8
+
+[[issues]]
+file = "src/Cms/Middleware/ContentApiDispatcher.php"
+code = "no-else-clause"
+message = "Avoid `else` clauses."
+count = 1
+
+[[issues]]
+file = "src/Cms/Middleware/ContentApiDispatcher.php"
+code = "no-isset"
+message = "Use of the `isset` construct."
+count = 2
+
+[[issues]]
+file = "src/Cms/Middleware/ContentApiDispatcher.php"
+code = "no-shorthand-ternary"
+message = "Use of the shorthand ternary operator."
+count = 1
+
+[[issues]]
+file = "src/Cms/Middleware/ContentRouter.php"
+code = "cyclomatic-complexity"
+message = "Class has high complexity."
+count = 1
+
+[[issues]]
+file = "src/Cms/Middleware/ContentRouter.php"
+code = "halstead"
+message = "Method has a high halstead effort"
+count = 1
+
+[[issues]]
+file = "src/Cms/Middleware/ContentRouter.php"
+code = "no-else-clause"
+message = "Avoid `else` clauses."
+count = 1
+
+[[issues]]
+file = "src/Cms/Middleware/ContentRouter.php"
+code = "no-else-clause"
+message = "Avoid `elseif` clauses."
+count = 2
+
+[[issues]]
+file = "src/Cms/Middleware/ContentRouter.php"
+code = "no-empty"
+message = "Use of the `empty` construct."
+count = 2
+
+[[issues]]
+file = "src/Cms/Middleware/ContentRouter.php"
+code = "no-redundant-use"
+message = "Unused import: `Indexer`."
+count = 1
+
+[[issues]]
+file = "src/Cms/Middleware/ContentRouter.php"
+code = "no-shorthand-ternary"
+message = "Use of the shorthand ternary operator."
+count = 1
+
+[[issues]]
+file = "src/Cms/Middleware/ContentRouter.php"
+code = "prefer-static-closure"
+message = "This arrow function does not use `$this` and should be declared static."
+count = 2
+
+[[issues]]
+file = "src/Cms/Middleware/CsrfProtection.php"
+code = "block-statement"
+message = "`if` statement should use a block body."
+count = 3
+
+[[issues]]
+file = "src/Cms/Middleware/CsrfProtection.php"
+code = "no-empty"
+message = "Use of the `empty` construct."
+count = 1
+
+[[issues]]
+file = "src/Cms/Middleware/CsrfProtection.php"
+code = "sensitive-parameter"
+message = "Parameters that may contain sensitive information should be marked with the `#[SensitiveParameter]` attribute."
+count = 3
+
+[[issues]]
+file = "src/Cms/Middleware/DevReloadMiddleware.php"
+code = "no-else-clause"
+message = "Avoid `else` clauses."
+count = 1
+
+[[issues]]
+file = "src/Cms/Middleware/LocaleDetector.php"
+code = "no-empty"
+message = "Use of the `empty` construct."
+count = 2
+
+[[issues]]
+file = "src/Cms/Middleware/LocaleDetector.php"
+code = "no-empty-catch-clause"
+message = "Do not use empty `catch` blocks."
+count = 2
+
+[[issues]]
+file = "src/Cms/Middleware/WpApiDispatcher.php"
+code = "block-statement"
+message = "`if` statement should use a block body."
+count = 19
+
+[[issues]]
+file = "src/Cms/Middleware/WpApiDispatcher.php"
+code = "cyclomatic-complexity"
+message = "Class has high complexity."
+count = 1
+
+[[issues]]
+file = "src/Cms/Middleware/WpApiDispatcher.php"
+code = "no-else-clause"
+message = "Avoid `else` clauses."
+count = 1
+
+[[issues]]
+file = "src/Cms/Middleware/WpApiDispatcher.php"
+code = "no-isset"
+message = "Use of the `isset` construct."
+count = 1
+
+[[issues]]
+file = "src/Cms/Middleware/WpApiDispatcher.php"
+code = "no-redundant-use"
+message = "Unused import: `Indexer`."
+count = 1
+
+[[issues]]
+file = "src/Cms/Middleware/WpApiDispatcher.php"
+code = "no-shorthand-ternary"
+message = "Use of the shorthand ternary operator."
+count = 2
+
+[[issues]]
+file = "src/Cms/Middleware/WpApiDispatcher.php"
+code = "readable-literal"
+message = "Numeric literal could use underscore separators for readability."
+count = 4
+
+[[issues]]
+file = "src/Cms/Queue/FileQueue.php"
+code = "explicit-octal"
+message = "Use explicit octal numeral notation."
+count = 1
+
+[[issues]]
+file = "src/Cms/Queue/FileQueue.php"
+code = "no-else-clause"
+message = "Avoid `else` clauses."
+count = 1
+
+[[issues]]
+file = "src/Cms/Queue/FileQueue.php"
+code = "no-error-control-operator"
+message = "Unsafe use of error control operator `@`."
+count = 5
+
+[[issues]]
+file = "src/Cms/Search/SearchEngine.php"
+code = "cyclomatic-complexity"
+message = "Class has high complexity."
+count = 1
+
+[[issues]]
+file = "src/Cms/Search/SearchEngine.php"
+code = "no-empty"
+message = "Use of the `empty` construct."
+count = 1
+
+[[issues]]
+file = "src/Cms/Search/SearchEngine.php"
+code = "prefer-early-continue"
+message = "Consider using early continue pattern to reduce nesting."
+count = 2
+
+[[issues]]
+file = "src/Cms/Search/SearchIndexer.php"
+code = "explicit-octal"
+message = "Use explicit octal numeral notation."
+count = 1
+
+[[issues]]
+file = "src/Cms/Search/SearchIndexer.php"
+code = "no-shorthand-ternary"
+message = "Use of the shorthand ternary operator."
+count = 1
+
+[[issues]]
+file = "src/Cms/Search/SearchIndexer.php"
+code = "prefer-arrow-function"
+message = "This closure can be simplified to a more concise arrow function."
+count = 1
+
+[[issues]]
+file = "src/Cms/Search/SearchIndexer.php"
+code = "prefer-static-closure"
+message = "This closure does not use `$this` and should be declared static."
+count = 1
+
+[[issues]]
+file = "src/Cms/Seo/JsonLdGenerator.php"
+code = "cyclomatic-complexity"
+message = "Class has high complexity."
+count = 1
+
+[[issues]]
+file = "src/Cms/Seo/JsonLdGenerator.php"
+code = "no-empty"
+message = "Use of the `empty` construct."
+count = 10
+
+[[issues]]
+file = "src/Cms/Seo/MetaTagGenerator.php"
+code = "cyclomatic-complexity"
+message = "Class has high complexity."
+count = 1
+
+[[issues]]
+file = "src/Cms/Seo/MetaTagGenerator.php"
+code = "no-empty"
+message = "Use of the `empty` construct."
+count = 12
+
+[[issues]]
+file = "src/Cms/Seo/WebMcpGenerator.php"
+code = "no-else-clause"
+message = "Avoid `elseif` clauses."
+count = 2
+
+[[issues]]
+file = "src/Cms/Seo/WebMcpGenerator.php"
+code = "no-shorthand-ternary"
+message = "Use of the shorthand ternary operator."
+count = 1
+
+[[issues]]
+file = "src/Cms/Template/Engine.php"
+code = "no-empty-catch-clause"
+message = "Do not use empty `catch` blocks."
+count = 1
+
+[[issues]]
+file = "src/Cms/Template/Engine.php"
+code = "prefer-early-continue"
+message = "Consider using early continue pattern to reduce nesting."
+count = 1
+
+[[issues]]
+file = "src/Cms/Template/Extensions/ContentExtension.php"
+code = "no-empty-catch-clause"
+message = "Do not use empty `catch` blocks."
+count = 3
+
+[[issues]]
+file = "src/Cms/Template/Extensions/ContentExtension.php"
+code = "no-redundant-use"
+message = "Unused import: `Indexer`."
+count = 1
+
+[[issues]]
+file = "src/Cms/Template/Extensions/I18nExtension.php"
+code = "no-else-clause"
+message = "Avoid `else` clauses."
+count = 2
+
+[[issues]]
+file = "src/Cms/Template/Extensions/I18nExtension.php"
+code = "no-empty-catch-clause"
+message = "Do not use empty `catch` blocks."
+count = 3
+
+[[issues]]
+file = "src/Cms/Template/Extensions/I18nExtension.php"
+code = "prefer-early-continue"
+message = "Consider using early continue pattern to reduce nesting."
+count = 1
+
+[[issues]]
+file = "src/Cms/Template/Extensions/SeoExtension.php"
+code = "no-else-clause"
+message = "Avoid `else` clauses."
+count = 2
+
+[[issues]]
+file = "src/Cms/Template/Extensions/SeoExtension.php"
+code = "no-empty-catch-clause"
+message = "Do not use empty `catch` blocks."
+count = 6
+
+[[issues]]
+file = "src/Framework/Application.php"
+code = "block-statement"
+message = "`if` statement should use a block body."
+count = 1
+
+[[issues]]
+file = "src/Framework/Application.php"
+code = "no-empty"
+message = "Use of the `empty` construct."
+count = 2
+
+[[issues]]
+file = "src/Framework/Application.php"
+code = "no-empty-catch-clause"
+message = "Do not use empty `catch` blocks."
+count = 1
+
+[[issues]]
+file = "src/Framework/Application.php"
+code = "no-isset"
+message = "Use of the `isset` construct."
+count = 1
+
+[[issues]]
+file = "src/Framework/Application.php"
+code = "no-shorthand-ternary"
+message = "Use of the shorthand ternary operator."
+count = 2
+
+[[issues]]
+file = "src/Framework/Application.php"
+code = "prefer-arrow-function"
+message = "This closure can be simplified to a more concise arrow function."
+count = 2
+
+[[issues]]
+file = "src/Framework/Application.php"
+code = "prefer-static-closure"
+message = "This arrow function does not use `$this` and should be declared static."
+count = 1
+
+[[issues]]
+file = "src/Framework/Application.php"
+code = "prefer-static-closure"
+message = "This closure does not use `$this` and should be declared static."
+count = 8
+
+[[issues]]
+file = "src/Framework/Container.php"
+code = "no-else-clause"
+message = "Avoid `else` clauses."
+count = 1
+
+[[issues]]
+file = "src/Framework/Container.php"
+code = "no-isset"
+message = "Use of the `isset` construct."
+count = 4
+
+[[issues]]
+file = "src/Framework/Dispatcher.php"
+code = "no-isset"
+message = "Use of the `isset` construct."
+count = 1
+
+[[issues]]
+file = "src/Framework/Router.php"
+code = "inline-variable-return"
+message = "Variable assignment can be inlined into the return statement."
+count = 1
+
+[[issues]]
+file = "src/Framework/helpers.php"
+code = "no-empty-catch-clause"
+message = "Do not use empty `catch` blocks."
+count = 1
+
+[[issues]]
+file = "src/Framework/helpers.php"
+code = "no-redundant-math"
+message = "Redundant addition of `0`: adding 0 does not alter the value."
+count = 1
+
+[[issues]]
+file = "src/Framework/helpers.php"
+code = "no-redundant-use"
+message = "Unused import: `Indexer`."
+count = 1
+
+[[issues]]
+file = "src/Framework/helpers.php"
+code = "no-shorthand-ternary"
+message = "Use of the shorthand ternary operator."
+count = 2
+
+[[issues]]
+file = "tests/Cms/Boost/ArchetypeBuildTest.php"
+code = "use-dedicated-expectation"
+message = "Use `toBeFile()` instead of `file_exists()` with `toBeTrue()`."
+count = 35
+
+[[issues]]
+file = "tests/Cms/Boost/SiteProfileTest.php"
+code = "use-specific-expectations"
+message = "Use `toBeEmpty()` instead of comparing with empty values for clarity."
+count = 2
+
+[[issues]]
+file = "tests/Cms/Cache/InvalidatorTest.php"
+code = "explicit-octal"
+message = "Use explicit octal numeral notation."
+count = 1
+
+[[issues]]
+file = "tests/Cms/Cache/InvalidatorTest.php"
+code = "strict-types"
+message = "Missing `declare(strict_types=1);` statement at the beginning of the file."
+count = 1
+
+[[issues]]
+file = "tests/Cms/Cache/InvalidatorTest.php"
+code = "use-specific-expectations"
+message = "Use `toBeEmpty()` instead of comparing with empty values for clarity."
+count = 1
+
+[[issues]]
+file = "tests/Cms/Cache/PageCacheTest.php"
+code = "strict-types"
+message = "Missing `declare(strict_types=1);` statement at the beginning of the file."
+count = 1
+
+[[issues]]
+file = "tests/Cms/Cache/PhpFileCacheTest.php"
+code = "strict-types"
+message = "Missing `declare(strict_types=1);` statement at the beginning of the file."
+count = 1
+
+[[issues]]
+file = "tests/Cms/Cache/PhpFileCacheTest.php"
+code = "use-dedicated-expectation"
+message = "Use `toBeDirectory()` instead of `is_dir()` with `toBeTrue()`."
+count = 1
+
+[[issues]]
+file = "tests/Cms/Cli/BackupCommandsTest.php"
+code = "block-statement"
+message = "`if` statement should use a block body."
+count = 1
+
+[[issues]]
+file = "tests/Cms/Cli/BackupCommandsTest.php"
+code = "explicit-octal"
+message = "Use explicit octal numeral notation."
+count = 6
+
+[[issues]]
+file = "tests/Cms/Cli/BackupCommandsTest.php"
+code = "no-else-clause"
+message = "Avoid `else` clauses."
+count = 1
+
+[[issues]]
+file = "tests/Cms/Cli/BackupCommandsTest.php"
+code = "no-shorthand-ternary"
+message = "Use of the shorthand ternary operator."
+count = 1
+
+[[issues]]
+file = "tests/Cms/Cli/BackupCommandsTest.php"
+code = "use-dedicated-expectation"
+message = "Use `toBeFile()` instead of `file_exists()` with `toBeTrue()`."
+count = 2
+
+[[issues]]
+file = "tests/Cms/Cli/BoostInstallCommandTest.php"
+code = "explicit-octal"
+message = "Use explicit octal numeral notation."
+count = 5
+
+[[issues]]
+file = "tests/Cms/Cli/BoostInstallCommandTest.php"
+code = "use-dedicated-expectation"
+message = "Use `toBeFile()` instead of `file_exists()` with `toBeTrue()`."
+count = 2
+
+[[issues]]
+file = "tests/Cms/Cli/HerdInstallCommandTest.php"
+code = "explicit-octal"
+message = "Use explicit octal numeral notation."
+count = 2
+
+[[issues]]
+file = "tests/Cms/Cli/HerdInstallCommandTest.php"
+code = "use-dedicated-expectation"
+message = "Use `toBeFile()` instead of `file_exists()` with `toBeTrue()`."
+count = 1
+
+[[issues]]
+file = "tests/Cms/Cli/InitCommandTest.php"
+code = "explicit-octal"
+message = "Use explicit octal numeral notation."
+count = 1
+
+[[issues]]
+file = "tests/Cms/Cli/InitCommandTest.php"
+code = "use-dedicated-expectation"
+message = "Use `toBeFile()` instead of `file_exists()` with `toBeTrue()`."
+count = 1
+
+[[issues]]
+file = "tests/Cms/Cli/WxrImportCommandTest.php"
+code = "explicit-octal"
+message = "Use explicit octal numeral notation."
+count = 1
+
+[[issues]]
+file = "tests/Cms/Cli/WxrImportCommandTest.php"
+code = "function-name"
+message = "Function name `wxrInvoke` should be in snake case."
+count = 1
+
+[[issues]]
+file = "tests/Cms/Content/ContentImporterTest.php"
+code = "block-statement"
+message = "`if` statement should use a block body."
+count = 1
+
+[[issues]]
+file = "tests/Cms/Content/ContentImporterTest.php"
+code = "explicit-octal"
+message = "Use explicit octal numeral notation."
+count = 3
+
+[[issues]]
+file = "tests/Cms/Content/ContentImporterTest.php"
+code = "no-shorthand-ternary"
+message = "Use of the shorthand ternary operator."
+count = 1
+
+[[issues]]
+file = "tests/Cms/Content/ContentImporterTest.php"
+code = "prefer-early-continue"
+message = "Consider using early continue pattern to reduce nesting."
+count = 1
+
+[[issues]]
+file = "tests/Cms/Content/ContentImporterTest.php"
+code = "use-dedicated-expectation"
+message = "Use `toBeFile()` instead of `file_exists()` with `toBeTrue()`."
+count = 2
+
+[[issues]]
+file = "tests/Cms/Content/ContentStorageFactoryTest.php"
+code = "explicit-octal"
+message = "Use explicit octal numeral notation."
+count = 2
+
+[[issues]]
+file = "tests/Cms/Content/ContentStorageFactoryTest.php"
+code = "function-name"
+message = "Function name `bootContentFixture` should be in snake case."
+count = 1
+
+[[issues]]
+file = "tests/Cms/Content/DraftResolverTest.php"
+code = "block-statement"
+message = "`if` statement should use a block body."
+count = 1
+
+[[issues]]
+file = "tests/Cms/Content/DraftResolverTest.php"
+code = "explicit-octal"
+message = "Use explicit octal numeral notation."
+count = 1
+
+[[issues]]
+file = "tests/Cms/Content/DraftResolverTest.php"
+code = "no-else-clause"
+message = "Avoid `else` clauses."
+count = 1
+
+[[issues]]
+file = "tests/Cms/Content/FileContentStorageTest.php"
+code = "block-statement"
+message = "`if` statement should use a block body."
+count = 1
+
+[[issues]]
+file = "tests/Cms/Content/FileContentStorageTest.php"
+code = "explicit-octal"
+message = "Use explicit octal numeral notation."
+count = 1
+
+[[issues]]
+file = "tests/Cms/Content/FileContentStorageTest.php"
+code = "use-dedicated-expectation"
+message = "Use `toBeFile()` instead of `file_exists()` with `toBeTrue()`."
+count = 2
+
+[[issues]]
+file = "tests/Cms/Content/IndexerTest.php"
+code = "explicit-octal"
+message = "Use explicit octal numeral notation."
+count = 10
+
+[[issues]]
+file = "tests/Cms/Content/IndexerTest.php"
+code = "no-else-clause"
+message = "Avoid `else` clauses."
+count = 1
+
+[[issues]]
+file = "tests/Cms/Content/IndexerTest.php"
+code = "prefer-early-continue"
+message = "Consider using early continue pattern to reduce nesting."
+count = 1
+
+[[issues]]
+file = "tests/Cms/Content/MysqlContentStorageTest.php"
+code = "block-statement"
+message = "`if` statement should use a block body."
+count = 1
+
+[[issues]]
+file = "tests/Cms/Content/MysqlContentStorageTest.php"
+code = "explicit-octal"
+message = "Use explicit octal numeral notation."
+count = 1
+
+[[issues]]
+file = "tests/Cms/Content/MysqlContentStorageTest.php"
+code = "no-isset"
+message = "Use of the `isset` construct."
+count = 1
+
+[[issues]]
+file = "tests/Cms/Content/MysqlContentStorageTest.php"
+code = "use-dedicated-expectation"
+message = "Use `toBeFile()` instead of `file_exists()` with `toBeTrue()`."
+count = 2
+
+[[issues]]
+file = "tests/Cms/Content/MysqlContentStorageTest.php"
+code = "use-specific-expectations"
+message = "Use `toBeTrue()` instead of `not->toBeFalse()` for clarity."
+count = 1
+
+[[issues]]
+file = "tests/Cms/Content/PaginatorTest.php"
+code = "use-specific-expectations"
+message = "Use `toBeEmpty()` instead of comparing with empty values for clarity."
+count = 2
+
+[[issues]]
+file = "tests/Cms/Content/ParserTest.php"
+code = "use-specific-expectations"
+message = "Use `toBeEmpty()` instead of comparing with empty values for clarity."
+count = 1
+
+[[issues]]
+file = "tests/Cms/Content/QueryTest.php"
+code = "use-specific-expectations"
+message = "Use `toBeEmpty()` instead of comparing with empty values for clarity."
+count = 1
+
+[[issues]]
+file = "tests/Cms/Content/ScheduleCheckerTest.php"
+code = "block-statement"
+message = "`if` statement should use a block body."
+count = 1
+
+[[issues]]
+file = "tests/Cms/Content/ScheduleCheckerTest.php"
+code = "explicit-octal"
+message = "Use explicit octal numeral notation."
+count = 2
+
+[[issues]]
+file = "tests/Cms/Content/ScheduleCheckerTest.php"
+code = "no-else-clause"
+message = "Avoid `else` clauses."
+count = 1
+
+[[issues]]
+file = "tests/Cms/Events/WebhookListenerTest.php"
+code = "block-statement"
+message = "`if` statement should use a block body."
+count = 1
+
+[[issues]]
+file = "tests/Cms/Events/WebhookListenerTest.php"
+code = "explicit-octal"
+message = "Use explicit octal numeral notation."
+count = 1
+
+[[issues]]
+file = "tests/Cms/Events/WebhookListenerTest.php"
+code = "no-else-clause"
+message = "Avoid `else` clauses."
+count = 1
+
+[[issues]]
+file = "tests/Cms/Events/WebhookListenerTest.php"
+code = "no-literal-password"
+message = "Literal passwords or sensitive data should not be stored in code."
+count = 1
+
+[[issues]]
+file = "tests/Cms/Http/Controllers/BoostApiControllerTest.php"
+code = "explicit-octal"
+message = "Use explicit octal numeral notation."
+count = 1
+
+[[issues]]
+file = "tests/Cms/Http/Controllers/BoostApiControllerTest.php"
+code = "use-dedicated-expectation"
+message = "Use `toBeFile()` instead of `file_exists()` with `toBeTrue()`."
+count = 3
+
+[[issues]]
+file = "tests/Cms/Http/Controllers/CommandApiControllerTest.php"
+code = "function-name"
+message = "Function name `minimalWxr` should be in snake case."
+count = 1
+
+[[issues]]
+file = "tests/Cms/Http/Controllers/CommandApiControllerTest.php"
+code = "function-name"
+message = "Function name `wxrUploadRequest` should be in snake case."
+count = 1
+
+[[issues]]
+file = "tests/Cms/Http/Controllers/CommandApiControllerTest.php"
+code = "prefer-early-continue"
+message = "Consider using early continue pattern to reduce nesting."
+count = 1
+
+[[issues]]
+file = "tests/Cms/Http/Controllers/CommandApiControllerTest.php"
+code = "use-dedicated-expectation"
+message = "Use `toBeDirectory()` instead of `is_dir()` with `toBeTrue()`."
+count = 1
+
+[[issues]]
+file = "tests/Cms/Http/Controllers/CommandApiControllerTest.php"
+code = "use-specific-expectations"
+message = "Use `toBeEmpty()` instead of comparing with empty values for clarity."
+count = 1
+
+[[issues]]
+file = "tests/Cms/Http/Controllers/ContentApiConfigSchemaTest.php"
+code = "explicit-octal"
+message = "Use explicit octal numeral notation."
+count = 2
+
+[[issues]]
+file = "tests/Cms/Http/Controllers/ContentApiConfigSchemaTest.php"
+code = "function-name"
+message = "Function name `bootApiConfigFixture` should be in snake case."
+count = 1
+
+[[issues]]
+file = "tests/Cms/Http/Controllers/ContentApiConfigSchemaTest.php"
+code = "prefer-early-continue"
+message = "Consider using early continue pattern to reduce nesting."
+count = 1
+
+[[issues]]
+file = "tests/Cms/Http/Controllers/ContentApiControllerTest.php"
+code = "block-statement"
+message = "`if` statement should use a block body."
+count = 1
+
+[[issues]]
+file = "tests/Cms/Http/Controllers/ContentApiControllerTest.php"
+code = "explicit-octal"
+message = "Use explicit octal numeral notation."
+count = 4
+
+[[issues]]
+file = "tests/Cms/Http/Controllers/ContentApiControllerTest.php"
+code = "no-else-clause"
+message = "Avoid `else` clauses."
+count = 1
+
+[[issues]]
+file = "tests/Cms/Http/Controllers/ContentApiControllerTest.php"
+code = "use-dedicated-expectation"
+message = "Use `toBeFile()` instead of `file_exists()` with `toBeTrue()`."
+count = 1
+
+[[issues]]
+file = "tests/Cms/Http/Controllers/ContentApiControllerTest.php"
+code = "use-dedicated-expectation"
+message = "Use `toContain()` instead of `in_array()` with `toBeTrue()`."
+count = 3
+
+[[issues]]
+file = "tests/Cms/Http/Controllers/ContentApiMysqlDriverTest.php"
+code = "explicit-octal"
+message = "Use explicit octal numeral notation."
+count = 2
+
+[[issues]]
+file = "tests/Cms/Http/Controllers/ContentApiMysqlDriverTest.php"
+code = "no-empty-catch-clause"
+message = "Do not use empty `catch` blocks."
+count = 1
+
+[[issues]]
+file = "tests/Cms/Http/Controllers/ContentApiMysqlDriverTest.php"
+code = "use-dedicated-expectation"
+message = "Use `toBeFile()` instead of `file_exists()` with `toBeTrue()`."
+count = 1
+
+[[issues]]
+file = "tests/Cms/Http/Controllers/ContentApiMysqlDriverTest.php"
+code = "use-specific-expectations"
+message = "Use `toBeTrue()` instead of `not->toBeFalse()` for clarity."
+count = 1
+
+[[issues]]
+file = "tests/Cms/Http/Controllers/FormControllerTest.php"
+code = "function-name"
+message = "Function name `createFormRequest` should be in snake case."
+count = 1
+
+[[issues]]
+file = "tests/Cms/Http/Controllers/FormControllerTest.php"
+code = "no-literal-password"
+message = "Literal passwords or sensitive data should not be stored in code."
+count = 1
+
+[[issues]]
+file = "tests/Cms/Http/Controllers/MediaApiHardeningTest.php"
+code = "block-statement"
+message = "`if` statement should use a block body."
+count = 1
+
+[[issues]]
+file = "tests/Cms/Http/Controllers/MediaApiHardeningTest.php"
+code = "explicit-octal"
+message = "Use explicit octal numeral notation."
+count = 2
+
+[[issues]]
+file = "tests/Cms/Http/Controllers/MediaApiHardeningTest.php"
+code = "function-name"
+message = "Function name `uploadPng` should be in snake case."
+count = 1
+
+[[issues]]
+file = "tests/Cms/Http/Controllers/MediaApiHardeningTest.php"
+code = "strict-behavior"
+message = "Call to `base64_decode` must enforce strict comparison."
+count = 1
+
+[[issues]]
+file = "tests/Cms/Http/Controllers/MediaApiHardeningTest.php"
+code = "use-dedicated-expectation"
+message = "Use `toBeFile()` instead of `file_exists()` with `toBeTrue()`."
+count = 3
+
+[[issues]]
+file = "tests/Cms/Http/Controllers/SitemapControllerTest.php"
+code = "explicit-octal"
+message = "Use explicit octal numeral notation."
+count = 3
+
+[[issues]]
+file = "tests/Cms/Http/Controllers/SitemapControllerTest.php"
+code = "function-name"
+message = "Function name `bootSitemapFixture` should be in snake case."
+count = 1
+
+[[issues]]
+file = "tests/Cms/I18n/LocaleDetectorTest.php"
+code = "explicit-octal"
+message = "Use explicit octal numeral notation."
+count = 8
+
+[[issues]]
+file = "tests/Cms/I18n/TranslatorTest.php"
+code = "explicit-octal"
+message = "Use explicit octal numeral notation."
+count = 2
+
+[[issues]]
+file = "tests/Cms/Integrations/GumroadButtonGeneratorTest.php"
+code = "use-specific-expectations"
+message = "Use `toBeEmpty()` instead of comparing with empty values for clarity."
+count = 6
+
+[[issues]]
+file = "tests/Cms/Integrations/MailchimpFormGeneratorTest.php"
+code = "use-specific-expectations"
+message = "Use `toBeEmpty()` instead of comparing with empty values for clarity."
+count = 2
+
+[[issues]]
+file = "tests/Cms/Integrations/StripeButtonGeneratorTest.php"
+code = "use-specific-expectations"
+message = "Use `toBeEmpty()` instead of comparing with empty values for clarity."
+count = 4
+
+[[issues]]
+file = "tests/Cms/Integrations/WhatsAppButtonGeneratorTest.php"
+code = "use-specific-expectations"
+message = "Use `toBeEmpty()` instead of comparing with empty values for clarity."
+count = 2
+
+[[issues]]
+file = "tests/Cms/Mail/MailerTest.php"
+code = "no-literal-password"
+message = "Literal passwords or sensitive data should not be stored in code."
+count = 1
+
+[[issues]]
+file = "tests/Cms/Mcp/JsonRpcHandlerTest.php"
+code = "readable-literal"
+message = "Numeric literal could use underscore separators for readability."
+count = 3
+
+[[issues]]
+file = "tests/Cms/Mcp/JsonRpcHandlerTest.php"
+code = "use-specific-expectations"
+message = "Use `toBeEmpty()` instead of comparing with empty values for clarity."
+count = 1
+
+[[issues]]
+file = "tests/Cms/Mcp/McpServerTest.php"
+code = "function-name"
+message = "Function name `createTestServer` should be in snake case."
+count = 1
+
+[[issues]]
+file = "tests/Cms/Mcp/McpServerTest.php"
+code = "readable-literal"
+message = "Numeric literal could use underscore separators for readability."
+count = 5
+
+[[issues]]
+file = "tests/Cms/Mcp/McpServerTest.php"
+code = "use-specific-expectations"
+message = "Use `toBeEmpty()` instead of comparing with empty values for clarity."
+count = 3
+
+[[issues]]
+file = "tests/Cms/Mcp/Resources/ConfigResourceTest.php"
+code = "explicit-octal"
+message = "Use explicit octal numeral notation."
+count = 3
+
+[[issues]]
+file = "tests/Cms/Mcp/Tools/AdminToolsTest.php"
+code = "explicit-octal"
+message = "Use explicit octal numeral notation."
+count = 4
+
+[[issues]]
+file = "tests/Cms/Mcp/Tools/AdminToolsTest.php"
+code = "strict-behavior"
+message = "Call to `base64_decode` must enforce strict comparison."
+count = 1
+
+[[issues]]
+file = "tests/Cms/Mcp/Tools/AdminToolsTest.php"
+code = "use-dedicated-expectation"
+message = "Use `toBeFile()` instead of `is_file()` with `toBeTrue()`."
+count = 3
+
+[[issues]]
+file = "tests/Cms/Mcp/Tools/BoostApplyToolTest.php"
+code = "explicit-octal"
+message = "Use explicit octal numeral notation."
+count = 1
+
+[[issues]]
+file = "tests/Cms/Mcp/Tools/BoostApplyToolTest.php"
+code = "use-dedicated-expectation"
+message = "Use `toBeFile()` instead of `file_exists()` with `toBeTrue()`."
+count = 8
+
+[[issues]]
+file = "tests/Cms/Mcp/Tools/GetConfigToolTest.php"
+code = "explicit-octal"
+message = "Use explicit octal numeral notation."
+count = 1
+
+[[issues]]
+file = "tests/Cms/Mcp/Tools/ListCollectionsToolTest.php"
+code = "explicit-octal"
+message = "Use explicit octal numeral notation."
+count = 4
+
+[[issues]]
+file = "tests/Cms/Mcp/Tools/ListComponentsToolTest.php"
+code = "explicit-octal"
+message = "Use explicit octal numeral notation."
+count = 1
+
+[[issues]]
+file = "tests/Cms/Mcp/Tools/ListEntriesToolTest.php"
+code = "explicit-octal"
+message = "Use explicit octal numeral notation."
+count = 3
+
+[[issues]]
+file = "tests/Cms/Mcp/Tools/ListTemplatesToolTest.php"
+code = "explicit-octal"
+message = "Use explicit octal numeral notation."
+count = 3
+
+[[issues]]
+file = "tests/Cms/Mcp/Tools/ListTemplatesToolTest.php"
+code = "use-specific-expectations"
+message = "Use `toBeEmpty()` instead of comparing with empty values for clarity."
+count = 1
+
+[[issues]]
+file = "tests/Cms/Mcp/Tools/ProjectInfoToolTest.php"
+code = "explicit-octal"
+message = "Use explicit octal numeral notation."
+count = 5
+
+[[issues]]
+file = "tests/Cms/Mcp/Tools/ReadEntryToolTest.php"
+code = "explicit-octal"
+message = "Use explicit octal numeral notation."
+count = 2
+
+[[issues]]
+file = "tests/Cms/Mcp/Tools/SearchContentToolTest.php"
+code = "explicit-octal"
+message = "Use explicit octal numeral notation."
+count = 3
+
+[[issues]]
+file = "tests/Cms/Middleware/ContentApiDispatcherPermissionsTest.php"
+code = "explicit-octal"
+message = "Use explicit octal numeral notation."
+count = 2
+
+[[issues]]
+file = "tests/Cms/Middleware/ContentApiDispatcherPermissionsTest.php"
+code = "function-name"
+message = "Function name `bootDispatcherFixture` should be in snake case."
+count = 1
+
+[[issues]]
+file = "tests/Cms/Middleware/ContentApiDispatcherPermissionsTest.php"
+code = "function-name"
+message = "Function name `passthroughHandler` should be in snake case."
+count = 1
+
+[[issues]]
+file = "tests/Cms/Middleware/CsrfProtectionTest.php"
+code = "function-name"
+message = "Function name `createCsrf` should be in snake case."
+count = 1
+
+[[issues]]
+file = "tests/Cms/Middleware/CsrfProtectionTest.php"
+code = "function-name"
+message = "Function name `createMockHandler` should be in snake case."
+count = 1
+
+[[issues]]
+file = "tests/Cms/Middleware/CsrfProtectionTest.php"
+code = "function-name"
+message = "Function name `createRequest` should be in snake case."
+count = 1
+
+[[issues]]
+file = "tests/Cms/Middleware/CsrfProtectionTest.php"
+code = "no-literal-password"
+message = "Literal passwords or sensitive data should not be stored in code."
+count = 1
+
+[[issues]]
+file = "tests/Cms/Middleware/CsrfProtectionTest.php"
+code = "sensitive-parameter"
+message = "Parameters that may contain sensitive information should be marked with the `#[SensitiveParameter]` attribute."
+count = 1
+
+[[issues]]
+file = "tests/Cms/Middleware/DevReloadMiddlewareTest.php"
+code = "function-name"
+message = "Function name `makeHandler` should be in snake case."
+count = 1
+
+[[issues]]
+file = "tests/Cms/Middleware/DevReloadMiddlewareTest.php"
+code = "use-specific-expectations"
+message = "Use `toBeEmpty()` instead of comparing with empty values for clarity."
+count = 1
+
+[[issues]]
+file = "tests/Cms/Middleware/ErrorHandlerTest.php"
+code = "function-name"
+message = "Function name `create404Handler` should be in snake case."
+count = 1
+
+[[issues]]
+file = "tests/Cms/Middleware/ErrorHandlerTest.php"
+code = "function-name"
+message = "Function name `createErrorHandler` should be in snake case."
+count = 1
+
+[[issues]]
+file = "tests/Cms/Middleware/ErrorHandlerTest.php"
+code = "function-name"
+message = "Function name `createSuccessHandler` should be in snake case."
+count = 1
+
+[[issues]]
+file = "tests/Cms/Middleware/ErrorHandlerTest.php"
+code = "function-name"
+message = "Function name `createThrowingHandler` should be in snake case."
+count = 1
+
+[[issues]]
+file = "tests/Cms/Queue/FileQueueTest.php"
+code = "explicit-octal"
+message = "Use explicit octal numeral notation."
+count = 1
+
+[[issues]]
+file = "tests/Cms/Queue/FileQueueTest.php"
+code = "no-error-control-operator"
+message = "Unsafe use of error control operator `@`."
+count = 5
+
+[[issues]]
+file = "tests/Cms/Queue/FileQueueTest.php"
+code = "no-shorthand-ternary"
+message = "Use of the shorthand ternary operator."
+count = 1
+
+[[issues]]
+file = "tests/Cms/Queue/FileQueueTest.php"
+code = "readable-literal"
+message = "Numeric literal could use underscore separators for readability."
+count = 1
+
+[[issues]]
+file = "tests/Cms/Queue/FileQueueTest.php"
+code = "use-dedicated-expectation"
+message = "Use `toBeDirectory()` instead of `is_dir()` with `toBeTrue()`."
+count = 3
+
+[[issues]]
+file = "tests/Cms/Queue/FileQueueTest.php"
+code = "use-dedicated-expectation"
+message = "Use `toBeFile()` instead of `is_file()` with `toBeTrue()`."
+count = 5
+
+[[issues]]
+file = "tests/Cms/Search/SearchIndexerTest.php"
+code = "explicit-octal"
+message = "Use explicit octal numeral notation."
+count = 1
+
+[[issues]]
+file = "tests/Cms/Search/SearchIndexerTest.php"
+code = "function-name"
+message = "Function name `makeSearchSite` should be in snake case."
+count = 1
+
+[[issues]]
+file = "tests/Cms/Search/SearchIndexerTest.php"
+code = "function-name"
+message = "Function name `rknRmrf` should be in snake case."
+count = 1
+
+[[issues]]
+file = "tests/Cms/Search/SearchIndexerTest.php"
+code = "no-error-control-operator"
+message = "Unsafe use of error control operator `@`."
+count = 2
+
+[[issues]]
+file = "tests/Cms/Search/SearchIndexerTest.php"
+code = "use-specific-expectations"
+message = "Use `toBeEmpty()` instead of comparing with empty values for clarity."
+count = 1
+
+[[issues]]
+file = "tests/Cms/Seo/ConsentManagerTest.php"
+code = "use-specific-expectations"
+message = "Use `toBeEmpty()` instead of comparing with empty values for clarity."
+count = 2
+
+[[issues]]
+file = "tests/Cms/Seo/IntegrationTest.php"
+code = "use-specific-expectations"
+message = "Use `toBeEmpty()` instead of comparing with empty values for clarity."
+count = 3
+
+[[issues]]
+file = "tests/Cms/Seo/JsonLdGeneratorTest.php"
+code = "use-specific-expectations"
+message = "Use `toBeEmpty()` instead of comparing with empty values for clarity."
+count = 1
+
+[[issues]]
+file = "tests/Cms/Seo/MetaTag/CoreTagsTest.php"
+code = "use-specific-expectations"
+message = "Use `toBeEmpty()` instead of comparing with empty values for clarity."
+count = 1
+
+[[issues]]
+file = "tests/Cms/Template/Extensions/I18nExtensionTest.php"
+code = "no-else-clause"
+message = "Avoid `else` clauses."
+count = 1
+
+[[issues]]
+file = "tests/Cms/Template/Extensions/I18nExtensionTest.php"
+code = "no-global"
+message = "Unsafe use of `$GLOBALS` variable."
+count = 2
+
+[[issues]]
+file = "tests/Cms/Template/Extensions/SeoExtensionTest.php"
+code = "explicit-octal"
+message = "Use explicit octal numeral notation."
+count = 4
+
+[[issues]]
+file = "tests/Cms/Template/Extensions/SeoExtensionTest.php"
+code = "function-name"
+message = "Function name `bootSeoFixture` should be in snake case."
+count = 1
+
+[[issues]]
+file = "tests/Framework/ContainerTest.php"
+code = "prefer-arrow-function"
+message = "This closure can be simplified to a more concise arrow function."
+count = 1
+
+[[issues]]
+file = "tests/Framework/RouterTest.php"
+code = "use-specific-expectations"
+message = "Use `toBeEmpty()` instead of comparing with empty values for clarity."
+count = 1
+
+[[issues]]
+file = "tests/Helpers/ContainerHelper.php"
+code = "no-error-control-operator"
+message = "Unsafe use of error control operator `@`."
+count = 2
+
+[[issues]]
+file = "tests/Helpers/DeployStubServer.php"
+code = "explicit-octal"
+message = "Use explicit octal numeral notation."
+count = 4
+
+[[issues]]
+file = "tests/Helpers/DeployStubServer.php"
+code = "no-error-control-operator"
+message = "Unsafe use of error control operator `@`."
+count = 3
+
+[[issues]]
+file = "tests/Helpers/DeployStubServer.php"
+code = "no-literal-password"
+message = "Literal passwords or sensitive data should not be stored in code."
+count = 1
+
+[[issues]]
+file = "tests/Helpers/DeployStubServer.php"
+code = "no-redundant-use"
+message = "Unused import: `ZipArchive`."
+count = 1
+
+[[issues]]
+file = "tests/Helpers/DeployStubServer.php"
+code = "no-shorthand-ternary"
+message = "Use of the shorthand ternary operator."
+count = 2
+
+[[issues]]
+file = "tests/Helpers/DeployStubServer.php"
+code = "sensitive-parameter"
+message = "Parameters that may contain sensitive information should be marked with the `#[SensitiveParameter]` attribute."
+count = 1
+
+[[issues]]
+file = "tests/Helpers/DeployStubServer.php"
+code = "use-compound-assignment"
+message = "Use a compound assignment for clarity and performance."
+count = 2
+
+[[issues]]
+file = "tests/Integration/Deploy/DeployPhp/ActivateTest.php"
+code = "no-error-control-operator"
+message = "Unsafe use of error control operator `@`."
+count = 4
+
+[[issues]]
+file = "tests/Integration/Deploy/DeployPhp/CleanupLockTest.php"
+code = "explicit-octal"
+message = "Use explicit octal numeral notation."
+count = 1
+
+[[issues]]
+file = "tests/Integration/Deploy/DeployPhp/CleanupLockTest.php"
+code = "no-error-control-operator"
+message = "Unsafe use of error control operator `@`."
+count = 3
+
+[[issues]]
+file = "tests/Integration/Deploy/DeployPhp/CleanupLockTest.php"
+code = "no-shorthand-ternary"
+message = "Use of the shorthand ternary operator."
+count = 1
+
+[[issues]]
+file = "tests/Integration/Deploy/DeployPhp/RollbackTest.php"
+code = "use-dedicated-expectation"
+message = "Use `toBeBool()` instead of `is_bool()` with `toBeTrue()`."
+count = 1
+
+[[issues]]
+file = "tests/Integration/Deploy/FtpDriverContainerTest.php"
+code = "explicit-octal"
+message = "Use explicit octal numeral notation."
+count = 3
+
+[[issues]]
+file = "tests/Integration/Deploy/FtpDriverContainerTest.php"
+code = "no-empty-catch-clause"
+message = "Do not use empty `catch` blocks."
+count = 4
+
+[[issues]]
+file = "tests/Integration/Deploy/FtpDriverContainerTest.php"
+code = "no-error-control-operator"
+message = "Unsafe use of error control operator `@`."
+count = 3
+
+[[issues]]
+file = "tests/Integration/Deploy/FtpDriverContainerTest.php"
+code = "no-literal-password"
+message = "Literal passwords or sensitive data should not be stored in code."
+count = 2
+
+[[issues]]
+file = "tests/Integration/Deploy/FtpDriverContainerTest.php"
+code = "no-shorthand-ternary"
+message = "Use of the shorthand ternary operator."
+count = 1
+
+[[issues]]
+file = "tests/Integration/Deploy/FtpDriverContainerTest.php"
+code = "readable-literal"
+message = "Numeric literal could use underscore separators for readability."
+count = 2
+
+[[issues]]
+file = "tests/Integration/Deploy/FtpDriverContainerTest.php"
+code = "use-specific-expectations"
+message = "Use `toBeTrue()` instead of `not->toBeFalse()` for clarity."
+count = 1
+
+[[issues]]
+file = "tests/Integration/Deploy/PleskApi/PleskSandboxTest.php"
+code = "no-else-clause"
+message = "Avoid `else` clauses."
+count = 2
+
+[[issues]]
+file = "tests/Integration/Deploy/PleskApi/PleskSandboxTest.php"
+code = "no-global"
+message = "Unsafe use of `$GLOBALS` variable."
+count = 28
+
+[[issues]]
+file = "tests/Integration/Deploy/PleskApi/PleskSandboxTest.php"
+code = "no-shorthand-ternary"
+message = "Use of the shorthand ternary operator."
+count = 3
+
+[[issues]]
+file = "tests/Integration/Deploy/SftpDriverContainerTest.php"
+code = "explicit-octal"
+message = "Use explicit octal numeral notation."
+count = 6
+
+[[issues]]
+file = "tests/Integration/Deploy/SftpDriverContainerTest.php"
+code = "function-name"
+message = "Function name `sftpMakeConfig` should be in snake case."
+count = 1
+
+[[issues]]
+file = "tests/Integration/Deploy/SftpDriverContainerTest.php"
+code = "no-empty-catch-clause"
+message = "Do not use empty `catch` blocks."
+count = 3
+
+[[issues]]
+file = "tests/Integration/Deploy/SftpDriverContainerTest.php"
+code = "no-error-control-operator"
+message = "Unsafe use of error control operator `@`."
+count = 2
+
+[[issues]]
+file = "tests/Integration/Deploy/SftpDriverContainerTest.php"
+code = "no-literal-password"
+message = "Literal passwords or sensitive data should not be stored in code."
+count = 1
+
+[[issues]]
+file = "tests/Integration/Deploy/SftpDriverContainerTest.php"
+code = "no-shorthand-ternary"
+message = "Use of the shorthand ternary operator."
+count = 1
+
+[[issues]]
+file = "tests/Integration/Deploy/SftpDriverContainerTest.php"
+code = "use-specific-expectations"
+message = "Use `toBeEmpty()` instead of comparing with empty values for clarity."
+count = 1
+
+[[issues]]
+file = "tests/Integration/Index/DraftVisibilityParityTest.php"
+code = "explicit-octal"
+message = "Use explicit octal numeral notation."
+count = 3
+
+[[issues]]
+file = "tests/Integration/Index/DraftVisibilityParityTest.php"
+code = "function-name"
+message = "Function name `buildVisibilityFixture` should be in snake case."
+count = 1
+
+[[issues]]
+file = "tests/Integration/Index/DraftVisibilityParityTest.php"
+code = "function-name"
+message = "Function name `buildVisibilityStores` should be in snake case."
+count = 1
+
+[[issues]]
+file = "tests/Integration/Index/DraftVisibilityParityTest.php"
+code = "function-name"
+message = "Function name `rawSlugs` should be in snake case."
+count = 1
+
+[[issues]]
+file = "tests/Integration/Index/DraftVisibilityParityTest.php"
+code = "function-name"
+message = "Function name `visUrls` should be in snake case."
+count = 1
+
+[[issues]]
+file = "tests/Integration/Index/DraftVisibilityParityTest.php"
+code = "no-error-control-operator"
+message = "Unsafe use of error control operator `@`."
+count = 3
+
+[[issues]]
+file = "tests/Integration/Index/IndexParityTest.php"
+code = "explicit-octal"
+message = "Use explicit octal numeral notation."
+count = 3
+
+[[issues]]
+file = "tests/Integration/Index/IndexParityTest.php"
+code = "function-name"
+message = "Function name `buildBothStores` should be in snake case."
+count = 1
+
+[[issues]]
+file = "tests/Integration/Index/IndexParityTest.php"
+code = "function-name"
+message = "Function name `buildParityFixture` should be in snake case."
+count = 1
+
+[[issues]]
+file = "tests/Integration/Index/IndexParityTest.php"
+code = "function-name"
+message = "Function name `urlSeq` should be in snake case."
+count = 1
+
+[[issues]]
+file = "tests/Integration/Index/IndexParityTest.php"
+code = "no-error-control-operator"
+message = "Unsafe use of error control operator `@`."
+count = 3
+
+[[issues]]
+file = "tests/Integration/Index/SqliteBuildTest.php"
+code = "explicit-octal"
+message = "Use explicit octal numeral notation."
+count = 2
+
+[[issues]]
+file = "tests/Integration/Index/SqliteBuildTest.php"
+code = "function-name"
+message = "Function name `genBlog` should be in snake case."
+count = 1
+
+[[issues]]
+file = "tests/Integration/Index/SqliteBuildTest.php"
+code = "function-name"
+message = "Function name `makeSqliteStore` should be in snake case."
+count = 1
+
+[[issues]]
+file = "tests/Integration/Index/SqliteBuildTest.php"
+code = "no-error-control-operator"
+message = "Unsafe use of error control operator `@`."
+count = 1
+
+[[issues]]
+file = "tests/TestCase.php"
+code = "explicit-octal"
+message = "Use explicit octal numeral notation."
+count = 1
+
+[[issues]]
+file = "tests/TestCase.php"
+code = "no-else-clause"
+message = "Avoid `else` clauses."
+count = 1
+
+[[issues]]
+file = "tests/TestCase.php"
+code = "no-error-control-operator"
+message = "Unsafe use of error control operator `@`."
+count = 4
+
+[[issues]]
+file = "tests/TestCase.php"
+code = "no-shorthand-ternary"
+message = "Use of the shorthand ternary operator."
+count = 1
+
+[[issues]]
+file = "tests/TestCase.php"
+code = "prefer-early-continue"
+message = "Consider using early continue pattern to reduce nesting."
+count = 1
+
+[[issues]]
+file = "tests/Unit/Deploy/ArtifactBuilderTest.php"
+code = "explicit-octal"
+message = "Use explicit octal numeral notation."
+count = 4
+
+[[issues]]
+file = "tests/Unit/Deploy/ArtifactBuilderTest.php"
+code = "no-literal-password"
+message = "Literal passwords or sensitive data should not be stored in code."
+count = 1
+
+[[issues]]
+file = "tests/Unit/Deploy/ArtifactBuilderTest.php"
+code = "no-redundant-use"
+message = "Unused import: `ReleaseManifest`."
+count = 1
+
+[[issues]]
+file = "tests/Unit/Deploy/ArtifactBuilderTest.php"
+code = "use-dedicated-expectation"
+message = "Use `toBeFile()` instead of `file_exists()` with `toBeTrue()`."
+count = 2
+
+[[issues]]
+file = "tests/Unit/Deploy/ArtifactBuilderTest.php"
+code = "use-specific-expectations"
+message = "Use `toBeTrue()` instead of `not->toBeFalse()` for clarity."
+count = 2
+
+[[issues]]
+file = "tests/Unit/Deploy/ArtifactBuilderTest.php"
+code = "use-specific-expectations"
+message = "Use `toBeTrue()` instead of `toBe(true)` for clearer boolean expectations."
+count = 1
+
+[[issues]]
+file = "tests/Unit/Deploy/Cli/DeployCheckCommandTest.php"
+code = "explicit-octal"
+message = "Use explicit octal numeral notation."
+count = 2
+
+[[issues]]
+file = "tests/Unit/Deploy/Cli/DeployCheckCommandTest.php"
+code = "function-name"
+message = "Function name `cliBody` should be in snake case."
+count = 1
+
+[[issues]]
+file = "tests/Unit/Deploy/Cli/DeployCheckCommandTest.php"
+code = "function-name"
+message = "Function name `fakeDomainDetailBody` should be in snake case."
+count = 1
+
+[[issues]]
+file = "tests/Unit/Deploy/Cli/DeployCheckCommandTest.php"
+code = "function-name"
+message = "Function name `fakeDomainInfoStdout` should be in snake case."
+count = 1
+
+[[issues]]
+file = "tests/Unit/Deploy/Cli/DeployCheckCommandTest.php"
+code = "function-name"
+message = "Function name `fakeDomainsListBody` should be in snake case."
+count = 1
+
+[[issues]]
+file = "tests/Unit/Deploy/Cli/DeployCheckCommandTest.php"
+code = "function-name"
+message = "Function name `makeDeployCheckApp` should be in snake case."
+count = 1
+
+[[issues]]
+file = "tests/Unit/Deploy/Cli/DeployCheckCommandTest.php"
+code = "function-name"
+message = "Function name `runDeployCheck` should be in snake case."
+count = 1
+
+[[issues]]
+file = "tests/Unit/Deploy/Cli/DeployCheckCommandTest.php"
+code = "no-error-control-operator"
+message = "Unsafe use of error control operator `@`."
+count = 3
+
+[[issues]]
+file = "tests/Unit/Deploy/Cli/DeployCheckCommandTest.php"
+code = "no-literal-password"
+message = "Literal passwords or sensitive data should not be stored in code."
+count = 3
+
+[[issues]]
+file = "tests/Unit/Deploy/Cli/DeployCheckCommandTest.php"
+code = "no-shorthand-ternary"
+message = "Use of the shorthand ternary operator."
+count = 3
+
+[[issues]]
+file = "tests/Unit/Deploy/Cli/DeployDiffCommandTest.php"
+code = "explicit-octal"
+message = "Use explicit octal numeral notation."
+count = 2
+
+[[issues]]
+file = "tests/Unit/Deploy/Cli/DeployDiffCommandTest.php"
+code = "no-shorthand-ternary"
+message = "Use of the shorthand ternary operator."
+count = 1
+
+[[issues]]
+file = "tests/Unit/Deploy/Cli/DeployDiffCommandTest.php"
+code = "use-dedicated-expectation"
+message = "Use `toBeInt()` instead of `is_int()` with `toBeTrue()`."
+count = 1
+
+[[issues]]
+file = "tests/Unit/Deploy/Cli/DeployInitCommandTest.php"
+code = "explicit-octal"
+message = "Use explicit octal numeral notation."
+count = 1
+
+[[issues]]
+file = "tests/Unit/Deploy/Cli/DeployInitCommandTest.php"
+code = "function-name"
+message = "Function name `makeDeployInitApp` should be in snake case."
+count = 1
+
+[[issues]]
+file = "tests/Unit/Deploy/Cli/DeployInitCommandTest.php"
+code = "function-name"
+message = "Function name `runDeployInit` should be in snake case."
+count = 1
+
+[[issues]]
+file = "tests/Unit/Deploy/Cli/DeployInitCommandTest.php"
+code = "no-error-control-operator"
+message = "Unsafe use of error control operator `@`."
+count = 2
+
+[[issues]]
+file = "tests/Unit/Deploy/Cli/DeployInitCommandTest.php"
+code = "no-shorthand-ternary"
+message = "Use of the shorthand ternary operator."
+count = 2
+
+[[issues]]
+file = "tests/Unit/Deploy/Cli/DeployRollbackCommandTest.php"
+code = "explicit-octal"
+message = "Use explicit octal numeral notation."
+count = 1
+
+[[issues]]
+file = "tests/Unit/Deploy/Cli/DeployRollbackCommandTest.php"
+code = "function-name"
+message = "Function name `makeRollbackDriver` should be in snake case."
+count = 1
+
+[[issues]]
+file = "tests/Unit/Deploy/Cli/DeployRollbackCommandTest.php"
+code = "no-boolean-flag-parameter"
+message = "Avoid boolean flag parameters."
+count = 1
+
+[[issues]]
+file = "tests/Unit/Deploy/Cli/DeployRollbackCommandTest.php"
+code = "no-shorthand-ternary"
+message = "Use of the shorthand ternary operator."
+count = 1
+
+[[issues]]
+file = "tests/Unit/Deploy/Cli/DeployRollbackCommandTest.php"
+code = "use-dedicated-expectation"
+message = "Use `toBeInt()` instead of `is_int()` with `toBeTrue()`."
+count = 2
+
+[[issues]]
+file = "tests/Unit/Deploy/Cli/DeploySetupGitCommandTest.php"
+code = "explicit-octal"
+message = "Use explicit octal numeral notation."
+count = 3
+
+[[issues]]
+file = "tests/Unit/Deploy/Cli/DeploySetupGitCommandTest.php"
+code = "function-name"
+message = "Function name `cliBody` should be in snake case."
+count = 1
+
+[[issues]]
+file = "tests/Unit/Deploy/Cli/DeploySetupGitCommandTest.php"
+code = "function-name"
+message = "Function name `makeSetupGitApp` should be in snake case."
+count = 1
+
+[[issues]]
+file = "tests/Unit/Deploy/Cli/DeploySetupGitCommandTest.php"
+code = "function-name"
+message = "Function name `runSetupGit` should be in snake case."
+count = 1
+
+[[issues]]
+file = "tests/Unit/Deploy/Cli/DeploySetupGitCommandTest.php"
+code = "no-boolean-flag-parameter"
+message = "Avoid boolean flag parameters."
+count = 1
+
+[[issues]]
+file = "tests/Unit/Deploy/Cli/DeploySetupGitCommandTest.php"
+code = "no-error-control-operator"
+message = "Unsafe use of error control operator `@`."
+count = 1
+
+[[issues]]
+file = "tests/Unit/Deploy/Cli/DeploySetupGitCommandTest.php"
+code = "no-literal-password"
+message = "Literal passwords or sensitive data should not be stored in code."
+count = 2
+
+[[issues]]
+file = "tests/Unit/Deploy/Cli/DeploySetupGitCommandTest.php"
+code = "no-shorthand-ternary"
+message = "Use of the shorthand ternary operator."
+count = 3
+
+[[issues]]
+file = "tests/Unit/Deploy/Cli/DeploySetupGithubCommandTest.php"
+code = "explicit-octal"
+message = "Use explicit octal numeral notation."
+count = 2
+
+[[issues]]
+file = "tests/Unit/Deploy/Cli/DeploySetupGithubCommandTest.php"
+code = "function-name"
+message = "Function name `makeSetupGithubApp` should be in snake case."
+count = 1
+
+[[issues]]
+file = "tests/Unit/Deploy/Cli/DeploySetupGithubCommandTest.php"
+code = "function-name"
+message = "Function name `runSetupGithub` should be in snake case."
+count = 1
+
+[[issues]]
+file = "tests/Unit/Deploy/Cli/DeploySetupGithubCommandTest.php"
+code = "no-else-clause"
+message = "Avoid `else` clauses."
+count = 2
+
+[[issues]]
+file = "tests/Unit/Deploy/Cli/DeploySetupGithubCommandTest.php"
+code = "no-literal-password"
+message = "Literal passwords or sensitive data should not be stored in code."
+count = 6
+
+[[issues]]
+file = "tests/Unit/Deploy/Cli/DeploySetupGithubCommandTest.php"
+code = "no-shorthand-ternary"
+message = "Use of the shorthand ternary operator."
+count = 2
+
+[[issues]]
+file = "tests/Unit/Deploy/Cli/DeployStatusCommandTest.php"
+code = "explicit-octal"
+message = "Use explicit octal numeral notation."
+count = 1
+
+[[issues]]
+file = "tests/Unit/Deploy/Cli/DeployStatusCommandTest.php"
+code = "no-shorthand-ternary"
+message = "Use of the shorthand ternary operator."
+count = 1
+
+[[issues]]
+file = "tests/Unit/Deploy/Cli/DeployStatusCommandTest.php"
+code = "use-dedicated-expectation"
+message = "Use `toBeInt()` instead of `is_int()` with `toBeTrue()`."
+count = 1
+
+[[issues]]
+file = "tests/Unit/Deploy/DeployLockTest.php"
+code = "explicit-octal"
+message = "Use explicit octal numeral notation."
+count = 1
+
+[[issues]]
+file = "tests/Unit/Deploy/DeployLockTest.php"
+code = "no-shorthand-ternary"
+message = "Use of the shorthand ternary operator."
+count = 1
+
+[[issues]]
+file = "tests/Unit/Deploy/DeployLockTest.php"
+code = "readable-literal"
+message = "Numeric literal could use underscore separators for readability."
+count = 1
+
+[[issues]]
+file = "tests/Unit/Deploy/DeployLockTest.php"
+code = "use-dedicated-expectation"
+message = "Use `toBeBool()` instead of `is_bool()` with `toBeTrue()`."
+count = 1
+
+[[issues]]
+file = "tests/Unit/Deploy/Drivers/FtpDriverTest.php"
+code = "explicit-octal"
+message = "Use explicit octal numeral notation."
+count = 2
+
+[[issues]]
+file = "tests/Unit/Deploy/Drivers/FtpDriverTest.php"
+code = "function-name"
+message = "Function name `makeFtpDeployConfig` should be in snake case."
+count = 1
+
+[[issues]]
+file = "tests/Unit/Deploy/Drivers/FtpDriverTest.php"
+code = "no-empty"
+message = "Use of the `empty` construct."
+count = 2
+
+[[issues]]
+file = "tests/Unit/Deploy/Drivers/FtpDriverTest.php"
+code = "no-literal-password"
+message = "Literal passwords or sensitive data should not be stored in code."
+count = 4
+
+[[issues]]
+file = "tests/Unit/Deploy/Drivers/FtpDriverTest.php"
+code = "no-shorthand-ternary"
+message = "Use of the shorthand ternary operator."
+count = 1
+
+[[issues]]
+file = "tests/Unit/Deploy/Drivers/FtpDriverTest.php"
+code = "prefer-early-continue"
+message = "Consider using early continue pattern to reduce nesting."
+count = 1
+
+[[issues]]
+file = "tests/Unit/Deploy/Drivers/FtpDriverTest.php"
+code = "use-dedicated-expectation"
+message = "Use `toBeFile()` instead of `file_exists()` with `toBeTrue()`."
+count = 2
+
+[[issues]]
+file = "tests/Unit/Deploy/Drivers/FtpDriverTest.php"
+code = "use-specific-expectations"
+message = "Use `toBeTrue()` instead of `not->toBeFalse()` for clarity."
+count = 1
+
+[[issues]]
+file = "tests/Unit/Deploy/Drivers/GitDriverFatBranchTest.php"
+code = "explicit-octal"
+message = "Use explicit octal numeral notation."
+count = 3
+
+[[issues]]
+file = "tests/Unit/Deploy/Drivers/GitDriverFatBranchTest.php"
+code = "function-name"
+message = "Function name `createFatBareRemote` should be in snake case."
+count = 1
+
+[[issues]]
+file = "tests/Unit/Deploy/Drivers/GitDriverFatBranchTest.php"
+code = "function-name"
+message = "Function name `createFatWorkingRepo` should be in snake case."
+count = 1
+
+[[issues]]
+file = "tests/Unit/Deploy/Drivers/GitDriverFatBranchTest.php"
+code = "function-name"
+message = "Function name `detectComposerBin` should be in snake case."
+count = 1
+
+[[issues]]
+file = "tests/Unit/Deploy/Drivers/GitDriverFatBranchTest.php"
+code = "function-name"
+message = "Function name `makeFatConfig` should be in snake case."
+count = 1
+
+[[issues]]
+file = "tests/Unit/Deploy/Drivers/GitDriverFatBranchTest.php"
+code = "function-name"
+message = "Function name `withFatTempDir` should be in snake case."
+count = 1
+
+[[issues]]
+file = "tests/Unit/Deploy/Drivers/GitDriverFatBranchTest.php"
+code = "no-boolean-flag-parameter"
+message = "Avoid boolean flag parameters."
+count = 1
+
+[[issues]]
+file = "tests/Unit/Deploy/Drivers/GitDriverFatBranchTest.php"
+code = "use-dedicated-expectation"
+message = "Use `toBeFile()` instead of `file_exists()` with `toBeTrue()`."
+count = 1
+
+[[issues]]
+file = "tests/Unit/Deploy/Drivers/GitDriverFatBranchTest.php"
+code = "use-specific-expectations"
+message = "Use `toBeEmpty()` instead of comparing with empty values for clarity."
+count = 3
+
+[[issues]]
+file = "tests/Unit/Deploy/Drivers/GitDriverLeanTest.php"
+code = "explicit-octal"
+message = "Use explicit octal numeral notation."
+count = 4
+
+[[issues]]
+file = "tests/Unit/Deploy/Drivers/GitDriverLeanTest.php"
+code = "function-name"
+message = "Function name `createBareRemote` should be in snake case."
+count = 1
+
+[[issues]]
+file = "tests/Unit/Deploy/Drivers/GitDriverLeanTest.php"
+code = "function-name"
+message = "Function name `createWorkingRepo` should be in snake case."
+count = 1
+
+[[issues]]
+file = "tests/Unit/Deploy/Drivers/GitDriverLeanTest.php"
+code = "function-name"
+message = "Function name `makeLeanConfig` should be in snake case."
+count = 1
+
+[[issues]]
+file = "tests/Unit/Deploy/Drivers/GitDriverLeanTest.php"
+code = "function-name"
+message = "Function name `withTempDir` should be in snake case."
+count = 1
+
+[[issues]]
+file = "tests/Unit/Deploy/Drivers/GitDriverLeanTest.php"
+code = "no-redundant-use"
+message = "Unused import: `Command`."
+count = 1
+
+[[issues]]
+file = "tests/Unit/Deploy/Drivers/GitHubPullDriverTest.php"
+code = "explicit-octal"
+message = "Use explicit octal numeral notation."
+count = 2
+
+[[issues]]
+file = "tests/Unit/Deploy/Drivers/GitHubPullDriverTest.php"
+code = "function-name"
+message = "Function name `cleanupTempPath` should be in snake case."
+count = 1
+
+[[issues]]
+file = "tests/Unit/Deploy/Drivers/GitHubPullDriverTest.php"
+code = "function-name"
+message = "Function name `commitInitialFile` should be in snake case."
+count = 1
+
+[[issues]]
+file = "tests/Unit/Deploy/Drivers/GitHubPullDriverTest.php"
+code = "function-name"
+message = "Function name `initGitRepo` should be in snake case."
+count = 1
+
+[[issues]]
+file = "tests/Unit/Deploy/Drivers/GitHubPullDriverTest.php"
+code = "function-name"
+message = "Function name `makeGithubPullConfig` should be in snake case."
+count = 1
+
+[[issues]]
+file = "tests/Unit/Deploy/Drivers/GitHubPullDriverTest.php"
+code = "function-name"
+message = "Function name `makeTempBasePath` should be in snake case."
+count = 1
+
+[[issues]]
+file = "tests/Unit/Deploy/Drivers/GitHubPullDriverTest.php"
+code = "no-error-control-operator"
+message = "Unsafe use of error control operator `@`."
+count = 1
+
+[[issues]]
+file = "tests/Unit/Deploy/Drivers/GitHubPullDriverTest.php"
+code = "no-literal-password"
+message = "Literal passwords or sensitive data should not be stored in code."
+count = 2
+
+[[issues]]
+file = "tests/Unit/Deploy/Drivers/SftpDriverTest.php"
+code = "explicit-octal"
+message = "Use explicit octal numeral notation."
+count = 3
+
+[[issues]]
+file = "tests/Unit/Deploy/Drivers/SftpDriverTest.php"
+code = "function-name"
+message = "Function name `makeSftpDeployConfig` should be in snake case."
+count = 1
+
+[[issues]]
+file = "tests/Unit/Deploy/Drivers/SftpDriverTest.php"
+code = "no-empty-catch-clause"
+message = "Do not use empty `catch` blocks."
+count = 1
+
+[[issues]]
+file = "tests/Unit/Deploy/Drivers/SftpDriverTest.php"
+code = "no-literal-password"
+message = "Literal passwords or sensitive data should not be stored in code."
+count = 1
+
+[[issues]]
+file = "tests/Unit/Deploy/Drivers/SftpDriverTest.php"
+code = "no-shorthand-ternary"
+message = "Use of the shorthand ternary operator."
+count = 1
+
+[[issues]]
+file = "tests/Unit/Deploy/Drivers/SftpDriverTest.php"
+code = "prefer-early-continue"
+message = "Consider using early continue pattern to reduce nesting."
+count = 1
+
+[[issues]]
+file = "tests/Unit/Deploy/GitHost/GitHubClientTest.php"
+code = "function-name"
+message = "Function name `makeGitHubClient` should be in snake case."
+count = 1
+
+[[issues]]
+file = "tests/Unit/Deploy/GitHost/GitHubClientTest.php"
+code = "no-literal-password"
+message = "Literal passwords or sensitive data should not be stored in code."
+count = 1
+
+[[issues]]
+file = "tests/Unit/Deploy/GitHost/GitHubClientTest.php"
+code = "readable-literal"
+message = "Numeric literal could use underscore separators for readability."
+count = 3
+
+[[issues]]
+file = "tests/Unit/Deploy/GitHost/GitHubClientTest.php"
+code = "sensitive-parameter"
+message = "Parameters that may contain sensitive information should be marked with the `#[SensitiveParameter]` attribute."
+count = 1
+
+[[issues]]
+file = "tests/Unit/Deploy/HealthCheckerTest.php"
+code = "function-name"
+message = "Function name `findHealthFreePort` should be in snake case."
+count = 1
+
+[[issues]]
+file = "tests/Unit/Deploy/HealthCheckerTest.php"
+code = "function-name"
+message = "Function name `startHealthServer` should be in snake case."
+count = 1
+
+[[issues]]
+file = "tests/Unit/Deploy/HealthCheckerTest.php"
+code = "function-name"
+message = "Function name `stopHealthServer` should be in snake case."
+count = 1
+
+[[issues]]
+file = "tests/Unit/Deploy/HealthCheckerTest.php"
+code = "no-error-control-operator"
+message = "Unsafe use of error control operator `@`."
+count = 1
+
+[[issues]]
+file = "tests/Unit/Deploy/PleskApi/Client/RestTest.php"
+code = "no-shorthand-ternary"
+message = "Use of the shorthand ternary operator."
+count = 6
+
+[[issues]]
+file = "tests/Unit/Deploy/PleskApi/Client/RestTest.php"
+code = "use-specific-expectations"
+message = "Use `toBeEmpty()` instead of comparing with empty values for clarity."
+count = 1
+
+[[issues]]
+file = "tests/Unit/Deploy/PleskApi/InspectorGitHubPullTest.php"
+code = "function-name"
+message = "Function name `cliBody` should be in snake case."
+count = 1
+
+[[issues]]
+file = "tests/Unit/Deploy/PleskApi/InspectorGitHubPullTest.php"
+code = "function-name"
+message = "Function name `makeInspectorForGhPull` should be in snake case."
+count = 1
+
+[[issues]]
+file = "tests/Unit/Deploy/PleskApi/InspectorTest.php"
+code = "function-name"
+message = "Function name `cliBody` should be in snake case."
+count = 1
+
+[[issues]]
+file = "tests/Unit/Deploy/PleskApi/InspectorTest.php"
+code = "function-name"
+message = "Function name `makeInspector` should be in snake case."
+count = 1
+
+[[issues]]
+file = "tests/Unit/Deploy/PleskApi/ProvisionerGitHubPullTest.php"
+code = "function-name"
+message = "Function name `cliBody` should be in snake case."
+count = 1
+
+[[issues]]
+file = "tests/Unit/Deploy/PleskApi/ProvisionerGitHubPullTest.php"
+code = "function-name"
+message = "Function name `makeProvisionerForGhPull` should be in snake case."
+count = 1
+
+[[issues]]
+file = "tests/Unit/Deploy/PleskApi/ProvisionerGitHubPullTest.php"
+code = "function-name"
+message = "Function name `repoInfoStdout` should be in snake case."
+count = 1
+
+[[issues]]
+file = "tests/Unit/Deploy/PleskApi/ProvisionerGitHubPullTest.php"
+code = "no-boolean-flag-parameter"
+message = "Avoid boolean flag parameters."
+count = 1
+
+[[issues]]
+file = "tests/Unit/Deploy/PleskApi/ProvisionerTest.php"
+code = "function-name"
+message = "Function name `cliBody` should be in snake case."
+count = 1
+
+[[issues]]
+file = "tests/Unit/Deploy/PleskApi/ProvisionerTest.php"
+code = "function-name"
+message = "Function name `makeProvisioner` should be in snake case."
+count = 1
+
+[[issues]]
+file = "tests/Unit/Deploy/PleskApi/ProvisionerTest.php"
+code = "no-literal-password"
+message = "Literal passwords or sensitive data should not be stored in code."
+count = 1
+
+[[issues]]
+file = "tests/Unit/Deploy/Process/RunnerTest.php"
+code = "no-else-clause"
+message = "Avoid `else` clauses."
+count = 2
+
+[[issues]]
+file = "tests/Unit/Deploy/Process/RunnerTest.php"
+code = "use-specific-expectations"
+message = "Use `toBeEmpty()` instead of comparing with empty values for clarity."
+count = 1
+
+[[issues]]
+file = "tests/Unit/Deploy/ReleaseManifestTest.php"
+code = "explicit-octal"
+message = "Use explicit octal numeral notation."
+count = 2
+
+[[issues]]
+file = "tests/Unit/Deploy/WebhookDispatcherTest.php"
+code = "function-name"
+message = "Function name `findFreePort` should be in snake case."
+count = 1
+
+[[issues]]
+file = "tests/Unit/Deploy/WebhookDispatcherTest.php"
+code = "function-name"
+message = "Function name `startWebhookServer` should be in snake case."
+count = 1
+
+[[issues]]
+file = "tests/Unit/Deploy/WebhookDispatcherTest.php"
+code = "function-name"
+message = "Function name `stopServer` should be in snake case."
+count = 1
+
+[[issues]]
+file = "tests/Unit/Deploy/WebhookDispatcherTest.php"
+code = "no-error-control-operator"
+message = "Unsafe use of error control operator `@`."
+count = 2
+
+[[issues]]
+file = "tests/Unit/Deploy/WebhookDispatcherTest.php"
+code = "no-literal-password"
+message = "Literal passwords or sensitive data should not be stored in code."
+count = 3
+
+[[issues]]
+file = "tests/Unit/Helpers/ContainerHelperTest.php"
+code = "no-error-control-operator"
+message = "Unsafe use of error control operator `@`."
+count = 1
+
+[[issues]]
+file = "tests/Unit/Helpers/ContainerHelperTest.php"
+code = "use-specific-expectations"
+message = "Use `toBeTrue()` instead of `not->toBeFalse()` for clarity."
+count = 1

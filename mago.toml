@@ -1,0 +1,86 @@
+#:schema https://mago.carthage.software/1.30.0/schema.json
+
+# RakunCMS adopts Mago incrementally:
+# - semantic linting must stay clean;
+# - analyzer and linter baselines freeze current legacy findings;
+# - new errors above the baseline should fail CI.
+version = "1"
+php-version = "8.4.0"
+threads = 4
+
+[source]
+paths = ["src", "tests"]
+includes = []
+excludes = [
+    "vendor/**",
+    "cache/**",
+    "storage/**",
+    ".phpunit.cache/**",
+    "public/**",
+]
+extensions = ["php"]
+
+[linter]
+integrations = ["phpunit", "pest"]
+baseline = "mago-lint-baseline.toml"
+baseline-variant = "loose"
+minimum-fail-level = "error"
+excludes = [
+    "tests/Fixtures/**",
+]
+
+[linter.rules]
+# Keep semantic/safety checks useful, but do not force a broad style rewrite.
+literal-named-argument = { enabled = false }
+cyclomatic-complexity = { level = "warning", threshold = 35 }
+kan-defect = { level = "warning", threshold = 4.0 }
+too-many-methods = { level = "warning", threshold = 35 }
+too-many-properties = { level = "warning", threshold = 20 }
+excessive-parameter-list = { level = "warning", threshold = 8 }
+halstead = { level = "warning", volume-threshold = 2500.0, difficulty-threshold = 25.0, effort-threshold = 20000.0 }
+
+# RakunCMS intentionally supports pragmatic PHP shared-hosting code paths.
+no-empty = { level = "warning" }
+no-error-control-operator = { level = "warning" }
+no-empty-catch-clause = { level = "warning" }
+no-shorthand-ternary = { level = "warning" }
+no-else-clause = { level = "help" }
+no-boolean-flag-parameter = { level = "help" }
+prefer-static-closure = { level = "help", exclude = ["tests/**"] }
+
+# Security checks stay enabled but start as warnings where legacy scaffolding
+# produces false positives that must be reviewed incrementally.
+no-literal-password = { level = "warning" }
+sensitive-parameter = { level = "warning" }
+
+[analyzer]
+baseline = "mago-analysis-baseline.toml"
+baseline-variant = "loose"
+minimum-fail-level = "error"
+excludes = [
+    "tests/**",
+    "tests/Fixtures/**",
+]
+ignore = []
+find-unused-expressions = false
+find-unused-definitions = false
+analyze-dead-code = false
+perform-heuristic-checks = false
+check-throws = false
+
+[formatter]
+print-width = 120
+tab-width = 4
+use-tabs = false
+end-of-line = "lf"
+single-quote = true
+trailing-comma = true
+remove-trailing-close-tag = true
+control-brace-style = "same-line"
+closure-brace-style = "same-line"
+function-brace-style = "next-line"
+method-brace-style = "next-line"
+classlike-brace-style = "next-line"
+sort-uses = true
+separate-use-types = true
+expand-use-groups = true
