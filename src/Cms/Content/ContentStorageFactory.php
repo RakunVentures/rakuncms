@@ -32,29 +32,41 @@ final class ContentStorageFactory
         return $cache;
     }
 
-    private static function driver(): string
+    public static function driver(): string
     {
         $driver = self::config('content.driver') ?? self::config('rakun.content.driver') ?? 'file';
 
         return is_string($driver) ? $driver : 'file';
     }
 
-    private static function pdo(): PDO
+    /**
+     * Normalized MySQL connection config (with defaults applied). Single source
+     * of truth shared by self::pdo() and the db:dump CLI command.
+     *
+     * @return array{host: string, port: int, database: string, username: string, password: string}
+     */
+    public static function mysqlConfig(): array
     {
         $cfg = self::config('content.mysql') ?? self::config('rakun.content.mysql') ?? [];
         if (!is_array($cfg)) {
             $cfg = [];
         }
 
-        $host = (string) ($cfg['host'] ?? '127.0.0.1');
-        $port = (int) ($cfg['port'] ?? 3306);
-        $db   = (string) ($cfg['database'] ?? '');
-        $user = (string) ($cfg['username'] ?? 'root');
-        $pass = (string) ($cfg['password'] ?? '');
+        return [
+            'host'     => (string) ($cfg['host'] ?? '127.0.0.1'),
+            'port'     => (int) ($cfg['port'] ?? 3306),
+            'database' => (string) ($cfg['database'] ?? ''),
+            'username' => (string) ($cfg['username'] ?? 'root'),
+            'password' => (string) ($cfg['password'] ?? ''),
+        ];
+    }
 
-        $dsn = "mysql:host={$host};port={$port};dbname={$db};charset=utf8mb4";
+    public static function pdo(): PDO
+    {
+        $cfg = self::mysqlConfig();
+        $dsn = "mysql:host={$cfg['host']};port={$cfg['port']};dbname={$cfg['database']};charset=utf8mb4";
 
-        return new PDO($dsn, $user, $pass, [
+        return new PDO($dsn, $cfg['username'], $cfg['password'], [
             PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
             PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
             PDO::ATTR_TIMEOUT            => 5,

@@ -41,6 +41,7 @@ $application->addCommand(new \Rkn\Cms\Cli\WxrImportCommand());
 $application->addCommand(new \Rkn\Cms\Cli\IndexRebuildCommand());
 $application->addCommand(new \Rkn\Cms\Cli\ContentImportCommand());
 $application->addCommand(new \Rkn\Cms\Cli\ContentRebuildCacheCommand());
+$application->addCommand(new \Rkn\Cms\Cli\DbDumpCommand());
 $application->addCommand(new \Rkn\Cms\Cli\CacheClearCommand());
 $application->addCommand(new \Rkn\Cms\Cli\CacheWarmupCommand());
 $application->addCommand(new \Rkn\Cms\Cli\TemplateWarmupCommand());

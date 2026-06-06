@@ -46,6 +46,7 @@ class InitCommand extends Command
             'storage/queue/processing',
             'storage/queue/failed',
             'storage/rates',
+            'storage/backups',
             'templates/_layouts',
             'templates/_partials',
             'templates/_components',
@@ -120,6 +121,9 @@ class InitCommand extends Command
             '/node_modules/',
             '/.env',
             '/.env.*.local',
+            '# Database dumps (db:dump) hold the full content store — never commit them.',
+            '/storage/backups/*',
+            '!/storage/backups/.gitkeep',
         ];
         foreach ($lines as $line) {
             $this->appendIfMissing($path, $line . "\n");
@@ -551,6 +555,7 @@ $application = new Application('RakunCMS', '0.1.0');
 $application->addCommand(new \Rkn\Cms\Cli\InitCommand());
 $application->addCommand(new \Rkn\Cms\Cli\WxrImportCommand());
 $application->addCommand(new \Rkn\Cms\Cli\IndexRebuildCommand());
+$application->addCommand(new \Rkn\Cms\Cli\DbDumpCommand());
 $application->addCommand(new \Rkn\Cms\Cli\CacheClearCommand());
 $application->addCommand(new \Rkn\Cms\Cli\CacheWarmupCommand());
 $application->addCommand(new \Rkn\Cms\Cli\TemplateWarmupCommand());

@@ -12,6 +12,8 @@
 !/storage/queue/failed/.gitkeep
 /storage/rates/*
 !/storage/rates/.gitkeep
+/storage/backups/*
+!/storage/backups/.gitkeep
 .phpunit.result.cache
 .phpunit.cache/
 .php-cs-fixer.cache
