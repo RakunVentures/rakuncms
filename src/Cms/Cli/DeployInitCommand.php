@@ -60,6 +60,8 @@ final class DeployInitCommand extends Command
             return trim($value);
         });
 
+        $user = (string) $io->ask('FTP username');
+        $password = (string) $io->askHidden('FTP password');
         $domain = (string) $io->ask('Domain name (e.g. mysite.com)', null, static function (?string $value): string {
             if ($value === null || trim($value) === '') {
                 throw new \RuntimeException('Domain is required.');
@@ -67,12 +69,87 @@ final class DeployInitCommand extends Command
             return strtolower(trim($value));
         });
 
-        $path = (string) $io->ask('Remote path (e.g. /public_html or /httpdocs)', '/public_html', static function (?string $value): string {
-            if ($value === null || trim($value) === '') {
-                throw new \RuntimeException('Path is required.');
+        $path = '/public_html';
+
+        if (extension_loaded('ftp')) {
+            $io->writeln("Connecting to <info>{$host}</info>...");
+            
+            $conn = null;
+            if (function_exists('ftp_ssl_connect')) {
+                $conn = @ftp_ssl_connect($host);
             }
-            return trim($value);
-        });
+            if (!$conn && function_exists('ftp_connect')) {
+                $conn = @ftp_connect($host);
+            }
+
+            if (!$conn) {
+                $io->warning("Could not connect to FTP host {$host}. Proceeding with manual path configuration.");
+                $path = (string) $io->ask('Remote path (e.g. /public_html or /httpdocs)', $path);
+            } else {
+                if (!@ftp_login($conn, $user, $password)) {
+                    $io->error("FTP login failed for user {$user}. Verify your credentials.");
+                    @ftp_close($conn);
+                    return Command::FAILURE;
+                }
+
+                @ftp_pasv($conn, true);
+                $io->success("FTP connection and login successful!");
+
+                $rawList = @ftp_nlist($conn, '.');
+                $dirs = [];
+                if (is_array($rawList)) {
+                    foreach ($rawList as $item) {
+                        $cleanItem = basename($item);
+                        if (!in_array($cleanItem, ['.', '..'], true) && !str_contains($cleanItem, '.')) {
+                            $dirs[] = $cleanItem;
+                        }
+                    }
+                }
+
+                if (!empty($dirs)) {
+                    $choices = array_intersect(['public_html', 'httpdocs', 'www'], $dirs);
+                    if (empty($choices)) {
+                        $choices = array_slice($dirs, 0, 8);
+                    }
+                    $choices[] = 'Other (type manually)';
+                    
+                    $pathSelection = $io->choice('Select remote destination path', $choices, $choices[0] ?? null);
+                    if ($pathSelection === 'Other (type manually)') {
+                        $path = (string) $io->ask('Enter remote path (e.g. /public_html)', $path);
+                    } else {
+                        $path = '/' . $pathSelection;
+                    }
+                } else {
+                    $path = (string) $io->ask('Remote path (e.g. /public_html or /httpdocs)', $path);
+                }
+
+                // Check for existing contents and offer backup
+                $checkPath = ltrim($path, '/');
+                if ($checkPath === '') $checkPath = '.';
+
+                $contents = @ftp_nlist($conn, $checkPath);
+                $hasContents = is_array($contents) && count(array_filter($contents, fn($i) => !in_array(basename($i), ['.', '..'], true))) > 0;
+                
+                if ($hasContents) {
+                    $io->warning("The directory '{$path}' exists and is NOT empty.");
+                    if ($io->confirm("Do you want to rename it as a backup to start fresh? (e.g. {$path}_backup_Ymd)", false)) {
+                        $backupName = $checkPath . '_backup_' . date('Ymd_His');
+                        if (@ftp_rename($conn, $checkPath, $backupName)) {
+                            $io->success("Renamed to '{$backupName}'");
+                            @ftp_mkdir($conn, $checkPath);
+                            $io->success("Created fresh '{$path}' directory");
+                        } else {
+                            $io->error("Failed to rename '{$path}'. You might not have the required permissions.");
+                        }
+                    }
+                }
+
+                @ftp_close($conn);
+            }
+        } else {
+            $io->note("PHP FTP extension is not installed locally. Skipping connection test and folder discovery.");
+            $path = (string) $io->ask('Remote path (e.g. /public_html or /httpdocs)', $path);
+        }
 
         $configData = [
             $env => [
@@ -92,14 +169,12 @@ final class DeployInitCommand extends Command
         $exampleFile = "{$basePath}/config/deploy.yaml.example";
         $productionFile = "{$basePath}/config/deploy.yaml";
 
-        // Always write the .example file
         if (!is_dir("{$basePath}/config")) {
             mkdir("{$basePath}/config", 0755, true);
         }
         file_put_contents($exampleFile, Yaml::dump($configData, 6, 2));
         $io->success("Deployment blueprint saved to config/deploy.yaml.example");
 
-        // Optionally write the production file
         if (file_exists($productionFile)) {
             if ($io->confirm('config/deploy.yaml already exists. Overwrite it?', false)) {
                 file_put_contents($productionFile, Yaml::dump($configData, 6, 2));
@@ -112,18 +187,41 @@ final class DeployInitCommand extends Command
             $io->success('config/deploy.yaml created.');
         }
 
-        // ---- Update .env / .env.example ----
         $this->updateEnvExampleFtp($basePath);
+        
+        if ($user !== '' && $password !== '') {
+            $this->writeEnvVar($basePath, 'FTP_USER', $user, $io);
+            $this->writeEnvVar($basePath, 'FTP_PASSWORD', $password, $io);
+        }
 
         $io->section('Next steps');
         $io->listing([
-            'Copy .env.example to .env and fill in FTP_USER, FTP_PASSWORD, and DEPLOY_SECRET.',
+            'Copy .env.example to .env and ensure DEPLOY_SECRET is filled.',
             'Generate a DEPLOY_SECRET (e.g., using: php -r "echo bin2hex(random_bytes(16)).PHP_EOL;").',
             "Run 'rakun deploy:install {$env}' to upload the remote deployment script.",
             "Run 'rakun deploy {$env}' to deploy your site.",
         ]);
 
         return Command::SUCCESS;
+    }
+
+    private function writeEnvVar(string $basePath, string $key, string $value, SymfonyStyle $io): void
+    {
+        $envFile = "{$basePath}/.env";
+        $existing = is_file($envFile) ? (string) file_get_contents($envFile) : '';
+
+        if (preg_match('/^' . preg_quote($key, '/') . '=.*$/m', $existing) === 1) {
+            $io->note("{$key} already present in .env — not overwriting.");
+            return;
+        }
+
+        $prefix = ($existing === '' || str_ends_with($existing, "\n")) ? '' : "\n";
+        $appended = $existing . $prefix . "{$key}={$value}\n";
+        file_put_contents($envFile, $appended);
+
+        if (!is_file("{$envFile}.lock")) {
+            @chmod($envFile, 0600);
+        }
     }
 
     private function updateEnvExampleFtp(string $basePath): void
