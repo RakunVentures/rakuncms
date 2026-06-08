@@ -19,30 +19,139 @@ use Symfony\Component\Yaml\Yaml;
 /**
  * CLI command: rakun deploy:init
  *
- * Interactive wizard that:
- *   1. Asks for Plesk host, API key, and domain.
- *   2. Runs Inspector::discover() to capture server capabilities.
- *   3. Offers opt-in provisioning (enable shell, create Git repo).
- *   4. Writes config/deploy.yaml.example (does NOT overwrite config/deploy.yaml without confirmation).
- *   5. Updates .env.example with placeholder vars.
+ * Interactive wizard that setups the deploy configuration.
+ * Supports Plesk auto-provisioning and generic FTP/cPanel setup.
  */
-#[AsCommand(name: 'deploy:init', description: 'Interactive setup and auto-provisioning for Plesk')]
+#[AsCommand(name: 'deploy:init', description: 'Interactive setup for deployment (Plesk auto-provisioning or generic FTP)')]
 final class DeployInitCommand extends Command
 {
     protected function configure(): void
     {
         $this
-            ->addOption('environment', null, InputOption::VALUE_REQUIRED, 'Environment name (used in the auto-provisioned API key description)', 'production')
-            ->addOption('auto-key', null, InputOption::VALUE_NONE, 'Force auto-provisioning of a REST API key (skip the prompt)')
-            ->addOption('manual-key', null, InputOption::VALUE_NONE, 'Force manual API-key input (skip auto-provisioning prompt)');
+            ->addOption('environment', null, InputOption::VALUE_REQUIRED, 'Environment name', 'production')
+            ->addOption('auto-key', null, InputOption::VALUE_NONE, 'Force auto-provisioning of a REST API key (Plesk only)')
+            ->addOption('manual-key', null, InputOption::VALUE_NONE, 'Force manual API-key input (Plesk only)');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $io = new SymfonyStyle($input, $output);
-        $io->title('RakunCMS — Plesk Deployment Setup');
+        $io->title('RakunCMS — Deployment Setup');
 
         $env = (string) $input->getOption('environment');
+
+        $type = $io->choice('Select deployment type', ['Plesk (Auto-provisioning via API)', 'Generic FTP (cPanel, Shared Hosting)'], 'Plesk (Auto-provisioning via API)');
+
+        if (str_starts_with($type, 'Generic FTP')) {
+            return $this->setupFtp($io, $env);
+        }
+
+        return $this->setupPlesk($input, $io, $env);
+    }
+
+    private function setupFtp(SymfonyStyle $io, string $env): int
+    {
+        $io->section('Generic FTP Deployment Setup');
+
+        $host = (string) $io->ask('FTP host (e.g. ftp.example.com)', null, static function (?string $value): string {
+            if ($value === null || trim($value) === '') {
+                throw new \RuntimeException('Host is required.');
+            }
+            return trim($value);
+        });
+
+        $domain = (string) $io->ask('Domain name (e.g. mysite.com)', null, static function (?string $value): string {
+            if ($value === null || trim($value) === '') {
+                throw new \RuntimeException('Domain is required.');
+            }
+            return strtolower(trim($value));
+        });
+
+        $path = (string) $io->ask('Remote path (e.g. /public_html or /httpdocs)', '/public_html', static function (?string $value): string {
+            if ($value === null || trim($value) === '') {
+                throw new \RuntimeException('Path is required.');
+            }
+            return trim($value);
+        });
+
+        $configData = [
+            $env => [
+                'method' => 'ftp',
+                'strategy' => 'fat',
+                'host' => $host,
+                'user' => '${FTP_USER}',
+                'password' => '${FTP_PASSWORD}',
+                'domain' => $domain,
+                'path' => $path,
+                'secure' => true,
+                'deploy_secret' => '${DEPLOY_SECRET}',
+            ],
+        ];
+
+        $basePath = $this->findBasePath();
+        $exampleFile = "{$basePath}/config/deploy.yaml.example";
+        $productionFile = "{$basePath}/config/deploy.yaml";
+
+        // Always write the .example file
+        if (!is_dir("{$basePath}/config")) {
+            mkdir("{$basePath}/config", 0755, true);
+        }
+        file_put_contents($exampleFile, Yaml::dump($configData, 6, 2));
+        $io->success("Deployment blueprint saved to config/deploy.yaml.example");
+
+        // Optionally write the production file
+        if (file_exists($productionFile)) {
+            if ($io->confirm('config/deploy.yaml already exists. Overwrite it?', false)) {
+                file_put_contents($productionFile, Yaml::dump($configData, 6, 2));
+                $io->success('config/deploy.yaml updated.');
+            } else {
+                $io->note('config/deploy.yaml was not changed. Copy from config/deploy.yaml.example to update it.');
+            }
+        } else {
+            file_put_contents($productionFile, Yaml::dump($configData, 6, 2));
+            $io->success('config/deploy.yaml created.');
+        }
+
+        // ---- Update .env / .env.example ----
+        $this->updateEnvExampleFtp($basePath);
+
+        $io->section('Next steps');
+        $io->listing([
+            'Copy .env.example to .env and fill in FTP_USER, FTP_PASSWORD, and DEPLOY_SECRET.',
+            'Generate a DEPLOY_SECRET (e.g., using: php -r "echo bin2hex(random_bytes(16)).PHP_EOL;").',
+            "Run 'rakun deploy:install {$env}' to upload the remote deployment script.",
+            "Run 'rakun deploy {$env}' to deploy your site.",
+        ]);
+
+        return Command::SUCCESS;
+    }
+
+    private function updateEnvExampleFtp(string $basePath): void
+    {
+        $envExampleFile = "{$basePath}/.env.example";
+        $vars = [
+            'FTP_USER' => '',
+            'FTP_PASSWORD' => '',
+            'DEPLOY_SECRET' => '',
+        ];
+
+        $existing = '';
+        if (file_exists($envExampleFile)) {
+            $existing = file_get_contents($envExampleFile) ?: '';
+        }
+
+        foreach ($vars as $key => $defaultValue) {
+            if (!str_contains($existing, $key . '=')) {
+                $existing .= "\n{$key}={$defaultValue}";
+            }
+        }
+
+        file_put_contents($envExampleFile, ltrim($existing, "\n"));
+    }
+
+    private function setupPlesk(InputInterface $input, SymfonyStyle $io, string $env): int
+    {
+        $io->section('Plesk Deployment Setup');
 
         // ---- Step 1: Gather host + SSL preference ----
 
