@@ -209,14 +209,16 @@ final class DeployInstallCommand extends Command
     RewriteCond %{REQUEST_METHOD} POST
     RewriteRule ^deploy\.php$ - [L]
 
-    # 2. Block all other access to private deployment directories and files
+    # 2. Route shared media directly to the shared folder BEFORE blocking
+    RewriteCond %{REQUEST_URI} ^/(images|videos|assets/uploads)/(.*)$
+    RewriteRule ^(images|videos|assets/uploads)/(.*)$ shared/$1/$2 [L]
+
+    # 3. Block direct access to private directories but allow internal rewrites
+    RewriteCond %{ENV:REDIRECT_STATUS} ^$
     RewriteRule ^(releases|shared|deploy\.php) - [F,L]
 
-    # 3. Route shared media directly to the shared folder (bypasses symlinks for environments where symlink() is disabled)
-    RewriteCond %{REQUEST_URI} ^/(images|videos|assets/uploads)/(.*)$
-    RewriteRule ^(.*)$ shared/%1/%2 [L]
-
     # 4. Route all other traffic to the symlinked (or renamed) public directory
+    RewriteCond %{REQUEST_URI} !^/shared/
     RewriteCond %{REQUEST_URI} !^/current/public/
     RewriteRule ^(.*)$ current/public/$1 [L]
 </IfModule>
