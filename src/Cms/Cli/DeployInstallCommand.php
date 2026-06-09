@@ -193,10 +193,14 @@ final class DeployInstallCommand extends Command
 <IfModule mod_rewrite.c>
     RewriteEngine On
 
-    # 1. Block access to private deployment directories and files
+    # 1. Allow POST requests strictly to deploy.php (needed for atomic deployments)
+    RewriteCond %{REQUEST_METHOD} POST
+    RewriteRule ^deploy\.php$ - [L]
+
+    # 2. Block all other access to private deployment directories and files
     RewriteRule ^(releases|shared|deploy\.php) - [F,L]
 
-    # 2. Route all other traffic to the symlinked public directory
+    # 3. Route all other traffic to the symlinked public directory
     RewriteCond %{REQUEST_URI} !^/current/public/
     RewriteRule ^(.*)$ current/public/$1 [L]
 </IfModule>
