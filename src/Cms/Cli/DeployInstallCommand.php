@@ -205,8 +205,10 @@ final class DeployInstallCommand extends Command
 <IfModule mod_rewrite.c>
     RewriteEngine On
 
-    # 0. Block access to hidden files globally (like .env) BEFORE any routing happens
-    RewriteRule "(^|/)\." - [F,L]
+    # 0. Safety Net: Catch and redirect external leaks of current/public to the clean URL
+    # (placed at the root so it cannot be overridden by sub-directory .htaccess files)
+    RewriteCond %{THE_REQUEST} \s/current/public/(\S*)\s [NC]
+    RewriteRule ^ https://%{HTTP_HOST}/%1 [R=301,L]
 
     # 1. Allow POST requests strictly to deploy.php (needed for atomic deployments)
     RewriteCond %{REQUEST_METHOD} POST
