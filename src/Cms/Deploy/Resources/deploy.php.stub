@@ -232,19 +232,22 @@ function handleActivate(array $payload, string $basePath, string $secret): void
 
         // Ensure shared directories exist
         $sharedDir = "{$basePath}/shared";
-        foreach (['content', 'uploads', 'logs', 'cache'] as $dir) {
+        foreach (['content', 'uploads', 'logs', 'cache', 'images', 'videos'] as $dir) {
             if (!is_dir("{$sharedDir}/{$dir}")) {
-                mkdir("{$sharedDir}/{$dir}", 0755, true);
+                @mkdir("{$sharedDir}/{$dir}", 0755, true);
             }
         }
 
-        // Link shared dirs into release (relative symlinks)
+        $canSymlink = function_exists('symlink');
+
+        // Link shared dirs into release
         foreach (['content', 'uploads', 'cache'] as $dir) {
             $linkPath = "{$targetDir}/{$dir}";
             if (!file_exists($linkPath) && !is_link($linkPath)) {
-                if (!createSymlink("../../shared/{$dir}", $linkPath)) {
-                    cleanupFailedRelease($targetDir);
-                    respond(500, ['error' => 'symlink() is disabled on this server. Atomic deployments require symlinks.']);
+                if ($canSymlink) {
+                    @symlink("../../shared/{$dir}", $linkPath);
+                } else {
+                    @mkdir($linkPath, 0755, true);
                 }
             }
         }
@@ -261,18 +264,31 @@ function handleActivate(array $payload, string $basePath, string $secret): void
         $previous = null;
         if (is_link($currentLink)) {
             $previous = basename((string) readlink($currentLink));
+        } elseif (is_dir($currentLink)) {
+            $manFile = "{$currentLink}/manifest.json";
+            if (file_exists($manFile)) {
+                $man = json_decode((string) file_get_contents($manFile), true);
+                $previous = $man['releaseId'] ?? $man['release_id'] ?? null;
+            }
+            if (!$previous) {
+                $previous = 'unknown_' . time();
+            }
         }
 
-        // Atomic symlink swap: create new symlink at current_new, then rename over current
-        $newLink = "{$basePath}/current_new";
-        if (is_link($newLink)) {
-            unlink($newLink);
+        // Atomic swap (Symlink vs Rename fallback)
+        if ($canSymlink) {
+            $newLink = "{$basePath}/current_new";
+            if (is_link($newLink)) {
+                unlink($newLink);
+            }
+            @symlink($targetDir, $newLink);
+            rename($newLink, $currentLink);
+        } else {
+            if (file_exists($currentLink)) {
+                rename($currentLink, "{$basePath}/releases/{$previous}");
+            }
+            rename($targetDir, $currentLink);
         }
-        if (!createSymlink($targetDir, $newLink)) {
-            cleanupFailedRelease($targetDir);
-            respond(500, ['error' => 'symlink() is disabled on this server. Cannot activate release.']);
-        }
-        rename($newLink, $currentLink);
 
         // Cleanup ZIP and HMAC
         unlink($zipFile);
@@ -318,16 +334,35 @@ function handleRollback(array $payload, string $basePath): void
         $targetDir = "{$basePath}/releases/{$target}";
     }
 
-    $currentBefore = is_link($currentLink) ? basename((string) readlink($currentLink)) : null;
+    $currentBefore = null;
+    if (is_link($currentLink)) {
+        $currentBefore = basename((string) readlink($currentLink));
+    } elseif (is_dir($currentLink)) {
+        $manFile = "{$currentLink}/manifest.json";
+        if (file_exists($manFile)) {
+            $man = json_decode((string) file_get_contents($manFile), true);
+            $currentBefore = $man['releaseId'] ?? $man['release_id'] ?? null;
+        }
+        if (!$currentBefore) {
+            $currentBefore = 'unknown_' . time();
+        }
+    }
 
-    $newLink = "{$basePath}/current_new";
-    if (is_link($newLink)) {
-        unlink($newLink);
+    $canSymlink = function_exists('symlink');
+
+    if ($canSymlink) {
+        $newLink = "{$basePath}/current_new";
+        if (is_link($newLink)) {
+            unlink($newLink);
+        }
+        @symlink($targetDir, $newLink);
+        rename($newLink, $currentLink);
+    } else {
+        if (file_exists($currentLink)) {
+            rename($currentLink, "{$basePath}/releases/{$currentBefore}");
+        }
+        rename($targetDir, $currentLink);
     }
-    if (!createSymlink($targetDir, $newLink)) {
-        respond(500, ['error' => 'symlink() is disabled. Rollback failed.']);
-    }
-    rename($newLink, $currentLink);
 
     appendLog($basePath, 'rollback', ['to' => $target, 'from' => $currentBefore]);
 
@@ -344,14 +379,17 @@ function handleStatus(string $basePath): void
     $currentRelease = null;
     $currentManifest = null;
 
-    if (is_link($currentLink)) {
-        $currentRelease = basename((string) readlink($currentLink));
-        $manifestPath = "{$basePath}/releases/{$currentRelease}/manifest.json";
+    if (is_link($currentLink) || is_dir($currentLink)) {
+        $manifestPath = "{$currentLink}/manifest.json";
         if (file_exists($manifestPath)) {
             $manifestData = json_decode((string) file_get_contents($manifestPath), true);
             if (is_array($manifestData)) {
                 $currentManifest = $manifestData;
+                $currentRelease = $manifestData['releaseId'] ?? $manifestData['release_id'] ?? null;
             }
+        }
+        if (!$currentRelease && is_link($currentLink)) {
+            $currentRelease = basename((string) readlink($currentLink));
         }
     }
 
@@ -386,7 +424,16 @@ function handleCleanup(array $payload, string $basePath): void
     }
 
     $currentLink = "{$basePath}/current";
-    $currentRelease = is_link($currentLink) ? basename((string) readlink($currentLink)) : null;
+    $currentRelease = null;
+    if (is_link($currentLink)) {
+        $currentRelease = basename((string) readlink($currentLink));
+    } elseif (is_dir($currentLink)) {
+        $manFile = "{$currentLink}/manifest.json";
+        if (file_exists($manFile)) {
+            $man = json_decode((string) file_get_contents($manFile), true);
+            $currentRelease = $man['releaseId'] ?? $man['release_id'] ?? null;
+        }
+    }
 
     $releases = listReleases($basePath);
 
@@ -552,16 +599,4 @@ function respond(int $status, array $data): void
     header('Content-Type: application/json');
     echo json_encode($data);
     exit;
-}
-
-function createSymlink(string $target, string $link): bool
-{
-    if (function_exists('symlink')) {
-        return @symlink($target, $link);
-    }
-    if (function_exists('exec')) {
-        @exec(sprintf('ln -s %s %s', escapeshellarg($target), escapeshellarg($link)), $out, $ret);
-        return $ret === 0;
-    }
-    return false;
 }
