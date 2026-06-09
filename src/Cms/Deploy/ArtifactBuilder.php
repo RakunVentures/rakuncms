@@ -203,13 +203,26 @@ final class ArtifactBuilder
     /** @param array<string> $exclude */
     private function shouldExclude(string $path, array $exclude): bool
     {
+        $pathTrimmed = rtrim($path, '/');
+
         foreach ($exclude as $pattern) {
-            if ($pattern === $path || str_starts_with($path, rtrim($pattern, '/') . '/')) {
+            $origPattern = $pattern;
+            $patternTrimmed = rtrim($pattern, '/');
+
+            if (str_ends_with($patternTrimmed, '/*')) {
+                $patternTrimmed = substr($patternTrimmed, 0, -2);
+            } elseif (str_ends_with($patternTrimmed, '/**')) {
+                $patternTrimmed = substr($patternTrimmed, 0, -3);
+            }
+
+            if ($pathTrimmed === $patternTrimmed || str_starts_with($pathTrimmed, $patternTrimmed . '/')) {
                 return true;
             }
-            // Handle glob-like patterns simply
-            if (str_contains($pattern, '*') && preg_match('#' . str_replace('*', '.*', $pattern) . '#', $path)) {
-                return true;
+
+            if (str_contains($origPattern, '*')) {
+                if (fnmatch($origPattern, $path) || fnmatch($origPattern, $pathTrimmed)) {
+                    return true;
+                }
             }
         }
 
