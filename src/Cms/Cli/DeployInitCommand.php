@@ -40,10 +40,20 @@ final class DeployInitCommand extends Command
 
         $env = (string) $input->getOption('environment');
 
-        $type = $io->choice('Select deployment type', ['Plesk (Auto-provisioning via API)', 'Generic FTP (cPanel, Shared Hosting)'], 'Plesk (Auto-provisioning via API)');
+        $choices = [
+            'Plesk (Auto-provisioning via API)',
+            'SSH / SFTP (VPS, Dedicated, Robust Hosting)',
+            'FTP Legacy (cPanel, Shared Hosting - requires local lftp)'
+        ];
 
-        if (str_starts_with($type, 'Generic FTP')) {
+        $type = $io->choice('Select deployment type', $choices, $choices[0]);
+
+        if (str_starts_with($type, 'FTP Legacy')) {
             return $this->setupFtp($io, $env);
+        }
+
+        if (str_starts_with($type, 'SSH / SFTP')) {
+            return $this->setupSftp($io, $env);
         }
 
         return $this->setupPlesk($input, $io, $env);
@@ -51,7 +61,8 @@ final class DeployInitCommand extends Command
 
     private function setupFtp(SymfonyStyle $io, string $env): int
     {
-        $io->section('Generic FTP Deployment Setup');
+        $io->section('FTP Legacy Deployment Setup');
+        $io->note('This method uses atomic rename() and .htaccess routing. It requires lftp to be installed on your machine for media sync.');
 
         $host = (string) $io->ask('FTP host (e.g. ftp.example.com)', null, static function (?string $value): string {
             if ($value === null || trim($value) === '') {
@@ -245,6 +256,91 @@ final class DeployInitCommand extends Command
         }
 
         file_put_contents($envExampleFile, ltrim($existing, "\n"));
+    }
+
+    private function setupSftp(SymfonyStyle $io, string $env): int
+    {
+        $io->section('SSH / SFTP Deployment Setup');
+
+        $host = (string) $io->ask('SSH host (e.g. server.example.com)', null, static function (?string $value): string {
+            if ($value === null || trim($value) === '') {
+                throw new \RuntimeException('Host is required.');
+            }
+            return trim($value);
+        });
+
+        $port = (int) $io->ask('SSH port', '22');
+        $user = (string) $io->ask('SSH username', 'root');
+        
+        $authType = $io->choice('Authentication method', ['Password', 'SSH Key (Identity File)'], 'SSH Key (Identity File)');
+        
+        $password = '';
+        $identityFile = '';
+        if ($authType === 'Password') {
+            $password = (string) $io->askHidden('SSH password');
+        } else {
+            $identityFile = (string) $io->ask('Path to private SSH key', '~/.ssh/id_rsa');
+        }
+
+        $domain = (string) $io->ask('Domain name (e.g. mysite.com)', null, static function (?string $value): string {
+            if ($value === null || trim($value) === '') {
+                throw new \RuntimeException('Domain is required.');
+            }
+            return strtolower(trim($value));
+        });
+
+        $path = (string) $io->ask('Remote path (e.g. /var/www/mysite or /httpdocs)', '/var/www/' . $domain);
+
+        $configData = [
+            $env => [
+                'method' => 'sftp',
+                'strategy' => 'fat',
+                'host' => $host,
+                'port' => $port,
+                'user' => $user,
+                'domain' => $domain,
+                'path' => $path,
+            ],
+        ];
+
+        if ($authType === 'Password') {
+            $configData[$env]['password'] = '${SFTP_PASSWORD}';
+        } else {
+            $configData[$env]['identity_file'] = $identityFile;
+        }
+
+        $basePath = $this->findBasePath();
+        $exampleFile = "{$basePath}/config/deploy.yaml.example";
+        $productionFile = "{$basePath}/config/deploy.yaml";
+
+        if (!is_dir("{$basePath}/config")) {
+            mkdir("{$basePath}/config", 0755, true);
+        }
+        file_put_contents($exampleFile, Yaml::dump($configData, 6, 2));
+        $io->success("Deployment blueprint saved to config/deploy.yaml.example");
+
+        if (file_exists($productionFile)) {
+            if ($io->confirm('config/deploy.yaml already exists. Overwrite it?', false)) {
+                file_put_contents($productionFile, Yaml::dump($configData, 6, 2));
+                $io->success('config/deploy.yaml updated.');
+            } else {
+                $io->note('config/deploy.yaml was not changed. Copy from config/deploy.yaml.example to update it.');
+            }
+        } else {
+            file_put_contents($productionFile, Yaml::dump($configData, 6, 2));
+            $io->success('config/deploy.yaml created.');
+        }
+
+        if ($authType === 'Password' && $password !== '') {
+            $this->writeEnvVar($basePath, 'SFTP_PASSWORD', $password, $io);
+        }
+
+        $io->section('Next steps');
+        $io->listing([
+            "Run 'rakun deploy {$env}' to deploy your site directly via SFTP atomic symlinking.",
+        ]);
+
+        return Command::SUCCESS;
     }
 
     private function setupPlesk(InputInterface $input, SymfonyStyle $io, string $env): int

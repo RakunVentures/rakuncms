@@ -63,9 +63,7 @@ switch ($action) {
             'ok' => true, 
             'version' => 2, 
             'php' => PHP_VERSION,
-            'os' => php_uname('s') . ' ' . php_uname('r'),
-            'symlink' => function_exists('symlink'),
-            'exec' => function_exists('exec')
+            'os' => php_uname('s') . ' ' . php_uname('r')
         ]);
         break;
     default:
@@ -238,17 +236,11 @@ function handleActivate(array $payload, string $basePath, string $secret): void
             }
         }
 
-        $canSymlink = function_exists('symlink');
-
-        // Link shared dirs into release
+        // Ensure empty directories exist for routing (since we don't symlink in FTP legacy mode)
         foreach (['content', 'uploads', 'cache'] as $dir) {
             $linkPath = "{$targetDir}/{$dir}";
             if (!file_exists($linkPath) && !is_link($linkPath)) {
-                if ($canSymlink) {
-                    @symlink("../../shared/{$dir}", $linkPath);
-                } else {
-                    @mkdir($linkPath, 0755, true);
-                }
+                @mkdir($linkPath, 0755, true);
             }
         }
 
@@ -275,20 +267,11 @@ function handleActivate(array $payload, string $basePath, string $secret): void
             }
         }
 
-        // Atomic swap (Symlink vs Rename fallback)
-        if ($canSymlink) {
-            $newLink = "{$basePath}/current_new";
-            if (is_link($newLink)) {
-                unlink($newLink);
-            }
-            @symlink($targetDir, $newLink);
-            rename($newLink, $currentLink);
-        } else {
-            if (file_exists($currentLink)) {
-                rename($currentLink, "{$basePath}/releases/{$previous}");
-            }
-            rename($targetDir, $currentLink);
+        // Atomic swap using rename() fallback (guarantees cross-environment compatibility without symlinks)
+        if (file_exists($currentLink) || is_link($currentLink)) {
+            rename($currentLink, "{$basePath}/releases/{$previous}");
         }
+        rename($targetDir, $currentLink);
 
         // Cleanup ZIP and HMAC
         unlink($zipFile);
@@ -348,21 +331,10 @@ function handleRollback(array $payload, string $basePath): void
         }
     }
 
-    $canSymlink = function_exists('symlink');
-
-    if ($canSymlink) {
-        $newLink = "{$basePath}/current_new";
-        if (is_link($newLink)) {
-            unlink($newLink);
-        }
-        @symlink($targetDir, $newLink);
-        rename($newLink, $currentLink);
-    } else {
-        if (file_exists($currentLink)) {
-            rename($currentLink, "{$basePath}/releases/{$currentBefore}");
-        }
-        rename($targetDir, $currentLink);
+    if (file_exists($currentLink) || is_link($currentLink)) {
+        rename($currentLink, "{$basePath}/releases/{$currentBefore}");
     }
+    rename($targetDir, $currentLink);
 
     appendLog($basePath, 'rollback', ['to' => $target, 'from' => $currentBefore]);
 
@@ -407,9 +379,7 @@ function handleStatus(string $basePath): void
         'releases'     => array_slice($releases, 0, 10),
         'disk_usage_kb' => $diskUsage,
         'php'          => PHP_VERSION,
-        'os'           => php_uname('s') . ' ' . php_uname('r'),
-        'symlink'      => function_exists('symlink'),
-        'exec'         => function_exists('exec'),
+        'os'           => php_uname('s') . ' ' . php_uname('r')
     ]);
 }
 

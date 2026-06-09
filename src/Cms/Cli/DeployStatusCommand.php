@@ -76,8 +76,6 @@ final class DeployStatusCommand extends Command
             [
                 ['PHP Version', $data['php'] ?? 'Unknown'],
                 ['OS', $data['os'] ?? 'Unknown'],
-                ['Symlink Enabled', !empty($data['symlink']) ? '<info>Yes</info>' : '<error>No</error>'],
-                ['Exec Enabled', !empty($data['exec']) ? '<info>Yes</info>' : '<error>No</error>'],
             ]
         );
 

@@ -106,9 +106,7 @@ final class DeployInstallCommand extends Command
                         ]
                     );
 
-                    if (empty($pingData['symlink']) && empty($pingData['exec'])) {
-                        $io->note('symlink() is disabled on this server. RakunCMS will automatically use the rename() fallback for zero-downtime deployments.');
-                    }
+                    // Since FTP legacy deployments strictly use rename() instead of symlink(), we no longer warn about symlink status.
                 } else {
                     $output->writeln(
                         "<comment>Warning: ping to {$deployUrl} did not return 200. "
