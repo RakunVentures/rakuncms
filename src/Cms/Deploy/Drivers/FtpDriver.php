@@ -171,7 +171,7 @@ final class FtpDriver implements TransportInterface
             }
 
             // 7. Cleanup old releases
-            $keepReleases = max(1, (int) ($config->discovered['keep_releases'] ?? 5));
+            $keepReleases = max(1, $config->keepReleases);
             $cleanupBody  = (string) json_encode(['action' => 'cleanup', 'keep' => $keepReleases]);
             $this->callDeployPhp($deployUrl, $cleanupBody, $secret);
 

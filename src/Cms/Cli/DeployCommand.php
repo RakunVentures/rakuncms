@@ -175,7 +175,7 @@ final class DeployCommand extends Command
         $host      = (string) ($parsed['host'] ?? $config->domain);
         $deployUrl = "{$scheme}://{$host}/deploy.php";
 
-        $keepReleases = max(1, (int) ($config->discovered['keep_releases'] ?? 5));
+        $keepReleases = max(1, $config->keepReleases);
         $body         = (string) json_encode(['action' => 'cleanup', 'keep' => $keepReleases]);
         $timestamp    = time();
         $signature    = 'sha256=' . hash_hmac('sha256', $body, $secret);

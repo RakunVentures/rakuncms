@@ -24,6 +24,7 @@ final class DeployConfig
     public ?string $webhookUrl = null;
     public ?string $deploySecret = null;
     public array $exclude = [];
+    public int $keepReleases = 5;
 
     // Git-specific deployment fields (Phase 2)
     public ?string $composerBin = null;
@@ -92,6 +93,7 @@ final class DeployConfig
         $config->secure = (bool)($data['secure'] ?? true);
         $config->deploySecret = $data['deploy_secret'] ?? null;
         $config->exclude = is_array($data['exclude'] ?? null) ? $data['exclude'] : [];
+        $config->keepReleases = (int) ($data['keep_releases'] ?? 5);
 
         if ($config->method === 'git') {
             $config->remote = $data['remote'] ?? 'plesk';
