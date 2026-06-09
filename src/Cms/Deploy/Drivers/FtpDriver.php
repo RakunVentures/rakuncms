@@ -98,9 +98,16 @@ final class FtpDriver implements TransportInterface
         try {
             // 1. Build artifact
             $builder  = $this->getBuilder();
+            
+            // Allow explicit exclusions via config, fallback to gitignore parsing could be added later
+            $exclude = $config->discovered['exclude'] ?? $config->exclude ?? [];
+            if (!is_array($exclude)) {
+                $exclude = [];
+            }
+            
             $zipPath  = $builder->build(
                 releaseId: $releaseId,
-                exclude: [],
+                exclude: $exclude,
                 gitSha: $this->detectGitSha(),
                 phpVersionTarget: null,
                 strategy: $config->strategy,
