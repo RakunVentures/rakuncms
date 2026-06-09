@@ -205,6 +205,9 @@ final class DeployInstallCommand extends Command
 <IfModule mod_rewrite.c>
     RewriteEngine On
 
+    # 0. Block access to hidden files globally (like .env) BEFORE any routing happens
+    RewriteRule "(^|/)\." - [F,L]
+
     # 1. Allow POST requests strictly to deploy.php (needed for atomic deployments)
     RewriteCond %{REQUEST_METHOD} POST
     RewriteRule ^deploy\.php$ - [L]
