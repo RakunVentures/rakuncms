@@ -204,7 +204,11 @@ final class DeployInstallCommand extends Command
     RewriteCond %{REQUEST_URI} !^/current/public/
     RewriteRule ^(.*)$ current/public/$1 [L]
 </IfModule>
+
 HTACCESS;
+
+        // Force LF line endings instead of CRLF to prevent Apache 500 errors on some hosts
+        $content = str_replace("\r\n", "\n", $content);
 
         $tmp = tempnam(sys_get_temp_dir(), 'rakun-htaccess-');
         if ($tmp === false) {
@@ -213,7 +217,8 @@ HTACCESS;
         
         file_put_contents($tmp, $content);
 
-        if (@ftp_put($conn, $remoteHtaccess, $tmp, FTP_ASCII)) {
+        // Upload in BINARY mode, NOT ASCII, to prevent the FTP server from converting LF back to CRLF
+        if (@ftp_put($conn, $remoteHtaccess, $tmp, FTP_BINARY)) {
             $output->writeln("<info>.htaccess created for atomic routing and security</info>");
         }
 
