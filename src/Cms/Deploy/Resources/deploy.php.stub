@@ -59,7 +59,14 @@ switch ($action) {
         handleCleanup($payload, $basePath);
         break;
     case 'ping':
-        respond(200, ['ok' => true, 'version' => 2, 'php' => PHP_VERSION]);
+        respond(200, [
+            'ok' => true, 
+            'version' => 2, 
+            'php' => PHP_VERSION,
+            'os' => php_uname('s') . ' ' . php_uname('r'),
+            'symlink' => function_exists('symlink'),
+            'exec' => function_exists('exec')
+        ]);
         break;
     default:
         respond(400, ['error' => "unknown action: {$action}"]);
@@ -235,7 +242,10 @@ function handleActivate(array $payload, string $basePath, string $secret): void
         foreach (['content', 'uploads', 'cache'] as $dir) {
             $linkPath = "{$targetDir}/{$dir}";
             if (!file_exists($linkPath) && !is_link($linkPath)) {
-                @symlink("../../shared/{$dir}", $linkPath);
+                if (!createSymlink("../../shared/{$dir}", $linkPath)) {
+                    cleanupFailedRelease($targetDir);
+                    respond(500, ['error' => 'symlink() is disabled on this server. Atomic deployments require symlinks.']);
+                }
             }
         }
 
@@ -258,7 +268,10 @@ function handleActivate(array $payload, string $basePath, string $secret): void
         if (is_link($newLink)) {
             unlink($newLink);
         }
-        symlink($targetDir, $newLink);
+        if (!createSymlink($targetDir, $newLink)) {
+            cleanupFailedRelease($targetDir);
+            respond(500, ['error' => 'symlink() is disabled on this server. Cannot activate release.']);
+        }
         rename($newLink, $currentLink);
 
         // Cleanup ZIP and HMAC
@@ -311,7 +324,9 @@ function handleRollback(array $payload, string $basePath): void
     if (is_link($newLink)) {
         unlink($newLink);
     }
-    symlink($targetDir, $newLink);
+    if (!createSymlink($targetDir, $newLink)) {
+        respond(500, ['error' => 'symlink() is disabled. Rollback failed.']);
+    }
     rename($newLink, $currentLink);
 
     appendLog($basePath, 'rollback', ['to' => $target, 'from' => $currentBefore]);
@@ -354,6 +369,9 @@ function handleStatus(string $basePath): void
         'releases'     => array_slice($releases, 0, 10),
         'disk_usage_kb' => $diskUsage,
         'php'          => PHP_VERSION,
+        'os'           => php_uname('s') . ' ' . php_uname('r'),
+        'symlink'      => function_exists('symlink'),
+        'exec'         => function_exists('exec'),
     ]);
 }
 
@@ -534,4 +552,16 @@ function respond(int $status, array $data): void
     header('Content-Type: application/json');
     echo json_encode($data);
     exit;
+}
+
+function createSymlink(string $target, string $link): bool
+{
+    if (function_exists('symlink')) {
+        return @symlink($target, $link);
+    }
+    if (function_exists('exec')) {
+        @exec(sprintf('ln -s %s %s', escapeshellarg($target), escapeshellarg($link)), $out, $ret);
+        return $ret === 0;
+    }
+    return false;
 }

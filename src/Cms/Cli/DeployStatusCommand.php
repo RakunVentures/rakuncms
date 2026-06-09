@@ -69,6 +69,18 @@ final class DeployStatusCommand extends Command
             return Command::FAILURE;
         }
 
+        $io = new \Symfony\Component\Console\Style\SymfonyStyle($input, $output);
+        $io->section('Remote Server Information');
+        $io->table(
+            ['Property', 'Value'],
+            [
+                ['PHP Version', $data['php'] ?? 'Unknown'],
+                ['OS', $data['os'] ?? 'Unknown'],
+                ['Symlink Enabled', !empty($data['symlink']) ? '<info>Yes</info>' : '<error>No</error>'],
+                ['Exec Enabled', !empty($data['exec']) ? '<info>Yes</info>' : '<error>No</error>'],
+            ]
+        );
+
         $current  = (string) ($data['current'] ?? 'None');
         $manifest = is_array($data['manifest'] ?? null) ? $data['manifest'] : [];
         $releases = is_array($data['releases'] ?? null) ? $data['releases'] : [];

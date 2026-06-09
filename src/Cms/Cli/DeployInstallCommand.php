@@ -89,10 +89,26 @@ final class DeployInstallCommand extends Command
 
                 // Step 5: Validate installation via HMAC ping
                 $deployUrl = $this->buildDeployUrl($config);
-                $pingOk    = $this->ping($deployUrl, (string) $config->deploySecret);
+                $pingData  = $this->ping($deployUrl, (string) $config->deploySecret);
 
-                if ($pingOk) {
+                if ($pingData !== null && isset($pingData['ok'])) {
                     $output->writeln("<info>Ping successful — deploy.php v2 is operational at {$deployUrl}</info>");
+                    
+                    $io = new \Symfony\Component\Console\Style\SymfonyStyle($input, $output);
+                    $io->section('Remote Server Information');
+                    $io->table(
+                        ['Property', 'Value'],
+                        [
+                            ['PHP Version', $pingData['php'] ?? 'Unknown'],
+                            ['OS', $pingData['os'] ?? 'Unknown'],
+                            ['Symlink Enabled', !empty($pingData['symlink']) ? '<info>Yes</info>' : '<error>No</error>'],
+                            ['Exec Enabled', !empty($pingData['exec']) ? '<info>Yes</info>' : '<error>No</error>'],
+                        ]
+                    );
+
+                    if (empty($pingData['symlink']) && empty($pingData['exec'])) {
+                        $io->warning('symlink() and exec() are both disabled on this server. Atomic deployments will fail. Please ask your hosting provider to enable symlink().');
+                    }
                 } else {
                     $output->writeln(
                         "<comment>Warning: ping to {$deployUrl} did not return 200. "
@@ -225,7 +241,7 @@ HTACCESS;
         unlink($tmp);
     }
 
-    private function ping(string $deployUrl, string $secret): bool
+    private function ping(string $deployUrl, string $secret): ?array
     {
         $body      = (string) json_encode(['action' => 'ping']);
         $timestamp = time();
@@ -233,7 +249,7 @@ HTACCESS;
 
         $ch = curl_init($deployUrl);
         if ($ch === false) {
-            return false;
+            return null;
         }
 
         curl_setopt_array($ch, [
@@ -249,11 +265,16 @@ HTACCESS;
             ],
         ]);
 
-        curl_exec($ch);
+        $response = (string) curl_exec($ch);
         $status = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
         curl_close($ch);
 
-        return $status === 200;
+        if ($status === 200) {
+            $data = json_decode($response, true);
+            return is_array($data) ? $data : null;
+        }
+
+        return null;
     }
 
     private function buildDeployUrl(DeployConfig $config): string
