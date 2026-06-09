@@ -107,7 +107,7 @@ final class DeployInstallCommand extends Command
                     );
 
                     if (empty($pingData['symlink']) && empty($pingData['exec'])) {
-                        $io->warning('symlink() and exec() are both disabled on this server. Atomic deployments will fail. Please ask your hosting provider to enable symlink().');
+                        $io->note('symlink() is disabled on this server. RakunCMS will automatically use the rename() fallback for zero-downtime deployments.');
                     }
                 } else {
                     $output->writeln(
