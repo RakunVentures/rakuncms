@@ -117,8 +117,9 @@ final class FtpDriver implements TransportInterface
                 $this->ensureRemoteStructure($conn, $config->path, $logger);
 
                 // 4. Upload ZIP (with size verification + retry)
-                $remoteZip  = "{$config->path}/releases/{$releaseId}.zip";
-                $remoteHmac = "{$config->path}/releases/{$releaseId}.zip.hmac";
+                $remoteBase = rtrim($config->path, '/');
+                $remoteZip  = "{$remoteBase}/releases/{$releaseId}.zip";
+                $remoteHmac = "{$remoteBase}/releases/{$releaseId}.zip.hmac";
 
                 $logger("<comment>Uploading ZIP...</comment>");
                 $this->uploadWithVerification($conn, $zipPath, $remoteZip, $logger);
@@ -271,14 +272,16 @@ final class FtpDriver implements TransportInterface
 
     private function ensureRemoteStructure(Connection $conn, string $path, callable $logger): void
     {
+        $base = rtrim($path, '/');
+        
         $dirs = [
-            "{$path}/releases",
-            "{$path}/shared",
-            "{$path}/shared/logs",
-            "{$path}/shared/content",
-            "{$path}/shared/uploads",
-            "{$path}/shared/cache",
-            "{$path}/shared/locks",
+            "{$base}/releases",
+            "{$base}/shared",
+            "{$base}/shared/logs",
+            "{$base}/shared/content",
+            "{$base}/shared/uploads",
+            "{$base}/shared/cache",
+            "{$base}/shared/locks",
         ];
 
         foreach ($dirs as $dir) {
