@@ -128,7 +128,7 @@ final class FtpDriver implements TransportInterface
                     $this->uploadWithVerification($conn, $hmacPath, $remoteHmac, $logger);
                 }
             } finally {
-                ftp_close($conn);
+                @ftp_close($conn);
             }
 
             // 5. Activate via deploy.php
@@ -239,11 +239,11 @@ final class FtpDriver implements TransportInterface
         }
 
         if (!@ftp_login($conn, (string) $config->user, (string) $config->pass)) {
-            ftp_close($conn);
+            @ftp_close($conn);
             return ["FTP login failed for user {$config->user} at {$config->host}"];
         }
 
-        ftp_close($conn);
+        @ftp_close($conn);
         return [];
     }
 
@@ -258,7 +258,7 @@ final class FtpDriver implements TransportInterface
         }
 
         if (!@ftp_login($conn, (string) $config->user, (string) $config->pass)) {
-            ftp_close($conn);
+            @ftp_close($conn);
             throw new RuntimeException("FTP login failed for user {$config->user}");
         }
 
