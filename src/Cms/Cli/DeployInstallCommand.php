@@ -101,8 +101,6 @@ final class DeployInstallCommand extends Command
                         [
                             ['PHP Version', $pingData['php'] ?? 'Unknown'],
                             ['OS', $pingData['os'] ?? 'Unknown'],
-                            ['Symlink Enabled', !empty($pingData['symlink']) ? '<info>Yes</info>' : '<error>No</error>'],
-                            ['Exec Enabled', !empty($pingData['exec']) ? '<info>Yes</info>' : '<error>No</error>'],
                         ]
                     );
 
