@@ -84,7 +84,10 @@ final class DeployInstallCommand extends Command
                 $remoteEnv = rtrim($config->path, '/') . '/shared/.env';
                 $this->ensureSharedEnv($conn, $remoteEnv, (string) $config->deploySecret, $output);
 
-                // Step 4: Validate installation via HMAC ping
+                // Step 4: Ensure .htaccess exists for secure atomic routing (do NOT overwrite if exists)
+                $this->ensureHtaccess($conn, $config->path, $output);
+
+                // Step 5: Validate installation via HMAC ping
                 $deployUrl = $this->buildDeployUrl($config);
                 $pingOk    = $this->ping($deployUrl, (string) $config->deploySecret);
 
@@ -174,6 +177,43 @@ final class DeployInstallCommand extends Command
 
         unlink($tmp);
         $output->writeln("<info>shared/.env created with DEPLOY_SECRET</info>");
+    }
+
+    private function ensureHtaccess(\FTP\Connection $conn, string $remotePath, OutputInterface $output): void
+    {
+        $remoteHtaccess = rtrim($remotePath, '/') . '/.htaccess';
+        
+        $size = @ftp_size($conn, $remoteHtaccess);
+        if ($size !== false && $size > 0) {
+            $output->writeln("<comment>.htaccess already exists (not overwriting)</comment>");
+            return;
+        }
+
+        $content = <<<HTACCESS
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # 1. Block access to private deployment directories and files
+    RewriteRule ^(releases|shared|deploy\.php) - [F,L]
+
+    # 2. Route all other traffic to the symlinked public directory
+    RewriteCond %{REQUEST_URI} !^/current/public/
+    RewriteRule ^(.*)$ current/public/$1 [L]
+</IfModule>
+HTACCESS;
+
+        $tmp = tempnam(sys_get_temp_dir(), 'rakun-htaccess-');
+        if ($tmp === false) {
+            return; // Fail silently, it's a nice-to-have feature
+        }
+        
+        file_put_contents($tmp, $content);
+
+        if (@ftp_put($conn, $remoteHtaccess, $tmp, FTP_ASCII)) {
+            $output->writeln("<info>.htaccess created for atomic routing and security</info>");
+        }
+
+        unlink($tmp);
     }
 
     private function ping(string $deployUrl, string $secret): bool
