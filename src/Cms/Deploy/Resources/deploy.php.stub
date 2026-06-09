@@ -237,7 +237,7 @@ function handleActivate(array $payload, string $basePath, string $secret): void
         }
 
         // Ensure empty directories exist for routing (since we don't symlink in FTP legacy mode)
-        foreach (['content', 'uploads', 'cache'] as $dir) {
+        foreach (['content', 'uploads', 'cache', 'public/images', 'public/videos'] as $dir) {
             $linkPath = "{$targetDir}/{$dir}";
             if (!file_exists($linkPath) && !is_link($linkPath)) {
                 @mkdir($linkPath, 0755, true);
