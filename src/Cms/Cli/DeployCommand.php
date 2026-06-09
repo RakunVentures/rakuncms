@@ -172,7 +172,7 @@ final class DeployCommand extends Command
 
         $parsed    = parse_url((string) $config->healthUrl);
         $scheme    = (string) ($parsed['scheme'] ?? 'https');
-        $host      = (string) ($parsed['host'] ?? $config->host);
+        $host      = (string) ($parsed['host'] ?? $config->domain);
         $deployUrl = "{$scheme}://{$host}/deploy.php";
 
         $keepReleases = max(1, (int) ($config->discovered['keep_releases'] ?? 5));

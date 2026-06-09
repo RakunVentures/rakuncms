@@ -189,13 +189,13 @@ final class DeployDiffCommand extends Command
         if (!empty($config->healthUrl)) {
             $parsed = parse_url($config->healthUrl);
             $scheme = (string) ($parsed['scheme'] ?? 'https');
-            $host   = (string) ($parsed['host'] ?? $config->host);
+            $host   = (string) ($parsed['host'] ?? $config->domain);
             $port   = isset($parsed['port']) ? ":{$parsed['port']}" : '';
             return "{$scheme}://{$host}{$port}/deploy.php";
         }
 
         $proto = $config->secure ? 'https' : 'http';
-        return "{$proto}://{$config->host}/deploy.php";
+        return "{$proto}://{$config->domain}/deploy.php";
     }
 
     private function findBasePath(): string

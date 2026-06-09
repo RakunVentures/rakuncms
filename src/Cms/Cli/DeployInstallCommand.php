@@ -73,7 +73,7 @@ final class DeployInstallCommand extends Command
                 }
                 file_put_contents($tmp, $stub);
 
-                $remotePath = "{$config->path}/deploy.php";
+                $remotePath = rtrim($config->path, '/') . '/deploy.php';
                 if (!ftp_put($conn, $remotePath, $tmp, FTP_BINARY)) {
                     throw new RuntimeException("Failed to upload deploy.php to {$remotePath}");
                 }
@@ -81,7 +81,7 @@ final class DeployInstallCommand extends Command
                 $output->writeln("<info>deploy.php v2 uploaded to {$remotePath}</info>");
 
                 // Step 3: Ensure shared/.env with DEPLOY_SECRET (do NOT overwrite if exists)
-                $remoteEnv = "{$config->path}/shared/.env";
+                $remoteEnv = rtrim($config->path, '/') . '/shared/.env';
                 $this->ensureSharedEnv($conn, $remoteEnv, (string) $config->deploySecret, $output);
 
                 // Step 4: Validate installation via HMAC ping
@@ -98,7 +98,7 @@ final class DeployInstallCommand extends Command
                 }
 
             } finally {
-                ftp_close($conn);
+                @ftp_close($conn);
             }
 
             return Command::SUCCESS;
@@ -131,6 +131,7 @@ final class DeployInstallCommand extends Command
     private function migrateV1IfPresent(\FTP\Connection $conn, string $remotePath, OutputInterface $output): void
     {
         // Try to rename the old file (best-effort)
+        $remotePath = rtrim($remotePath, '/');
         $v1Path  = "{$remotePath}/deploy.php";
         $v1Bak   = "{$remotePath}/deploy.php.v1.bak";
 
@@ -211,12 +212,12 @@ final class DeployInstallCommand extends Command
         if (!empty($config->healthUrl)) {
             $parsed = parse_url($config->healthUrl);
             $scheme = (string) ($parsed['scheme'] ?? 'https');
-            $host   = (string) ($parsed['host'] ?? $config->host);
+            $host   = (string) ($parsed['host'] ?? $config->domain);
             return "{$scheme}://{$host}/deploy.php";
         }
 
-        $proto = $config->secure ? 'https' : 'http';
-        return "{$proto}://{$config->host}/deploy.php";
+        $proto = 'https'; // Always prefer HTTPS for the web ping
+        return "{$proto}://{$config->domain}/deploy.php";
     }
 
     private function findBasePath(): string

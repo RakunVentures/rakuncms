@@ -49,6 +49,7 @@ $application->addCommand(new \Rkn\Cms\Cli\QueueProcessCommand());
 $application->addCommand(new \Rkn\Cms\Cli\ServeCommand());
 $application->addCommand(new \Rkn\Cms\Cli\MakeComponentCommand());
 $application->addCommand(new \Rkn\Cms\Cli\MakeCollectionCommand());
+$application->addCommand(new \Rkn\Cms\Cli\MagazineProcessCommand());
 $application->addCommand(new \Rkn\Cms\Cli\EmailPublishCommand());
 $application->addCommand(new \Rkn\Cms\Cli\SitemapGenerateCommand());
 $application->addCommand(new \Rkn\Cms\Cli\LlmsGenerateCommand());

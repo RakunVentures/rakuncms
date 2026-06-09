@@ -358,16 +358,16 @@ final class FtpDriver implements TransportInterface
     private function buildDeployUrl(DeployConfig $config): string
     {
         if (empty($config->healthUrl)) {
-            // Fall back to constructing URL from host
+            // Fall back to constructing URL from domain
             $proto = $config->secure ? 'https' : 'http';
-            return "{$proto}://{$config->host}/deploy.php";
+            return "{$proto}://{$config->domain}/deploy.php";
         }
 
         // health_url is typically https://domain.com/health, deploy.php is at root.
         // Preserve port when present (needed for non-standard ports, e.g. local test servers).
         $parsed = parse_url($config->healthUrl);
         $scheme = (string) ($parsed['scheme'] ?? 'https');
-        $host   = (string) ($parsed['host'] ?? $config->host);
+        $host   = (string) ($parsed['host'] ?? $config->domain);
         $port   = isset($parsed['port']) ? ":{$parsed['port']}" : '';
 
         return "{$scheme}://{$host}{$port}/deploy.php";
