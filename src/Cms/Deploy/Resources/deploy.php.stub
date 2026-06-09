@@ -420,6 +420,12 @@ function handleCleanup(array $payload, string $basePath): void
             rmrf($releaseDir);
             $deleted[] = $release;
         }
+        // Also cleanup dangling ZIPs and HMACs from failed deploys
+        $zipFile = "{$basePath}/releases/{$release}.zip";
+        if (file_exists($zipFile)) @unlink($zipFile);
+        
+        $hmacFile = "{$basePath}/releases/{$release}.zip.hmac";
+        if (file_exists($hmacFile)) @unlink($hmacFile);
     }
 
     appendLog($basePath, 'cleanup', ['kept' => $keep, 'deleted' => $deleted]);
