@@ -51,6 +51,27 @@ test('scaffolded .htaccess forwards the Authorization header to PHP', function (
     expect($htaccess)->toContain('E=HTTP_AUTHORIZATION:%{HTTP:Authorization}');
 });
 
+test('scaffolded config/api.yaml.example is a valid template for server-only API keys', function () {
+    $examplePath = $this->tmpDir . '/config/api.yaml.example';
+    expect(file_exists($examplePath))->toBeTrue();
+
+    // The real file is created by hand on each server — init must never scaffold it.
+    expect(file_exists($this->tmpDir . '/config/api.yaml'))->toBeFalse();
+
+    $parsed = Symfony\Component\Yaml\Yaml::parse((string) file_get_contents($examplePath));
+    expect($parsed['api']['enabled'])->toBeTrue();
+    expect($parsed['api']['keys'][0]['permissions'])->toBe(['write', 'media']);
+    expect($parsed['api']['keys'][1]['permissions'])->toBe(['admin', 'write', 'media']);
+});
+
+test('scaffolded .gitignore ignores config/api.yaml but not its example template', function () {
+    $gitignore = file_get_contents($this->tmpDir . '/.gitignore');
+
+    expect($gitignore)->toContain('/config/api.yaml');
+    // The anchored pattern must not swallow the committed template.
+    expect($gitignore)->not->toContain('/config/api.yaml.example');
+});
+
 test('scaffolded index.php serves the page cache via PHP middleware', function () {
     // Removing the Apache cache rewrite is only safe because PHP serves it.
     $index = file_get_contents($this->tmpDir . '/public/index.php');

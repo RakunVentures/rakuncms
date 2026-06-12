@@ -66,6 +66,7 @@ class InitCommand extends Command
         $this->createFile($basePath . '/public/index.php', $this->getIndexPhpContent());
         $this->createFile($basePath . '/public/.htaccess', $this->getHtaccessContent());
         $this->createFile($basePath . '/config/rakun.yaml', $this->getConfigContent());
+        $this->createFile($basePath . '/config/api.yaml.example', $this->getApiKeysExampleContent());
         $this->createFile($basePath . '/.env.example', $this->getDotenvExampleContent());
         $this->createFile($basePath . '/.env', $this->getDotenvExampleContent());
         $this->scaffoldGitignore($basePath . '/.gitignore');
@@ -121,6 +122,8 @@ class InitCommand extends Command
             '/node_modules/',
             '/.env',
             '/.env.*.local',
+            '# Content API keys live only on each server — template in config/api.yaml.example.',
+            '/config/api.yaml',
             '# Database dumps (db:dump) hold the full content store — never commit them.',
             '/storage/backups/*',
             '!/storage/backups/.gitkeep',
@@ -310,6 +313,41 @@ seo:
 #         label: "Comprar eBook"
 #         description: "$19"
 #     overlay: true
+YAML;
+    }
+
+    private function getApiKeysExampleContent(): string
+    {
+        return <<<'YAML'
+# Plantilla de config/api.yaml — keys de la Content API.
+#
+# El archivo real (config/api.yaml) NUNCA va a git (ya está en .gitignore):
+# vive solo en cada servidor (o en tu copia local de desarrollo), por lo que
+# sobrevive deploys y las keys no quedan en la historia del repo.
+# Sin este archivo (y sin bloque api: en rakun.yaml) la API queda deshabilitada.
+# Precedencia: api.* de este archivo gana sobre el bloque api: de rakun.yaml.
+#
+# Uso:
+#   cp config/api.yaml.example config/api.yaml   # y sustituir las keys XXXX
+#
+# Genera cada secreto con entropía real:
+#   php -r "echo 'quien-sitio-' . bin2hex(random_bytes(8)) . PHP_EOL;"
+#
+# Permisos: write = entradas (POST/PUT/DELETE) · media = uploads
+#           admin = comandos remotos (y concede todo lo demás)
+#
+# Cada key identifica a UNA persona (name = quién es ante el sitio). Se compara
+# exacta (hash_equals), sin hashing: trátala como contraseña.
+
+api:
+  enabled: true
+  keys:
+    - name: "Editora Ejemplo"
+      key: "editora-sitio-XXXXXXXXXXXXXXXX"
+      permissions: ["write", "media"]
+    - name: "Admin"
+      key: "admin-sitio-XXXXXXXXXXXXXXXX"
+      permissions: ["admin", "write", "media"]
 YAML;
     }
 
