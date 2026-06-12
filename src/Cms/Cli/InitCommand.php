@@ -224,6 +224,11 @@ PHP;
         return <<<'HTACCESS'
 RewriteEngine On
 
+# Reenviar el header Authorization a PHP: Apache con PHP-FPM/FastCGI lo descarta
+# por defecto y la Content API respondería "Authentication required" a todo Bearer.
+RewriteCond %{HTTP:Authorization} .
+RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+
 # Evitar lectura directa a archivos y carpetas ocultas
 RewriteRule "(^|/)\." - [F]
 

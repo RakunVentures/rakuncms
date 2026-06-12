@@ -43,6 +43,14 @@ test('scaffolded .htaccess does not rewrite to ../cache (Apache 2.4 AH10244)', f
     expect($htaccess)->toContain('index.php');
 });
 
+test('scaffolded .htaccess forwards the Authorization header to PHP', function () {
+    $htaccess = file_get_contents($this->tmpDir . '/public/.htaccess');
+
+    // Apache+PHP-FPM drops the Authorization header unless re-exported: without
+    // this rule every Bearer request to the Content API gets a 401.
+    expect($htaccess)->toContain('E=HTTP_AUTHORIZATION:%{HTTP:Authorization}');
+});
+
 test('scaffolded index.php serves the page cache via PHP middleware', function () {
     // Removing the Apache cache rewrite is only safe because PHP serves it.
     $index = file_get_contents($this->tmpDir . '/public/index.php');
