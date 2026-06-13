@@ -59,9 +59,9 @@ test('scaffolded config/api.yaml.example is a valid template for server-only API
     expect(file_exists($this->tmpDir . '/config/api.yaml'))->toBeFalse();
 
     $parsed = Symfony\Component\Yaml\Yaml::parse((string) file_get_contents($examplePath));
-    expect($parsed['api']['enabled'])->toBeTrue();
-    expect($parsed['api']['keys'][0]['permissions'])->toBe(['write', 'media']);
-    expect($parsed['api']['keys'][1]['permissions'])->toBe(['admin', 'write', 'media']);
+    expect($parsed['enabled'])->toBeTrue();
+    expect($parsed['keys'][0]['permissions'])->toBe(['write', 'media']);
+    expect($parsed['keys'][1]['permissions'])->toBe(['admin', 'write', 'media']);
 });
 
 test('scaffolded .gitignore ignores config/api.yaml but not its example template', function () {

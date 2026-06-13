@@ -325,6 +325,7 @@ YAML;
 # vive solo en cada servidor (o en tu copia local de desarrollo), por lo que
 # sobrevive deploys y las keys no quedan en la historia del repo.
 # Sin este archivo (y sin bloque api: en rakun.yaml) la API queda deshabilitada.
+# Este archivo se carga como config('api.*'), así que enabled y keys van en la raíz.
 # Precedencia: api.* de este archivo gana sobre el bloque api: de rakun.yaml.
 #
 # Uso:
@@ -339,15 +340,14 @@ YAML;
 # Cada key identifica a UNA persona (name = quién es ante el sitio). Se compara
 # exacta (hash_equals), sin hashing: trátala como contraseña.
 
-api:
-  enabled: true
-  keys:
-    - name: "Editora Ejemplo"
-      key: "editora-sitio-XXXXXXXXXXXXXXXX"
-      permissions: ["write", "media"]
-    - name: "Admin"
-      key: "admin-sitio-XXXXXXXXXXXXXXXX"
-      permissions: ["admin", "write", "media"]
+enabled: true
+keys:
+  - name: "Editora Ejemplo"
+    key: "editora-sitio-XXXXXXXXXXXXXXXX"
+    permissions: ["write", "media"]
+  - name: "Admin"
+    key: "admin-sitio-XXXXXXXXXXXXXXXX"
+    permissions: ["admin", "write", "media"]
 YAML;
     }
 
