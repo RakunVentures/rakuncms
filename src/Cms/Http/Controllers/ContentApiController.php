@@ -13,6 +13,7 @@ use Rkn\Cms\Content\Entry;
 use Rkn\Cms\Content\Indexer;
 use Rkn\Cms\Content\IndexStoreFactory;
 use Rkn\Cms\Content\Query;
+use Rkn\Cms\Content\QuerySpec;
 
 final class ContentApiController
 {
@@ -453,21 +454,19 @@ final class ContentApiController
 
     public function collections(): ResponseInterface
     {
+        $store = IndexStoreFactory::make($this->basePath);
+
         $data = [];
         foreach ($this->discoverCollections() as $name) {
-            $dir   = $this->basePath . '/content/' . $name;
-            $count = 0;
-            if (is_dir($dir)) {
-                foreach (new \DirectoryIterator($dir) as $f) {
-                    if ($f->getExtension() === 'md') {
-                        $count++;
-                    }
-                }
-            }
             $data[] = [
                 'id'          => $name,
                 'name'        => $name,
-                'entry_count' => $count,
+                // Count from the index, not a raw directory scan: entries live in
+                // nested folders (e.g. blog/YYYY/MM/) that a non-recursive
+                // DirectoryIterator misses, reporting 0 for chronological blogs.
+                // Mirrors the MCP CollectionsResource and stays memory-safe on
+                // SQLite (a COUNT query, never materialising the rows).
+                'entry_count' => $store->count(new QuerySpec(collection: $name)),
             ];
         }
         return $this->json(200, ['data' => $data]);

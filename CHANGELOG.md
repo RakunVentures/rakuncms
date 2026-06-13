@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.6.2-alpha1] - 2026-06-12
+
+### Fixed
+
+- **Content API `/collections` entry counts:** `GET /api/v1/collections` reported `entry_count: 0` for collections whose entries live in nested folders (e.g. a chronological blog under `blog/YYYY/MM/`). The endpoint counted only top-level `.md` files with a non-recursive `DirectoryIterator`; it now counts published entries from the active index via `IndexStore::count()`. This matches the WebMCP `collections` resource and stays memory-safe on the SQLite driver (a `COUNT` query, never materialising rows).
+
 ## [1.0.0] - 2026-03-03
 
 ### Added (Initial Release)

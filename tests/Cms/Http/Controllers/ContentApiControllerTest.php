@@ -286,9 +286,29 @@ test('collections returns list of collections with counts', function () {
     $data = json_decode((string) $response->getBody(), true);
 
     expect($response->getStatusCode())->toBe(200);
-    $names = array_column($data['data'], 'name');
-    expect($names)->toContain('blog');
-    expect($names)->toContain('pages');
+    $counts = array_column($data['data'], 'entry_count', 'name');
+    expect($counts)->toHaveKey('blog');
+    expect($counts)->toHaveKey('pages');
+    expect($counts['blog'])->toBe(2);
+    expect($counts['pages'])->toBe(1);
+});
+
+test('collections counts entries nested in subdirectories (chronological blog)', function () {
+    // A real blog organises posts under blog/YYYY/MM/. A non-recursive scan of
+    // content/blog/ would miss these and report 0 — the index sees them all.
+    mkdir($this->tempDir . '/content/blog/2024/03', 0755, true);
+    file_put_contents($this->tempDir . '/content/blog/2024/03/nested.en.md', <<<'MD'
+    ---
+    title: "Nested Post"
+    ---
+    A post buried under year/month folders.
+    MD);
+
+    $data = json_decode((string) $this->controller->collections()->getBody(), true);
+    $counts = array_column($data['data'], 'entry_count', 'name');
+
+    // 2 flat (hello, second) + 1 nested. The buggy non-recursive count returned 2.
+    expect($counts['blog'])->toBe(3);
 });
 
 // ──────────────────────────────────────────────────────────────────────────────
