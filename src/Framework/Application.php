@@ -63,7 +63,12 @@ final class Application
                     return ($val !== false && $val !== null) ? $val : ($matches[2] ?? '');
                 }, $content) ?: $content;
 
-                $config[$name] = Yaml::parse($content);
+                try {
+                    $config[$name] = Yaml::parse($content);
+                } catch (\Throwable $e) {
+                    error_log('[rakun] unparseable config ' . $file . '; using empty: ' . $e->getMessage());
+                    $config[$name] = [];
+                }
             }
         }
         $this->container->set('config', $config);

@@ -74,9 +74,13 @@ final class IndexStoreFactory
 
         $configFile = $basePath . '/config/rakun.yaml';
         if (file_exists($configFile)) {
-            $config = Yaml::parseFile($configFile);
-            if (is_array($config) && isset($config['site']['default_locale'])) {
-                return (string) $config['site']['default_locale'];
+            try {
+                $config = Yaml::parseFile($configFile);
+                if (is_array($config) && isset($config['site']['default_locale'])) {
+                    return (string) $config['site']['default_locale'];
+                }
+            } catch (\Throwable $e) {
+                error_log('[rakun] unparseable config ' . $configFile . '; defaulting locale to es: ' . $e->getMessage());
             }
         }
 

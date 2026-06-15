@@ -464,3 +464,42 @@ test('write does not create cache/pages when no page cache exists', function () 
     expect($response->getStatusCode())->toBe(201)
         ->and(is_dir($this->tempDir . '/cache/pages'))->toBeFalse();
 });
+
+test('a failing page-cache invalidation is logged but never breaks the write', function () {
+    if (function_exists('posix_getuid') && posix_getuid() === 0) {
+        // root bypasses 0000 perms, so a clear() failure cannot be simulated.
+        test()->markTestSkipped('cannot simulate a permission failure as root');
+    }
+
+    $pages = $this->tempDir . '/cache/pages';
+    mkdir($pages, 0755, true);
+    file_put_contents($pages . '/index.html', '<html>stale</html>');
+    // Make the cache dir unreadable so PageCache::clear() throws when it iterates
+    // it. is_dir() (stat via the 0755 parent) still passes, so the controller does
+    // attempt the clear — exactly the silent-failure path we want made observable.
+    chmod($pages, 0000);
+
+    $logFile = sys_get_temp_dir() . '/rakun-errlog-' . uniqid() . '.log';
+    $prev = ini_get('error_log');
+    ini_set('error_log', $logFile);
+
+    try {
+        $body = json_encode(['title' => 'Resilient Write', 'slug' => 'resilient-write', 'locale' => 'en', 'content' => 'x']);
+        $request = (new ServerRequest('POST', new Uri('/api/v1/entries/blog')))
+            ->withBody(\Nyholm\Psr7\Stream::create((string) $body));
+
+        $response = $this->controller->create($request, 'blog');
+    } finally {
+        ini_set('error_log', $prev === false ? '' : $prev);
+        chmod($pages, 0755); // restore so afterEach cleanup can recurse
+    }
+
+    $log = file_exists($logFile) ? (string) file_get_contents($logFile) : '';
+    @unlink($logFile);
+
+    // The write itself succeeds and the file lands on disk…
+    expect($response->getStatusCode())->toBe(201);
+    expect(file_exists($this->tempDir . '/content/blog/resilient-write.en.md'))->toBeTrue();
+    // …and the previously-swallowed cache failure is now observable in the log.
+    expect($log)->toContain('[rakun]');
+});

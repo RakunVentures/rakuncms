@@ -48,7 +48,18 @@ final class Parser
             throw new \RuntimeException("Cannot read file: {$filePath}");
         }
 
-        $result = $this->converter->convert($content);
+        try {
+            $result = $this->converter->convert($content);
+        } catch (\Throwable $e) {
+            error_log('[rakun] unparseable frontmatter in ' . $filePath . '; rendering body only: ' . $e->getMessage());
+            $parts = explode('---', $content, 3);
+            $body = count($parts) >= 3 ? ltrim($parts[2], "\n") : $content;
+
+            return [
+                'frontmatter' => [],
+                'html' => $this->converter->convert($body)->getContent(),
+            ];
+        }
 
         $frontmatter = [];
         if ($result instanceof RenderedContentWithFrontMatter) {

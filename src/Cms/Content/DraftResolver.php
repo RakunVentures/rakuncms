@@ -50,7 +50,12 @@ final class DraftResolver
                 continue;
             }
 
-            $document = YamlFrontMatter::parse($content);
+            try {
+                $document = YamlFrontMatter::parse($content);
+            } catch (\Throwable $e) {
+                error_log('[rakun] skipping unparseable draft frontmatter in ' . $file . ': ' . $e->getMessage());
+                continue;
+            }
             $matter = $document->matter();
 
             if (empty($matter['draft'])) {

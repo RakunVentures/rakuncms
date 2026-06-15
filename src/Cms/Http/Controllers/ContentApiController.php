@@ -449,8 +449,8 @@ final class ContentApiController
             } else {
                 (new Indexer($this->basePath))->rebuild();
             }
-        } catch (\Throwable) {
-            // ignore; explicit rebuild still available
+        } catch (\Throwable $e) {
+            error_log('[rakun] index refresh after write failed; explicit rebuild still available: ' . $e->getMessage());
         }
 
         $this->invalidatePageCache();
@@ -474,8 +474,8 @@ final class ContentApiController
         }
         try {
             (new PageCache($dir))->clear();
-        } catch (\Throwable) {
-            // ignore; cache will be refreshed on next manual clear/visit
+        } catch (\Throwable $e) {
+            error_log('[rakun] page cache invalidation after write failed; refreshed on next manual clear/visit: ' . $e->getMessage());
         }
     }
 

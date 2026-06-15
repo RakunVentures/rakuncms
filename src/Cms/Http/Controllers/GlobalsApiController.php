@@ -26,7 +26,12 @@ final class GlobalsApiController
             return $this->json(404, ['error' => 'Global not found']);
         }
 
-        $data = Yaml::parseFile($file);
+        try {
+            $data = Yaml::parseFile($file);
+        } catch (\Throwable $e) {
+            error_log('[rakun] unparseable global ' . $file . '; returning empty: ' . $e->getMessage());
+            $data = [];
+        }
 
         return $this->json(200, ['data' => is_array($data) ? $data : []]);
     }

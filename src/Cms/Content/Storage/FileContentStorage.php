@@ -134,9 +134,13 @@ final class FileContentStorage implements ContentStorage
         $frontmatter = [];
         $body        = $raw;
         if (count($parts) >= 3) {
-            $parsed = Yaml::parse($parts[1]);
-            if (is_array($parsed)) {
-                $frontmatter = $parsed;
+            try {
+                $parsed = Yaml::parse($parts[1]);
+                if (is_array($parsed)) {
+                    $frontmatter = $parsed;
+                }
+            } catch (\Throwable $e) {
+                error_log('[rakun] unparseable frontmatter in ' . $file . '; using empty: ' . $e->getMessage());
             }
             $body = ltrim($parts[2], "\n");
         }

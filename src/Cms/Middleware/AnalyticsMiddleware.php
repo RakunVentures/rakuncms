@@ -62,6 +62,10 @@ final class AnalyticsMiddleware implements MiddlewareInterface
         }
 
         $db = new SQLite3($this->dbPath);
+        // WAL + busy_timeout let the template reader (ContentExtension::getViews)
+        // and this writer coexist instead of colliding as SQLITE_BUSY noise.
+        $db->exec('PRAGMA journal_mode=WAL');
+        $db->exec('PRAGMA busy_timeout=5000');
         $db->exec('CREATE TABLE IF NOT EXISTS hits (
             slug TEXT PRIMARY KEY,
             type TEXT,

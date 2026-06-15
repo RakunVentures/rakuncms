@@ -28,7 +28,12 @@ final class EntryStatus
             return 'draft';
         }
 
-        if ($sc->isScheduled($entry) || in_array($raw, ['future', 'scheduled', 'pending'], true)) {
+        // A raw `scheduled`/`future`/`pending` status (e.g. copied verbatim by the
+        // WXR importer) only means "scheduled" while its effective date is still in
+        // the future. With a past date it is already due → fall through to published.
+        $isScheduledRaw = in_array($raw, ['future', 'scheduled', 'pending'], true);
+
+        if ($sc->isScheduled($entry) || ($isScheduledRaw && $sc->isScheduledByDateFallback($entry))) {
             return 'scheduled';
         }
 

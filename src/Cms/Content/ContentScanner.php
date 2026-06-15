@@ -186,9 +186,13 @@ final class ContentScanner
             $manifestFile = $entryInfo->getPathname() . '/_section.yaml';
             $manifest = [];
             if (is_file($manifestFile)) {
-                $parsed = Yaml::parseFile($manifestFile);
-                if (is_array($parsed)) {
-                    $manifest = $parsed;
+                try {
+                    $parsed = Yaml::parseFile($manifestFile);
+                    if (is_array($parsed)) {
+                        $manifest = $parsed;
+                    }
+                } catch (\Throwable $e) {
+                    error_log('[rakun] unparseable section manifest ' . $manifestFile . '; ignoring: ' . $e->getMessage());
                 }
             }
 
@@ -266,7 +270,12 @@ final class ContentScanner
             return null;
         }
 
-        $document = YamlFrontMatter::parse($content);
+        try {
+            $document = YamlFrontMatter::parse($content);
+        } catch (\Throwable $e) {
+            error_log('[rakun] skipping unparseable frontmatter in ' . $filePath . ': ' . $e->getMessage());
+            return null;
+        }
         $matter = $document->matter();
 
         $basename = basename($filePath, '.md');

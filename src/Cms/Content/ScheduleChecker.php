@@ -66,6 +66,32 @@ final class ScheduleChecker
     }
 
     /**
+     * Date-based scheduling check that also honours a legacy `date` field
+     * (e.g. WXR-imported posts) when no explicit publish_date is present.
+     * Used to validate a raw `scheduled`/`future`/`pending` status string: only
+     * a still-future effective date should keep the entry out of the public index.
+     *
+     * @param array<string, mixed> $entryData
+     */
+    public function isScheduledByDateFallback(array $entryData, ?\DateTimeInterface $now = null): bool
+    {
+        $effectiveDate = $entryData['meta']['publish_date']
+            ?? $entryData['publish_date']
+            ?? $entryData['meta']['date']
+            ?? $entryData['date']
+            ?? null;
+
+        if ($effectiveDate === null) {
+            return false;
+        }
+
+        $now ??= new \DateTimeImmutable();
+        $scheduled = $this->parseDate((string) $effectiveDate);
+
+        return $scheduled !== null && $scheduled > $now;
+    }
+
+    /**
      * Scan content directory for entries with publish_date that should now be published.
      *
      * @return list<array{file: string, collection: string, title: string}>
@@ -93,7 +119,12 @@ final class ScheduleChecker
                     continue;
                 }
 
-                $document = YamlFrontMatter::parse($content);
+                try {
+                    $document = YamlFrontMatter::parse($content);
+                } catch (\Throwable $e) {
+                    error_log('[rakun] skipping unparseable frontmatter in ' . $file . ': ' . $e->getMessage());
+                    continue;
+                }
                 $matter = $document->matter();
 
                 $publishDate = $matter['publish_date'] ?? ($matter['meta']['publish_date'] ?? null);
@@ -128,6 +159,12 @@ final class ScheduleChecker
 
         // Try ISO 8601 with timezone
         $dt = \DateTimeImmutable::createFromFormat(\DateTimeInterface::ATOM, $date);
+        if ($dt !== false) {
+            return $dt;
+        }
+
+        // Try space-separated datetime (WordPress post_date / WXR imports)
+        $dt = \DateTimeImmutable::createFromFormat('Y-m-d H:i:s', $date);
         if ($dt !== false) {
             return $dt;
         }

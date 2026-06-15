@@ -153,3 +153,40 @@ test('invalid date format is treated as published', function () {
     expect($checker->shouldPublish($entry))->toBeTrue();
     expect($checker->isScheduled($entry))->toBeFalse();
 });
+
+// ── isScheduledByDateFallback: honours the legacy `date` field (WXR imports) ──
+
+test('isScheduledByDateFallback: future date field is scheduled', function () {
+    $checker = new ScheduleChecker($this->tempDir);
+    expect($checker->isScheduledByDateFallback(['date' => '2999-01-01']))->toBeTrue();
+    expect($checker->isScheduledByDateFallback(['meta' => ['date' => '2999-01-01']]))->toBeTrue();
+});
+
+test('isScheduledByDateFallback: past date field is not scheduled', function () {
+    $checker = new ScheduleChecker($this->tempDir);
+    expect($checker->isScheduledByDateFallback(['date' => '2020-01-01']))->toBeFalse();
+});
+
+test('isScheduledByDateFallback: publish_date takes precedence over date', function () {
+    $checker = new ScheduleChecker($this->tempDir);
+    // Past publish_date wins even with a future legacy date → already published.
+    expect($checker->isScheduledByDateFallback([
+        'publish_date' => '2020-01-01',
+        'date' => '2999-01-01',
+    ]))->toBeFalse();
+});
+
+test('isScheduledByDateFallback: no date and unparseable date are not scheduled', function () {
+    $checker = new ScheduleChecker($this->tempDir);
+    expect($checker->isScheduledByDateFallback(['title' => 'x']))->toBeFalse();
+    expect($checker->isScheduledByDateFallback(['date' => 'not-a-date']))->toBeFalse();
+});
+
+test('space-separated WordPress datetime (post_date) is parsed', function () {
+    // WXR writes `date: "Y-m-d H:i:s"` verbatim from WP post_date.
+    $checker = new ScheduleChecker($this->tempDir);
+    expect($checker->isScheduledByDateFallback(['date' => '2999-01-01 10:00:00']))->toBeTrue();
+    expect($checker->isScheduledByDateFallback(['date' => '2018-03-15 10:30:00']))->toBeFalse();
+    expect($checker->shouldPublish(['publish_date' => '2999-01-01 10:00:00']))->toBeFalse();
+    expect($checker->shouldPublish(['publish_date' => '2018-03-15 10:30:00']))->toBeTrue();
+});

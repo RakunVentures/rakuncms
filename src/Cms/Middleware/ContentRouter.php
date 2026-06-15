@@ -218,7 +218,12 @@ final class ContentRouter implements MiddlewareInterface
         $files = glob($globalsPath . '/*.yaml') ?: [];
         foreach ($files as $file) {
             $name = basename($file, '.yaml');
-            $data = Yaml::parseFile($file);
+            try {
+                $data = Yaml::parseFile($file);
+            } catch (\Throwable $e) {
+                error_log('[rakun] unparseable global ' . $file . '; using empty: ' . $e->getMessage());
+                $data = [];
+            }
             $globals[$name] = is_array($data) ? $data : [];
         }
 

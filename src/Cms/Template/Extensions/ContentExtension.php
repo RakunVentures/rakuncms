@@ -64,7 +64,12 @@ final class ContentExtension extends AbstractExtension
             return [];
         }
 
-        $data = Yaml::parseFile($file);
+        try {
+            $data = Yaml::parseFile($file);
+        } catch (\Throwable $e) {
+            error_log('[rakun] unparseable global ' . $file . '; using empty: ' . $e->getMessage());
+            return [];
+        }
         return is_array($data) ? $data : [];
     }
 
@@ -153,6 +158,9 @@ final class ContentExtension extends AbstractExtension
             }
 
             $db = new SQLite3($dbPath, SQLITE3_OPEN_READONLY);
+            // Wait out a concurrent analytics write instead of erroring as
+            // SQLITE_BUSY (the DB is WAL, set by AnalyticsMiddleware on write).
+            $db->exec('PRAGMA busy_timeout=5000');
             $stmt = $db->prepare('SELECT views FROM hits WHERE slug = :slug');
             $stmt->bindValue(':slug', $slug, SQLITE3_TEXT);
             $result = $stmt->execute();
