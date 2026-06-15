@@ -96,31 +96,6 @@ final class Application
                 $twig->addExtension(new \Twig\Extension\DebugExtension());
             }
 
-            // Register Banner Slot Function (Task 2.4)
-            $twig->addFunction(new \Twig\TwigFunction('banner_slot', function (string $slot) use ($basePath) {
-                $indexer = new \Rkn\Cms\Content\Indexer($basePath);
-                $query = new \Rkn\Cms\Content\Query($indexer->load());
-                $banners = $query->collection('banners')
-                    ->where('slot', '=', $slot)
-                    ->where('status', '=', 'publish')
-                    ->get();
-                
-                if (empty($banners)) return '';
-                
-                $banner = $banners[0];
-                $meta = $banner->meta();
-                
-                $img = $meta['image'] ?? '';
-                $url = $meta['url'] ?? '#';
-                
-                return sprintf(
-                    '<div class="banner-slot banner-slot-%s"><a href="%s" target="_blank"><img src="%s" alt="Ad" class="w-full h-auto"></a></div>',
-                    htmlspecialchars($slot),
-                    htmlspecialchars($url),
-                    htmlspecialchars($img)
-                );
-            }, ['is_safe' => ['html']]));
-
             return $twig;
         });
 

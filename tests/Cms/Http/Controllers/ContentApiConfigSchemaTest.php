@@ -93,3 +93,75 @@ test('schema returns collections with their field definitions', function () {
     expect($blog['fields'])->toHaveCount(2);
     expect($blog['fields'][0]['key'])->toBe('excerpt');
 });
+
+function bootPositionsFixture(string $dir): void
+{
+    mkdir($dir . '/config', 0755, true);
+    mkdir($dir . '/content/banners', 0755, true);
+    mkdir($dir . '/content/articles', 0755, true);
+    file_put_contents($dir . '/.env', '');
+    file_put_contents($dir . '/config/rakun.yaml', <<<'YAML'
+    site:
+      default_locale: en
+    collections:
+      banners:
+        name: "Banners"
+        active: true
+        positions:
+          - { key: hero, label: "Hero Banner", width_px: 1200, height_px: 400 }
+          - { key: sidebar, label: "Sidebar Banner", width_px: 300, height_px: 250 }
+      articles:
+        name: "Articles"
+        active: true
+    YAML);
+
+    new Application($dir);
+}
+
+test('schema passes positions verbatim for a collection that declares them', function () {
+    $dir = $this->makeTempDir();
+    bootPositionsFixture($dir);
+
+    $response = (new ContentApiController($dir))->schema();
+    $data = json_decode((string) $response->getBody(), true);
+
+    expect($response->getStatusCode())->toBe(200);
+
+    $banners = null;
+    foreach ($data['data'] as $c) {
+        if ($c['slug'] === 'banners') {
+            $banners = $c;
+            break;
+        }
+    }
+
+    expect($banners)->not->toBeNull();
+
+    $expectedPositions = [
+        ['key' => 'hero',    'label' => 'Hero Banner',    'width_px' => 1200, 'height_px' => 400],
+        ['key' => 'sidebar', 'label' => 'Sidebar Banner', 'width_px' => 300,  'height_px' => 250],
+    ];
+
+    expect($banners['positions'])->toEqual($expectedPositions);
+});
+
+test('schema returns positions as empty array for a collection without positions key', function () {
+    $dir = $this->makeTempDir();
+    bootPositionsFixture($dir);
+
+    $response = (new ContentApiController($dir))->schema();
+    $data = json_decode((string) $response->getBody(), true);
+
+    expect($response->getStatusCode())->toBe(200);
+
+    $articles = null;
+    foreach ($data['data'] as $c) {
+        if ($c['slug'] === 'articles') {
+            $articles = $c;
+            break;
+        }
+    }
+
+    expect($articles)->not->toBeNull();
+    expect($articles['positions'])->toBe([]);
+});
