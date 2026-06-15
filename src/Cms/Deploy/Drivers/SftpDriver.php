@@ -162,6 +162,20 @@ final class SftpDriver implements TransportInterface
 
         $runner = $this->getRunner();
 
+        // Prepare the remote release/shared tree BEFORE rsync. rsync creates only
+        // the final path component of the target, never missing parents, so
+        // {$path}/releases/ must already exist — otherwise rsync aborts with
+        // "mkdir ... failed: No such file or directory" (notably on the first
+        // deploy to a fresh server, where releases/ does not yet exist).
+        $prepResult = $runner->run($this->buildSshCommand($config, $this->buildSshPrepareCommands($path, $releaseId)))
+            ->withTimeout(30)
+            ->execute();
+
+        if (!$prepResult->isSuccess()) {
+            $logger("<error>Remote prepare failed:\n{$prepResult->stderr}</error>");
+            return false;
+        }
+
         $cmd = array_merge(
             ['rsync', '-avzL', '--delete', '-e', $sshCmd],
             $this->buildExcludeArgs(),
@@ -176,7 +190,9 @@ final class SftpDriver implements TransportInterface
             return false;
         }
 
-        // Create shared directories and activate symlinks via SSH
+        // Activate AFTER rsync: link shared dirs into the release and swap the
+        // current symlink. These run post-rsync because --delete would otherwise
+        // remove the shared symlinks (not present in the source tree).
         $sshCommands = $this->buildSshActivationCommands($path, $releaseId);
         $sshResult = $runner->run($this->buildSshCommand($config, $sshCommands))
             ->withTimeout(30)
@@ -191,12 +207,24 @@ final class SftpDriver implements TransportInterface
         return true;
     }
 
-    private function buildSshActivationCommands(string $path, string $releaseId): string
+    /**
+     * Remote directories that must exist BEFORE rsync runs (the release target
+     * and the shared tree). Kept separate from activation so rsync's --delete
+     * cannot wipe the shared symlinks created afterward.
+     */
+    private function buildSshPrepareCommands(string $path, string $releaseId): string
     {
         return <<<SHELL
         set -e
         mkdir -p {$path}/shared/content {$path}/shared/uploads {$path}/shared/cache {$path}/shared/logs
         mkdir -p {$path}/releases/{$releaseId}
+        SHELL;
+    }
+
+    private function buildSshActivationCommands(string $path, string $releaseId): string
+    {
+        return <<<SHELL
+        set -e
         [ -f {$path}/shared/.env ] && cp {$path}/shared/.env {$path}/releases/{$releaseId}/.env || true
         ln -sfn ../../shared/content {$path}/releases/{$releaseId}/content 2>/dev/null || true
         ln -sfn ../../shared/uploads {$path}/releases/{$releaseId}/uploads 2>/dev/null || true

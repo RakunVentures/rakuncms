@@ -89,6 +89,28 @@ final class DeployStubServer
     }
 
     /**
+     * Resolve the release ID of the currently-active deployment.
+     *
+     * Under the symlink-less architecture deploy.php.stub uses for cPanel/FTP
+     * legacy hosting (`disable_functions` often bans symlink()), `current` is a
+     * real DIRECTORY produced by rename(), not a symlink — so identity comes
+     * from its manifest.json, not readlink(). Mirrors the stub's own tolerant
+     * read of both key spellings (handleActivate/handleStatus).
+     */
+    public static function currentRelease(): ?string
+    {
+        $manifest = self::root() . '/current/manifest.json';
+        if (!is_file($manifest)) {
+            return null;
+        }
+        $data = json_decode((string) file_get_contents($manifest), true);
+        if (!is_array($data)) {
+            return null;
+        }
+        return $data['releaseId'] ?? $data['release_id'] ?? null;
+    }
+
+    /**
      * @return array{0:string,1:string,2:string}
      */
     public static function hmacHeaders(string $body, ?string $secret = null): array

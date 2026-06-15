@@ -13,8 +13,9 @@ use Tests\Helpers\ContainerHelper;
  *
  * Tests the pure-PHP functions (HMAC construction, lock acquisition,
  * artifact build) without requiring a real FTP server.
- * Full FTP server integration is covered in the Docker integration suite
- * (DOCKER_AVAILABLE=1 env var).
+ * Full FTP server integration is covered by the apple/container suite
+ * (tests/Integration/Deploy/FtpDriverContainerTest.php), which skips cleanly
+ * when the `container` daemon is not running.
  */
 describe('FtpDriver — unit (pure PHP, no FTP server)', function () {
 

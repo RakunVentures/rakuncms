@@ -30,7 +30,8 @@ it('stub: rollback reverts to a previous release', function () {
     [$s2, $r2] = DeployStubServer::request($body, $headers);
     expect($s2)->toBe(200, "Second activate of {$release2} failed: {$r2}");
 
-    expect(basename((string) readlink("{$root}/current")))->toBe($release2);
+    expect(is_dir("{$root}/current"))->toBeTrue()
+        ->and(DeployStubServer::currentRelease())->toBe($release2);
 
     $body    = (string) json_encode(['action' => 'rollback', 'to' => $release1]);
     $headers = DeployStubServer::hmacHeaders($body);
@@ -42,7 +43,8 @@ it('stub: rollback reverts to a previous release', function () {
     expect($data['ok'])->toBeTrue()
         ->and($data['rolled_to'])->toBe($release1);
 
-    expect(basename((string) readlink("{$root}/current")))->toBe($release1);
+    expect(is_dir("{$root}/current"))->toBeTrue()
+        ->and(DeployStubServer::currentRelease())->toBe($release1);
 });
 
 it('FtpDriver: rollback() sends "to" field when rollbackTo is set on config', function () {
@@ -87,7 +89,8 @@ it('FtpDriver: rollback() sends "to" field when rollbackTo is set on config', fu
     $result = $driver->rollback($config, $logger);
 
     expect($result)->toBeTrue();
-    expect(basename((string) readlink("{$root}/current")))->toBe($release1);
+    expect(is_dir("{$root}/current"))->toBeTrue()
+        ->and(DeployStubServer::currentRelease())->toBe($release1);
     $allLogs = implode(' ', $messages);
     expect($allLogs)->toContain($release1);
 });

@@ -12,8 +12,9 @@ use Tests\Helpers\ContainerHelper;
  * Unit tests for SftpDriver.
  *
  * Tests validate() error conditions, lock acquisition/release, and
- * rollback no-op behavior. SSH/rsync integration is tested in the
- * Docker-based integration suite (skippable).
+ * rollback no-op behavior. SSH/rsync integration is tested by the
+ * apple/container suite (tests/Integration/Deploy/SftpDriverContainerTest.php),
+ * which skips cleanly when the `container` daemon is not running.
  */
 describe('SftpDriver', function () {
 

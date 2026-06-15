@@ -97,6 +97,15 @@ final class ContainerHelper
      * @param array<int, int>    $portMap  [hostPort => containerPort]
      * @param array<string, string> $volumes  [hostPath => containerPath]
      * @param array<string, string> $env      [KEY => value]
+     * @param array<int, string>    $dns      nameserver IPs (e.g. ['1.1.1.1'])
+     *
+     * Pass $dns when the container must resolve public hostnames (e.g. an
+     * Alpine image running `apk add` to install a package): apple/container's
+     * default resolver (the gateway) intermittently fails to forward queries
+     * ("DNS: transient error"), so pinning a public nameserver de-flakes
+     * in-container network egress. Leave it empty for containers that only
+     * need the loopback-published ports (e.g. an FTP daemon), which work
+     * without it.
      */
     public function run(
         string $name,
@@ -104,6 +113,7 @@ final class ContainerHelper
         array $portMap = [],
         array $volumes = [],
         array $env = [],
+        array $dns = [],
     ): string {
         // Ensure no stale container with the same name exists
         $this->stop($name);
@@ -114,6 +124,11 @@ final class ContainerHelper
         foreach ($portMap as $hostPort => $containerPort) {
             $cmd[] = '-p';
             $cmd[] = "{$hostPort}:{$containerPort}";
+        }
+
+        foreach ($dns as $nameserver) {
+            $cmd[] = '--dns';
+            $cmd[] = $nameserver;
         }
 
         foreach ($volumes as $hostPath => $containerPath) {
@@ -204,6 +219,51 @@ final class ContainerHelper
             ->withTimeout(30)
             ->execute();
         // Intentionally ignoring exit code — idempotent
+    }
+
+    /**
+     * Remove every container whose ID starts with $prefix (running or stopped).
+     *
+     * Apple `container` sets the container ID equal to the --name passed at run
+     * time, so a prefix match over `container ls -a -q` IDs targets exactly the
+     * test containers (e.g. "rkn-test-ftp-"). Uses `rm -f` to force-remove
+     * running ones in a single step. Idempotent — never throws.
+     *
+     * Integration tests call this before starting a fresh container so a
+     * container leaked by a previously interrupted run (killed before its
+     * afterAll cleanup) cannot keep squatting ports the next run needs — most
+     * notably the FTP suite's fixed passive range 21001-21010, which a leaked
+     * FTP container would otherwise hold ("Address already in use").
+     *
+     * Assumes single-machine sequential E2E (the fixed FTP passive range
+     * already precludes concurrent FTP runs), so removing same-prefix
+     * containers cannot disturb a legitimate sibling run.
+     */
+    public function pruneByPrefix(string $prefix): void
+    {
+        if ($prefix === '') {
+            return;
+        }
+
+        $list = $this->runner
+            ->run(['container', 'ls', '-a', '-q'])
+            ->withTimeout(15)
+            ->execute();
+
+        if (!$list->isSuccess()) {
+            return;
+        }
+
+        foreach (preg_split('/\r?\n/', trim($list->stdout)) ?: [] as $id) {
+            $id = trim($id);
+            if ($id !== '' && str_starts_with($id, $prefix)) {
+                $this->runner
+                    ->run(['container', 'rm', '-f', $id])
+                    ->withTimeout(30)
+                    ->execute();
+                // Intentionally ignoring exit code — idempotent
+            }
+        }
     }
 
     /**

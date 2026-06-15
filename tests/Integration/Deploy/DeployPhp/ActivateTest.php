@@ -6,7 +6,7 @@ use Tests\Helpers\DeployStubServer;
 
 DeployStubServer::bootstrap();
 
-it('stub: activate succeeds and updates current symlink', function () {
+it('stub: activate succeeds and points current at the new release', function () {
     $releaseId = '2026-05-26_143022_a1b2c3d';
 
     DeployStubServer::clearLock();
@@ -22,9 +22,11 @@ it('stub: activate succeeds and updates current symlink', function () {
     expect($data['ok'])->toBeTrue()
         ->and($data['release'])->toBe($releaseId);
 
+    // Symlink-less activation: `current` is a real directory (renamed release),
+    // its identity lives in current/manifest.json (see deploy.php.stub).
     $root = DeployStubServer::root();
-    expect(is_link("{$root}/current"))->toBeTrue()
-        ->and(basename((string) readlink("{$root}/current")))->toBe($releaseId);
+    expect(is_dir("{$root}/current"))->toBeTrue()
+        ->and(DeployStubServer::currentRelease())->toBe($releaseId);
 });
 
 it('stub: activate rejects a ZIP with zip-slip path traversal (leading ../)', function () {

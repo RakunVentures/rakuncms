@@ -186,11 +186,12 @@ final class SqliteIndexStore implements IndexStore
     // ------------------------------------------------------------- build/sync
 
     /**
-     * Synchronise the SQLite index with the .md tree. Incremental by mtime:
-     * only changed/new files are re-parsed+upserted, removed/unpublished ones
-     * are deleted. An empty DB naturally becomes a full build.
+     * Synchronise the SQLite index with the .md tree. Every file's frontmatter is
+     * re-parsed (to read its mtime), but the write is incremental: only new/changed
+     * entries are upserted — the mtime gate skips redundant writes — and
+     * removed/unpublished ones are deleted. An empty DB naturally becomes a full build.
      *
-     * @return array{inserted:int, updated:int, deleted:int, scanned:int}
+     * @return array{inserted:int, updated:int, deleted:int, scanned:int, skipped:int}
      */
     public function sync(): array
     {

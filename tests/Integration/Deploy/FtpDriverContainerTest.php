@@ -48,6 +48,13 @@ if (!ContainerHelper::isAvailable()) {
 // ─── Shared fixtures ─────────────────────────────────────────────────────
 
 $ftpHelper         = new ContainerHelper();
+
+// Clear any container leaked by a previously interrupted run (killed before its
+// afterAll cleanup) before we bind the fixed passive port range (21001-21010):
+// a zombie FTP container squatting those ports would fail this run with
+// "Address already in use". This is the actual port-collision fix for FTP.
+$ftpHelper->pruneByPrefix('rkn-test-ftp-');
+
 $ftpPid            = getmypid();
 $ftpUid            = uniqid();
 $ftpContainerName  = "rkn-test-ftp-{$ftpPid}-{$ftpUid}";

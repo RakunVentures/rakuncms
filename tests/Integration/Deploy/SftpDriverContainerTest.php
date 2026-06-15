@@ -32,6 +32,12 @@ if (!ContainerHelper::isAvailable()) {
 // ─── Shared fixtures ─────────────────────────────────────────────────────
 
 $sftpHelper        = new ContainerHelper();
+
+// Hygiene only: remove containers leaked by previously interrupted runs so they
+// don't accumulate. Unlike FTP, SFTP binds an OS-assigned free port
+// (pickFreePort), so there is no fixed-port collision to guard against here.
+$sftpHelper->pruneByPrefix('rkn-test-sftp-');
+
 $sftpUid           = uniqid();
 $sftpContainerName = "rkn-test-sftp-{$sftpUid}";
 $sftpFixturesDir   = sys_get_temp_dir() . "/rkn-sftp-fix-{$sftpUid}";
@@ -83,6 +89,12 @@ $sftpHelper->run(
         'PUID'            => '1000',
         'PGID'            => '1000',
     ],
+    // Pin public resolvers so `apk add rsync` below can resolve dl-cdn.alpinelinux.org:
+    // apple/container's default gateway resolver intermittently returns
+    // "DNS: transient error", which would leave rsync uninstalled and skip the
+    // full-deploy/rollback pipeline tests. Falls back to a clean skip if the
+    // environment firewalls outbound DNS to these IPs.
+    dns: ['1.1.1.1', '8.8.8.8'],
 );
 
 // Wait for SSH to be ready then give sshd a moment to install the key
