@@ -7,6 +7,7 @@ namespace Rkn\Cms\Http\Controllers;
 use Nyholm\Psr7\Response;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
+use Rkn\Cms\Cache\PageCache;
 use Rkn\Cms\Content\ContentDraft;
 use Rkn\Cms\Content\ContentStorageFactory;
 use Rkn\Cms\Content\Entry;
@@ -449,6 +450,31 @@ final class ContentApiController
             }
         } catch (\Throwable) {
             // ignore; explicit rebuild still available
+        }
+
+        $this->invalidatePageCache();
+    }
+
+    /**
+     * Drop the full-page HTML cache after a content mutation. Without this the
+     * home/listing/archive pages keep serving frozen HTML and "new posts don't
+     * publish". clear() is the correct minimal invalidation: with no per-file
+     * dependency tracking we cannot know which cached pages embed the touched
+     * entry, so we wipe them all and let them regenerate on the next request.
+     * Guarded by is_dir() so a write never materialises an empty cache dir when
+     * page caching is off or the site has never been visited; best-effort so a
+     * cache-permission glitch never breaks the write itself.
+     */
+    private function invalidatePageCache(): void
+    {
+        $dir = $this->basePath . '/cache/pages';
+        if (!is_dir($dir)) {
+            return;
+        }
+        try {
+            (new PageCache($dir))->clear();
+        } catch (\Throwable) {
+            // ignore; cache will be refreshed on next manual clear/visit
         }
     }
 

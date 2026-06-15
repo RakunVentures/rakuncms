@@ -389,3 +389,78 @@ test('show with status=published returns 404 for draft entry', function () {
     $response = $this->controller->show('blog', 'hidden-draft', false, 'published');
     expect($response->getStatusCode())->toBe(404);
 });
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Full-page cache invalidation on write (cache/pages)
+//
+// A content mutation must invalidate the full-page HTML cache, otherwise every
+// listing/archive page keeps serving stale HTML and "new posts don't publish".
+// clear() wipes the whole page cache (correct without file-dependency tracking)
+// while preserving the cache directory itself.
+// ──────────────────────────────────────────────────────────────────────────────
+
+test('create invalidates the full-page cache', function () {
+    $pages = $this->tempDir . '/cache/pages';
+    mkdir($pages . '/blog', 0755, true);
+    file_put_contents($pages . '/index.html', '<html>stale home</html>');
+    file_put_contents($pages . '/blog/listing.html', '<html>stale listing</html>');
+
+    $body = json_encode(['title' => 'Cache Buster', 'slug' => 'cache-buster', 'locale' => 'en', 'content' => 'x']);
+    $request = (new ServerRequest('POST', new Uri('/api/v1/entries/blog')))
+        ->withBody(\Nyholm\Psr7\Stream::create((string) $body));
+
+    $response = $this->controller->create($request, 'blog');
+
+    expect($response->getStatusCode())->toBe(201)
+        ->and(file_exists($pages . '/index.html'))->toBeFalse()
+        ->and(file_exists($pages . '/blog/listing.html'))->toBeFalse()
+        // clear() empties the cache but preserves the directory itself.
+        ->and(is_dir($pages))->toBeTrue();
+});
+
+test('update invalidates the full-page cache', function () {
+    $pages = $this->tempDir . '/cache/pages';
+    mkdir($pages . '/blog', 0755, true);
+    file_put_contents($pages . '/index.html', '<html>stale home</html>');
+    file_put_contents($pages . '/blog/listing.html', '<html>stale listing</html>');
+
+    $body = json_encode(['title' => 'Hello Updated']);
+    $request = (new ServerRequest('PUT', new Uri('/api/v1/entries/blog/hello')))
+        ->withBody(\Nyholm\Psr7\Stream::create((string) $body));
+
+    $response = $this->controller->update($request, 'blog', 'hello');
+
+    expect($response->getStatusCode())->toBe(200)
+        ->and(file_exists($pages . '/index.html'))->toBeFalse()
+        ->and(file_exists($pages . '/blog/listing.html'))->toBeFalse()
+        ->and(is_dir($pages))->toBeTrue();
+});
+
+test('delete invalidates the full-page cache', function () {
+    $pages = $this->tempDir . '/cache/pages';
+    mkdir($pages . '/blog', 0755, true);
+    file_put_contents($pages . '/index.html', '<html>stale home</html>');
+    file_put_contents($pages . '/blog/listing.html', '<html>stale listing</html>');
+
+    $response = $this->controller->delete('blog', 'hello');
+
+    expect($response->getStatusCode())->toBe(200)
+        ->and(file_exists($pages . '/index.html'))->toBeFalse()
+        ->and(file_exists($pages . '/blog/listing.html'))->toBeFalse()
+        ->and(is_dir($pages))->toBeTrue();
+});
+
+test('write does not create cache/pages when no page cache exists', function () {
+    // Caching off / never visited: no cache/pages directory. A write must not
+    // materialise an empty cache dir as a side-effect.
+    expect(is_dir($this->tempDir . '/cache/pages'))->toBeFalse();
+
+    $body = json_encode(['title' => 'No Cache Here', 'slug' => 'no-cache-here', 'locale' => 'en']);
+    $request = (new ServerRequest('POST', new Uri('/api/v1/entries/blog')))
+        ->withBody(\Nyholm\Psr7\Stream::create((string) $body));
+
+    $response = $this->controller->create($request, 'blog');
+
+    expect($response->getStatusCode())->toBe(201)
+        ->and(is_dir($this->tempDir . '/cache/pages'))->toBeFalse();
+});
