@@ -67,6 +67,30 @@ it('PleskSandbox: Client can reach Plesk and authenticate (REST server endpoint)
     expect($response)->toBeArray();
 });
 
+it('PleskSandbox: TRIPWIRE — restGet(domains) reaches Plesk without silent-catch', function () {
+    $client = new Client(
+        $GLOBALS['plesk_host'],
+        $GLOBALS['plesk_api_key'],
+        $GLOBALS['plesk_verify_ssl'],
+        timeout: 15,
+    );
+
+    // Inspector internamente captura PleskApiException y cae a fallbacks
+    // (/httpdocs, null git, null php, null shell). Esto es comportamiento
+    // intencional en producción (un Plesk parcial no debe abortar discovery),
+    // pero en la suite de integración produce "green-by-fallback": los 5
+    // tests Inspector de abajo pasan aunque Plesk esté roto.
+    //
+    // Este tripwire llama directo al endpoint que Inspector usa por dentro
+    // (`domains`), SIN silent-catch — cuando falla, los verdes del Inspector
+    // ya no son señal confiable. Auth/rate-limit problems del sandbox quedan
+    // visibles aquí en lugar de enmascarados.
+    $domains = $client->restGet('domains');
+
+    $list = $domains['data'] ?? $domains;
+    expect($list)->toBeArray()->not->toBeEmpty();
+});
+
 it('PleskSandbox: Inspector.discover() returns the expected shape for a known domain', function () {
     $client = new Client(
         $GLOBALS['plesk_host'],
