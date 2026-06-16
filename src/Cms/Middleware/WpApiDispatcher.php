@@ -231,7 +231,7 @@ final class WpApiDispatcher implements MiddlewareInterface
         if ($action === 'delete' && $id !== null) {
             $entry = $this->findEntryByWpId($collection, $id);
             if (!$entry) return $this->jsonResponse(404, ['error' => 'Not found']);
-            return $controller->delete($collection, $entry->slug());
+            return $controller->delete($request, $collection, $entry->slug());
         }
 
         $body = json_decode((string) $request->getBody(), true) ?? [];

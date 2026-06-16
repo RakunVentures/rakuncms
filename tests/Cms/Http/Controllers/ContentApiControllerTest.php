@@ -211,14 +211,16 @@ test('create returns 422 for missing title', function () {
 });
 
 test('delete removes entry file', function () {
-    $response = $this->controller->delete('blog', 'hello');
+    $request = new ServerRequest('DELETE', new Uri('/api/v1/entries/blog/hello'));
+    $response = $this->controller->delete($request, 'blog', 'hello');
 
     expect($response->getStatusCode())->toBe(200);
     expect(file_exists($this->tempDir . '/content/blog/hello.en.md'))->toBeFalse();
 });
 
 test('delete returns 404 for missing entry', function () {
-    $response = $this->controller->delete('blog', 'nonexistent');
+    $request = new ServerRequest('DELETE', new Uri('/api/v1/entries/blog/nonexistent'));
+    $response = $this->controller->delete($request, 'blog', 'nonexistent');
 
     expect($response->getStatusCode())->toBe(404);
 });
@@ -442,7 +444,8 @@ test('delete invalidates the full-page cache', function () {
     file_put_contents($pages . '/index.html', '<html>stale home</html>');
     file_put_contents($pages . '/blog/listing.html', '<html>stale listing</html>');
 
-    $response = $this->controller->delete('blog', 'hello');
+    $request = new ServerRequest('DELETE', new Uri('/api/v1/entries/blog/hello'));
+    $response = $this->controller->delete($request, 'blog', 'hello');
 
     expect($response->getStatusCode())->toBe(200)
         ->and(file_exists($pages . '/index.html'))->toBeFalse()

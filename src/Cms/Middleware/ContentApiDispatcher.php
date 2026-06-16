@@ -127,7 +127,7 @@ final class ContentApiDispatcher implements MiddlewareInterface
                 }
                 if ($method === 'DELETE') {
                     if ($denied = $this->requirePermission($request, 'write')) return $denied;
-                    return $controller->delete($segments[1], $segments[2]);
+                    return $controller->delete($request, $segments[1], $segments[2]);
                 }
             }
         }

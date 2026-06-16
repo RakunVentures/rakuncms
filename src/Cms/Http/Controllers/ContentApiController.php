@@ -320,7 +320,21 @@ final class ContentApiController
         $locale  = (string) ($body['locale'] ?? $this->defaultLocale());
         $storage = ContentStorageFactory::make($this->basePath);
 
-        $existing = $storage->read($collection, $locale, $slug);
+        // El panel siempre envía el slug "limpio" (basename). Para entradas
+        // creadas desde el panel coincide con la clave de storage y read() acierta
+        // directo. Para entradas importadas (p.ej. WordPress en content/X/YYYY/MM/foo.md)
+        // la clave de storage es compuesta y read() falla con el slug limpio: ahí
+        // resolvemos vía el índice (full_slug es la clave canónica de storage).
+        $storageSlug = $slug;
+        $existing    = $storage->read($collection, $locale, $storageSlug);
+        if ($existing === null) {
+            $resolved = $this->resolveStorageSlug($collection, $locale, $slug);
+            if ($resolved !== null && $resolved !== $slug) {
+                $storageSlug = $resolved;
+                $existing    = $storage->read($collection, $locale, $storageSlug);
+            }
+        }
+
         if ($existing === null) {
             return $this->json(404, ['error' => "Entry '{$slug}' not found in '{$collection}'"]);
         }
@@ -334,7 +348,7 @@ final class ContentApiController
         }
         $content = array_key_exists('content', $body) ? (string) $body['content'] : $existing->body;
 
-        $storage->write(new ContentDraft($collection, $locale, $slug, $meta, $content));
+        $storage->write(new ContentDraft($collection, $locale, $storageSlug, $meta, $content));
         $this->refreshIndex();
 
         return $this->json(200, [
@@ -367,6 +381,7 @@ final class ContentApiController
         $content = (string) ($body['content'] ?? '');
 
         $storage = ContentStorageFactory::make($this->basePath);
+
         if ($storage->read($collection, $locale, $slug) !== null) {
             return $this->json(409, ['error' => "Entry '{$slug}' already exists in '{$collection}'"]);
         }
@@ -391,31 +406,99 @@ final class ContentApiController
         ]);
     }
 
-    public function delete(string $collection, string $slug): ResponseInterface
+    public function delete(ServerRequestInterface $request, string $collection, string $slug): ResponseInterface
     {
-        $dir = $this->basePath . '/content/' . $collection;
+        $qp     = $request->getQueryParams();
+        $locale = isset($qp['locale']) && $qp['locale'] !== ''
+            ? (string) $qp['locale']
+            : $this->defaultLocale();
 
-        $matched = glob("{$dir}/{$slug}.*.md") ?: [];
-        $fallback = "{$dir}/{$slug}.md";
-        if (is_file($fallback)) {
-            $matched[] = $fallback;
+        $storage = ContentStorageFactory::make($this->basePath);
+
+        // (a) Gate por filesystem (flat-file legacy): un `.md` directamente bajo
+        //     content/{collection}/ con variantes por locale. Conserva la
+        //     semántica histórica de borrar TODAS las variantes locales en una
+        //     sola llamada cuando aplique.
+        $dir         = $this->basePath . '/content/' . $collection;
+        $matched     = glob("{$dir}/{$slug}.*.md") ?: [];
+        $flatFallback = "{$dir}/{$slug}.md";
+        if (is_file($flatFallback)) {
+            $matched[] = $flatFallback;
         }
 
-        if (empty($matched)) {
+        if ($matched !== []) {
+            foreach ($matched as $file) {
+                $segments = explode('.', basename($file, '.md'));
+                $fileLocale = (count($segments) >= 2 && strlen((string) end($segments)) === 2)
+                    ? (string) end($segments)
+                    : $this->defaultLocale();
+                $storage->delete($collection, $fileLocale, $slug);
+            }
+            $this->refreshIndex();
+
+            return $this->json(200, ['message' => 'Deleted']);
+        }
+
+        // (b) Gate por índice: aplica a MySQL y a layouts flat-file con
+        //     subdirectorios (p.ej. content/blog/YYYY/MM/foo.md). El panel envía
+        //     siempre slug limpio; el índice nos da la clave canónica de
+        //     storage (full_slug) que puede ser compuesta.
+        $storageSlug = $this->resolveStorageSlug($collection, $locale, $slug);
+        if ($storageSlug === null) {
             return $this->json(404, ['error' => "Entry '{$slug}' not found in '{$collection}'"]);
         }
 
-        $storage = ContentStorageFactory::make($this->basePath);
-        foreach ($matched as $file) {
-            $segments = explode('.', basename($file, '.md'));
-            $locale = (count($segments) >= 2 && strlen((string) end($segments)) === 2)
-                ? (string) end($segments)
-                : $this->defaultLocale();
-            $storage->delete($collection, $locale, $slug);
-        }
+        $storage->delete($collection, $locale, $storageSlug);
         $this->refreshIndex();
 
         return $this->json(200, ['message' => 'Deleted']);
+    }
+
+    /**
+     * Resolver del slug "limpio" (basename) que el panel siempre envía hacia la
+     * clave canónica de storage (full_slug). Cubre dos topologías:
+     *
+     *  - Flat-file en subdirectorio: content/{collection}/YYYY/MM/{slug}.md →
+     *    el indexer guarda slug=basename y full_slug='YYYY/MM/basename', y
+     *    storage->read/write/delete usan full_slug como clave.
+     *  - MySQL con datos importados de WordPress: el WxrImportCommand persiste
+     *    archivos en YYYY/MM/{slug}.md y el importer FS→MySQL copia el slug
+     *    compuesto a la columna `slug`, dejando MySQL con
+     *    slug='YYYY/MM/basename' (y por tanto storage->read('basename') falla).
+     *
+     * Estrategia: el índice (ya sea PhpArray o Sqlite) implementa findBySlug con
+     * fallback `(full_slug = slug OR locale_slug = slug)`, así que matchea
+     * tanto el slug limpio como el compuesto. Retornamos su `full_slug` como la
+     * clave real de storage. null si no hay match publicado.
+     */
+    private function resolveStorageSlug(string $collection, string $locale, string $slug): ?string
+    {
+        try {
+            $row = \index_store()->findBySlug($collection, $locale, $slug);
+        } catch (\Throwable $e) {
+            error_log('[rakun] storage-slug resolution failed: ' . $e->getMessage());
+            return null;
+        }
+        if ($row === null) {
+            return null;
+        }
+
+        // SqliteIndexStore expone `full_slug` (la clave canónica de storage)
+        // directamente; PhpArrayIndexStore no — devuelve el array crudo de
+        // ContentScanner con `slug` (basename) y `section` separados, así que
+        // recomponemos la clave aquí.
+        $full = $row['full_slug'] ?? null;
+        if (is_string($full) && $full !== '') {
+            return $full;
+        }
+
+        $rowSlug = isset($row['slug']) ? (string) $row['slug'] : '';
+        $section = isset($row['section']) ? (string) $row['section'] : '';
+        if ($rowSlug === '') {
+            return null;
+        }
+
+        return $section !== '' ? "{$section}/{$rowSlug}" : $rowSlug;
     }
 
     /**
