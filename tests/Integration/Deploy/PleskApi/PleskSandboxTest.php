@@ -60,7 +60,9 @@ it('PleskSandbox: Client can reach Plesk and authenticate (REST server endpoint)
 
     // REST is the only supported transport on Plesk 18.0.78+ — failure here
     // means the sandbox is misconfigured, not that we should silently skip.
-    $response = $client->restGet('server/ip');
+    // `server` is the canonical info endpoint (REST v2). `server/ip` does
+    // not exist (returns 404 in REST v2 — verified against live sandbox).
+    $response = $client->restGet('server');
 
     expect($response)->toBeArray();
 });
