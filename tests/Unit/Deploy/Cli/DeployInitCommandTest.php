@@ -83,8 +83,9 @@ describe('DeployInitCommand', function () use ($fixturesDir): void {
     });
 
     it('displays Plesk-related output when run interactively', function () use ($fixturesDir): void {
-        // Simulate inputs: host, api_key, verify_ssl (yes), domain, then any remaining prompts
+        // Simulate inputs: deployment type, host, api_key, verify_ssl (yes), domain, then any remaining prompts
         $inputs = [
+            'Plesk (Auto-provisioning via API)', // deployment type (first prompt: $io->choice)
             'https://plesk.example.com:8443',  // host
             'test-api-key',                     // api_key
             'yes',                              // verify_ssl
@@ -103,6 +104,7 @@ describe('DeployInitCommand', function () use ($fixturesDir): void {
     it('outputs the RakunCMS title on startup', function (): void {
         // Verify the command title is rendered regardless of connectivity outcome
         $inputs = [
+            'Plesk (Auto-provisioning via API)', // deployment type (first prompt: $io->choice)
             'https://fallback.test:8443',
             'key',
             'yes',
