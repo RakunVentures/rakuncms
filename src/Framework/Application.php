@@ -42,6 +42,11 @@ final class Application
         if (!class_exists(\Dotenv\Dotenv::class)) {
             return;
         }
+        // safeLoad() no lanza si falta .env, pero internamente file_get_contents
+        // sin @ emite E_WARNING que Pest escala a warning de test.
+        if (!is_file($basePath . '/.env')) {
+            return;
+        }
         try {
             $dotenv = \Dotenv\Dotenv::createImmutable($basePath);
             $dotenv->safeLoad();
