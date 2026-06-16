@@ -29,17 +29,15 @@ final class LocaleDetector implements MiddlewareInterface
         // 1. Detect from URL prefix
         $locale = $this->detectFromUrl($path, $supportedLocales);
 
-        // 2. Redirect root "/" to "/{default_locale}" (no trailing slash)
+        // 2. Redirect root "/" to "/{default_locale}/" (canonical: trailing slash)
         if ($path === '/' || $path === '') {
-            // Check cookie preference
             $cookieLocale = $this->detectFromCookie($request, $supportedLocales);
-            // Check Accept-Language header
             $headerLocale = $this->detectFromHeader($request, $supportedLocales);
 
             $redirectLocale = $cookieLocale ?? $headerLocale ?? $defaultLocale;
 
             return new Response(302, [
-                'Location' => '/' . $redirectLocale,
+                'Location' => '/' . $redirectLocale . '/',
             ]);
         }
 
