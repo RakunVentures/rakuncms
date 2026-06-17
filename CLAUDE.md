@@ -116,6 +116,49 @@ herd php bin/rakun init       # Scaffold new site
 
 Never execute `find`, `grep`, `cat`, `ls` directly — use Claude Code's dedicated tools (Glob, Grep, Read).
 
+## Template Resolution
+
+Cuando una request llega a una entry (`/{locale}/{collection?}/{slug}`), el `TemplateResolver` (`src/Cms/Template/TemplateResolver.php`) decide qué `.twig` rinde. Orden estricto, primera coincidencia gana:
+
+1. **Frontmatter `template:`** del `.md` → `{valor}.twig`. Override por entry. WP imports usan esto: `template: "blog-post"` → `blog-post.twig`.
+2. **`collections.{name}.default_template`** del `rakun.yaml` → `{valor}.twig`. Si el archivo NO existe, lanza `TemplateNotFoundException` (cero fallback silencioso — fue el footgun que motivó la hardening). Útil para colecciones cuyo render es un template explícito que NO sigue la convención de path.
+3. **`templates/{collection}/{slug}.twig`** — override por path para una entry concreta.
+4. **`templates/{collection}/show.twig`** — convención por colección.
+5. **`templates/_layouts/{collection}.twig`** — convención por layout.
+6. **`templates/_layouts/page.twig`** — fallback final hardcoded.
+
+Reglas operativas:
+- Si declaras `default_template` en el YAML pero el archivo no existe, el sitio cae en 500 con mensaje legible. Eso es intencional.
+- Si quieres dejar que la convención decida (5), no declares `default_template`.
+- El cambio se invalida tras `bin/rakun cache:clear` (templates compilados + page cache).
+
+Tests del contrato: `tests/Cms/Template/TemplateResolverTest.php`.
+
+## Cache & Deploy
+
+RakunCMS tiene cinco niveles de cache que `bin/rakun cache:clear` purga atómicamente:
+
+| Path | Qué guarda | Vida |
+|---|---|---|
+| `cache/templates/` | Templates Twig compilados (`.php`) | Hasta `cache:clear` |
+| `cache/content-index.php` | Índice de entries (PHP array) | Hasta `cache:clear` o `index:rebuild` |
+| `cache/pages/` | HTML completo por URI (10k+ archivos típicos) | Hasta `cache:clear` |
+| `cache/data/` | PSR-16 generic store | Hasta `cache:clear` o TTL |
+| `cache/dependencies.php` | Tracking de invalidación cruzada | Hasta `cache:clear` |
+
+**`auto_reload=false` en producción** (`Engine.php:45`) es intencional: Twig no detecta cambios de fuente. La única invalidación canónica es `cache:clear`. En shared hosting (Plesk/cPanel sin SSH) se ejecuta vía CLI del panel o cron one-shot post-deploy.
+
+**El comando acepta `--base`** para apuntar a un sitio específico desde cualquier cwd:
+```bash
+herd php vendor/bin/rakun cache:clear --base=/path/to/site
+```
+
+Sin `--base` usa `getcwd()` (comportamiento legacy preservado).
+
+`PageCacheWriter` solo cachea: `GET` + `200 OK` + `Content-Type: text/html` + body no vacío. Nunca cachea `/api/*` ni `/yoyo*`. Contrato verificado en `tests/Cms/Middleware/PageCacheMiddlewareTest.php`.
+
+SOP de deploy completo: `docs/sop/deploy-cache.md`.
+
 ## Key Reference Documents
 
 | Document | When to consult |

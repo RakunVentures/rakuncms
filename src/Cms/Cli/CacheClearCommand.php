@@ -7,16 +7,30 @@ namespace Rkn\Cms\Cli;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 
 #[AsCommand(name: 'cache:clear', description: 'Clear all cache levels (templates, pages, content index)')]
 class CacheClearCommand extends Command
 {
+    protected function configure(): void
+    {
+        $this->addOption(
+            'base',
+            null,
+            InputOption::VALUE_REQUIRED,
+            'Site root path (defaults to current working directory). The command operates on <base>/cache.',
+        );
+    }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        $basePath = getcwd();
-        $cacheDir = $basePath . '/cache';
+        $basePath = (string) ($input->getOption('base') ?? getcwd());
+        if (!is_dir($basePath)) {
+            $output->writeln("<error>Base path does not exist: {$basePath}</error>");
+            return Command::FAILURE;
+        }
+        $cacheDir = rtrim($basePath, '/') . '/cache';
         $cleared = [];
 
         // L1: Twig compiled templates

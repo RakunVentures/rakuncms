@@ -10,11 +10,10 @@ use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use Rkn\Cms\Content\DraftResolver;
-use Rkn\Cms\Content\Entry;
-use Rkn\Cms\Content\Indexer;
 use Rkn\Cms\Content\Query;
 use Rkn\Cms\Content\TaxonomyRouter;
 use Rkn\Cms\Template\Engine;
+use Rkn\Cms\Template\TemplateResolver;
 use Symfony\Component\Yaml\Yaml;
 
 final class ContentRouter implements MiddlewareInterface
@@ -148,8 +147,14 @@ final class ContentRouter implements MiddlewareInterface
         $container->set('locale', $locale);
         $container->set('current_page_number', $currentPageNumber);
 
-        // Resolve template
-        $templateName = $this->resolveTemplate($entry, $basePath);
+        // Resolve template (honours collections.{name}.default_template from rakun.yaml)
+        $defaults = [];
+        foreach ((array) \config('collections', []) as $name => $cfg) {
+            if (is_array($cfg) && isset($cfg['default_template']) && is_string($cfg['default_template'])) {
+                $defaults[(string) $name] = $cfg['default_template'];
+            }
+        }
+        $templateName = (new TemplateResolver($basePath . '/templates', $defaults))->resolve($entry);
 
         // Load globals
         $globals = $this->loadGlobals($basePath, $locale);
@@ -171,36 +176,6 @@ final class ContentRouter implements MiddlewareInterface
         }
 
         return new Response(200, ['Content-Type' => 'text/html; charset=UTF-8'], $html);
-    }
-
-    private function resolveTemplate(Entry $entry, string $basePath): string
-    {
-        $templateDir = $basePath . '/templates';
-        $collection = $entry->collection();
-        $slug = $entry->slug();
-
-        // 1. Frontmatter template field
-        if ($entry->template() !== null) {
-            return $entry->template() . '.twig';
-        }
-
-        // 2. templates/{collection}/{slug}.twig
-        if (file_exists($templateDir . '/' . $collection . '/' . $slug . '.twig')) {
-            return $collection . '/' . $slug . '.twig';
-        }
-
-        // 3. templates/{collection}/show.twig
-        if (file_exists($templateDir . '/' . $collection . '/show.twig')) {
-            return $collection . '/show.twig';
-        }
-
-        // 4. templates/_layouts/{collection}.twig
-        if (file_exists($templateDir . '/_layouts/' . $collection . '.twig')) {
-            return '_layouts/' . $collection . '.twig';
-        }
-
-        // 5. templates/_layouts/page.twig
-        return '_layouts/page.twig';
     }
 
     /**
