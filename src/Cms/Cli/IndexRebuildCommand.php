@@ -11,16 +11,36 @@ use Rkn\Framework\Application;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 
 #[AsCommand(name: 'index:rebuild', description: 'Rebuild the content index from filesystem')]
 final class IndexRebuildCommand extends Command
 {
+    protected function configure(): void
+    {
+        $this->addOption(
+            'base',
+            null,
+            InputOption::VALUE_REQUIRED,
+            'Site root path (defaults to the container base_path or cwd). The command operates on <base>/content + <base>/cache.',
+        );
+    }
+
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $output->writeln('Rebuilding content index...');
 
-        $basePath = $this->findBasePath();
+        $baseOpt = $input->getOption('base');
+        if (is_string($baseOpt) && $baseOpt !== '') {
+            if (!is_dir($baseOpt)) {
+                $output->writeln("<error>Base path does not exist: {$baseOpt}</error>");
+                return Command::FAILURE;
+            }
+            $basePath = rtrim($baseOpt, '/');
+        } else {
+            $basePath = $this->findBasePath();
+        }
         // Boot the app so config('index.driver') resolves (selects php vs sqlite).
         if (Application::getInstance() === null) {
             new Application($basePath);
