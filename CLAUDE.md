@@ -159,6 +159,42 @@ Sin `--base` usa `getcwd()` (comportamiento legacy preservado).
 
 SOP de deploy completo: `docs/sop/deploy-cache.md`.
 
+## Template Extensions
+
+Twig recibe estas extensiones por defecto (registradas en `src/Cms/Template/Engine.php:54-63`). Funciones disponibles en cualquier template:
+
+| Extensión | Función / filter | Qué hace |
+|---|---|---|
+| `AssetExtension` | `asset(path)` | URL absoluta o relativa con cache-busting opcional. |
+| `ContentExtension` | `collection(name)`, `entry(slug)`, `findEntryByPath(path)` | Query API para entries. |
+| `MarkdownExtension` | `markdown` filter | Compila Markdown a HTML. |
+| `MediaExtension` | `article_image(entry, variant='wide')` | Resuelve URL de imagen con fallback chain. |
+| `I18nExtension` | `t(key)`, locale helpers | Traducción / i18n. |
+| `SeoExtension` | `seo_head()` | Genera meta tags og:* / twitter:*. |
+| `IntegrationsExtension` | `views(slug)`, GA helpers | Analytics integration. |
+| `CsrfExtension` | `csrf_field()` | CSRF token en forms. |
+
+### `article_image(entry, variant)` — fallback chain
+
+Cuando un sitio declara `image_variants` en `rakun.yaml` y el admin (`CoverImageEditor`) regenera variantes, las URLs WebP se persisten en frontmatter en claves planas (`image`, `image_portrait`, `image_square`). El helper resuelve la cadena correcta sin que los templates conozcan los detalles:
+
+| Variante | Fallback chain |
+|---|---|
+| `wide` | `meta.image` |
+| `portrait` | `meta.image_portrait` → `meta.image` |
+| `square` | `meta.image_square` → `meta.image_portrait` → `meta.image` |
+| (cualquier otra) | trata como `wide` |
+
+Si nada está set: retorna string vacío. **El template provee el placeholder** con `|default('<URL>')`:
+
+```twig
+<img src="{{ article_image(entry, 'portrait')|default('/assets/img/placeholder-4x5.webp') }}">
+```
+
+Acepta `Entry` (objeto), `array` con clave `meta`, o `array` flat (shape de Yoyo paginate). Verificado en `tests/Cms/Template/Extensions/MediaExtensionTest.php`.
+
+Sitios que no declaran `image_variants` y nunca regeneran variantes siguen funcionando: la chain cae al `meta.image` legacy automáticamente.
+
 ## Release & Versioning
 
 `rkn/cms` se distribuye vía Packagist. Modelo de dos tracks:
