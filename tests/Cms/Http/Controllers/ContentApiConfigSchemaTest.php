@@ -165,3 +165,159 @@ test('schema returns positions as empty array for a collection without positions
     expect($articles)->not->toBeNull();
     expect($articles['positions'])->toBe([]);
 });
+
+function bootImageVariantsFixture(string $dir): void
+{
+    mkdir($dir . '/config', 0755, true);
+    mkdir($dir . '/content/blog', 0755, true);
+    mkdir($dir . '/content/pages', 0755, true);
+    file_put_contents($dir . '/.env', '');
+    file_put_contents($dir . '/config/rakun.yaml', <<<'YAML'
+    site:
+      default_locale: en
+    collections:
+      blog:
+        name: "Artículos"
+        active: true
+        image_variants:
+          - { key: wide,     label: "Horizontal", ratio: "16:9", width: 1600, height: 900,  target: image,          quality: 0.82, allow_override: true }
+          - { key: portrait, label: "Vertical",   ratio: "4:5",  width: 1200, height: 1500, target: image_portrait, quality: 0.82, allow_override: true }
+      pages:
+        name: "Páginas"
+        active: true
+    YAML);
+
+    new Application($dir);
+}
+
+test('schema passes image_variants verbatim for a collection that declares them', function () {
+    $dir = $this->makeTempDir();
+    bootImageVariantsFixture($dir);
+
+    $response = (new ContentApiController($dir))->schema();
+    $data = json_decode((string) $response->getBody(), true);
+
+    expect($response->getStatusCode())->toBe(200);
+
+    $blog = null;
+    foreach ($data['data'] as $c) {
+        if ($c['slug'] === 'blog') {
+            $blog = $c;
+            break;
+        }
+    }
+
+    expect($blog)->not->toBeNull();
+
+    $expected = [
+        ['key' => 'wide',     'label' => 'Horizontal', 'ratio' => '16:9', 'width' => 1600, 'height' => 900,  'target' => 'image',          'quality' => 0.82, 'allow_override' => true],
+        ['key' => 'portrait', 'label' => 'Vertical',   'ratio' => '4:5',  'width' => 1200, 'height' => 1500, 'target' => 'image_portrait', 'quality' => 0.82, 'allow_override' => true],
+    ];
+
+    expect($blog['image_variants'])->toEqual($expected);
+});
+
+test('schema returns image_variants as empty array for a collection without the key', function () {
+    $dir = $this->makeTempDir();
+    bootImageVariantsFixture($dir);
+
+    $response = (new ContentApiController($dir))->schema();
+    $data = json_decode((string) $response->getBody(), true);
+
+    expect($response->getStatusCode())->toBe(200);
+
+    $pages = null;
+    foreach ($data['data'] as $c) {
+        if ($c['slug'] === 'pages') {
+            $pages = $c;
+            break;
+        }
+    }
+
+    expect($pages)->not->toBeNull();
+    expect($pages['image_variants'])->toBe([]);
+});
+
+function bootGalleryFieldFixture(string $dir): void
+{
+    // El sitio declara un field `gallery` con `item_fields` anidados; el contrato
+    // del engine es transportarlos verbatim al admin (que dibuja el repeater).
+    // Sin este fixture no hay forma de probar que el engine no destruye la
+    // sub-estructura por accidente (filter/normalize/etc.).
+    mkdir($dir . '/config', 0755, true);
+    mkdir($dir . '/content/blog', 0755, true);
+    file_put_contents($dir . '/.env', '');
+    file_put_contents($dir . '/config/rakun.yaml', <<<'YAML'
+    site:
+      default_locale: es
+    collections:
+      blog:
+        name: "Blog"
+        active: true
+        fields:
+          - { key: author, type: text, label: "Autor" }
+          - key: gallery
+            type: gallery
+            label: "Galería de imágenes"
+            item_fields:
+              - { key: image,   type: image,    label: "Imagen",            required: true }
+              - { key: alt,     type: text,     label: "Texto alternativo", required: true }
+              - { key: caption, type: textarea, label: "Pie de foto" }
+              - { key: credit,  type: text,     label: "Crédito" }
+    YAML);
+
+    new Application($dir);
+}
+
+test('schema propagates gallery field item_fields verbatim to the admin', function () {
+    $dir = $this->makeTempDir();
+    bootGalleryFieldFixture($dir);
+
+    $response = (new ContentApiController($dir))->schema();
+    $data = json_decode((string) $response->getBody(), true);
+
+    expect($response->getStatusCode())->toBe(200);
+
+    $blog = null;
+    foreach ($data['data'] as $c) {
+        if ($c['slug'] === 'blog') {
+            $blog = $c;
+            break;
+        }
+    }
+    expect($blog)->not->toBeNull();
+
+    // El field gallery y su item_fields llegan tal cual los declaró el YAML.
+    $gallery = null;
+    foreach ($blog['fields'] as $f) {
+        if (($f['key'] ?? null) === 'gallery') {
+            $gallery = $f;
+            break;
+        }
+    }
+    expect($gallery)->not->toBeNull();
+    expect($gallery['type'])->toBe('gallery');
+    expect($gallery['label'])->toBe('Galería de imágenes');
+    expect($gallery)->toHaveKey('item_fields');
+    expect($gallery['item_fields'])->toHaveCount(4);
+
+    $expectedItemFields = [
+        ['key' => 'image',   'type' => 'image',    'label' => 'Imagen',            'required' => true],
+        ['key' => 'alt',     'type' => 'text',     'label' => 'Texto alternativo', 'required' => true],
+        ['key' => 'caption', 'type' => 'textarea', 'label' => 'Pie de foto'],
+        ['key' => 'credit',  'type' => 'text',     'label' => 'Crédito'],
+    ];
+    expect($gallery['item_fields'])->toEqual($expectedItemFields);
+
+    // El field plano (no-gallery) sigue siendo plano: el contrato no inventa
+    // item_fields donde no lo declara el sitio.
+    $author = null;
+    foreach ($blog['fields'] as $f) {
+        if (($f['key'] ?? null) === 'author') {
+            $author = $f;
+            break;
+        }
+    }
+    expect($author)->not->toBeNull();
+    expect($author)->not->toHaveKey('item_fields');
+});

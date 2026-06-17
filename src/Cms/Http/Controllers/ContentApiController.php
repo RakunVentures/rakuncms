@@ -56,6 +56,7 @@ final class ContentApiController
                 'active'           => (bool) ($def['active'] ?? true),
                 'fields'           => is_array($def['fields'] ?? null) ? $def['fields'] : [],
                 'positions'        => is_array($def['positions'] ?? null) ? $def['positions'] : [],
+                'image_variants'   => is_array($def['image_variants'] ?? null) ? $def['image_variants'] : [],
             ];
         }
 
