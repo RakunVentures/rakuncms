@@ -148,12 +148,18 @@ RakunCMS tiene cinco niveles de cache que `bin/rakun cache:clear` purga atómica
 
 **`auto_reload=false` en producción** (`Engine.php:45`) es intencional: Twig no detecta cambios de fuente. La única invalidación canónica es `cache:clear`. En shared hosting (Plesk/cPanel sin SSH) se ejecuta vía CLI del panel o cron one-shot post-deploy.
 
-**El comando acepta `--base`** para apuntar a un sitio específico desde cualquier cwd:
+**Caso común** — operador desde el docroot:
 ```bash
-herd php vendor/bin/rakun cache:clear --base=/path/to/site
+cd /path/to/site
+herd php vendor/bin/rakun cache:clear
 ```
 
-Sin `--base` usa `getcwd()` (comportamiento legacy preservado).
+`--base=` es **opcional**, no obligatorio. Solo lo necesitas si el comando NO se ejecuta desde el docroot:
+- Cron sin `cd` previo: `0 3 * * * php /var/www/site/vendor/bin/rakun cache:clear --base=/var/www/site`.
+- Wrapper script desde directorio neutral.
+- Orquestación multi-sitio desde herramienta central.
+
+Sin `--base`, el comando usa `getcwd()` — exactamente lo que necesitas si ya estás en el docroot. Misma regla aplica a `index:rebuild` (a partir de v1.6.6-alpha4).
 
 `PageCacheWriter` solo cachea: `GET` + `200 OK` + `Content-Type: text/html` + body no vacío. Nunca cachea `/api/*` ni `/yoyo*`. Contrato verificado en `tests/Cms/Middleware/PageCacheMiddlewareTest.php`.
 
