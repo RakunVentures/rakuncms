@@ -203,6 +203,17 @@ Esos sitios pueden añadir `prefer-stable: true` por seguridad, pero con `minimu
 - **Nunca skip de stable**. v1.6.6-alpha1 → v1.6.6-alpha2 → ... → v1.6.6. No saltar de alpha a v1.7 stable.
 - **Cambios breaking** → bump de minor (`v1.6 → v1.7`) en track 1.x. Major (`v2.0`) requiere coordinación de migración con sitios consumidores.
 - **Hotfix de stable previa**: rama `release/X.Y.x` desde el tag, fix, tag patch (`vX.Y.Z+1`). No mezclar con la línea alpha de `main`.
+- **NUNCA force-push tags ya pusheados**, ni alphas ni stables. Packagist trata todos los tags publicados como inmutables y bloquea el update (mail automático "version's source/dist reference changed"). Si necesitas corregir un tag pusheado, **tagea una versión nueva** — para alphas es trivial (alpha1 → alpha2). Para stables ya consumidas, patch (vX.Y.Z+1).
+
+### Anti-patrón: force-push de tags
+
+Si tagueaste `v1.6.6-alpha1` apuntando a SHA X, lo pusheaste, y después detectaste un bug que requiere corregir el tag para apuntar a SHA Y:
+- ❌ NO `git tag -d v1.6.6-alpha1 && git tag -a v1.6.6-alpha1 Y && git push --force origin v1.6.6-alpha1`. Packagist bloqueará el package update. El git remote queda en SHA Y pero Packagist sigue sirviendo SHA X. Consumidores via `composer install` (sin proxy de Packagist) y consumidores via Packagist resuelven SHAs distintas — split brain.
+- ✅ SÍ `git tag -a v1.6.6-alpha2 Y && git push origin v1.6.6-alpha2`. Una versión nueva. Limpia, idempotente, los consumidores con `minimum-stability: alpha` + `^1.6` la captarán automáticamente en el próximo `composer update`.
+
+Si ya cometiste el error (force-pushed un tag, recibiste el mail de Packagist):
+1. Restaura el tag local + remoto al SHA original (matcheando Packagist) con `git push --force origin <tag>`. Idempotente porque Packagist ya tiene ese SHA.
+2. Tagea la versión nueva con la fix.
 
 ### Anti-patrón: `minimum-stability: stable` + constraint con sufijo `-alpha1`
 
