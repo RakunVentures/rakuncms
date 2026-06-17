@@ -161,15 +161,49 @@ SOP de deploy completo: `docs/sop/deploy-cache.md`.
 
 ## Release & Versioning
 
-`rkn/cms` se distribuye vía Packagist. Convención obligatoria:
+`rkn/cms` se distribuye vía Packagist. Modelo de dos tracks:
 
-- **Tags estables (`vX.Y.Z`)** — para todo lo que un sitio consume vía `composer require rkn/cms:^X.Y` con `minimum-stability` por defecto (`stable`).
-- **NO tags `-alphaN` / `-betaN` / `-rcN`** en `main` salvo coordinación explícita con el sitio. Composer ignora pre-releases bajo `minimum-stability: stable`; el síntoma es "el tag se publica en Packagist pero `composer update` no lo ve". Si el sitio quisiera consumirlos, tendría que añadir `minimum-stability: alpha` + `prefer-stable: true` o sufijo `@alpha` en la constraint — fricción operacional que no escala.
-- **Si necesitas validar antes del release estable**: usa una rama (`next`, `wip-feature`) sin tag. El sitio puede pinear `dev-next` para probar. Cuando esté listo, merge a `main` y tag estable.
-- **Cambios breaking** → bump de minor (`v1.6 → v1.7`) en track 1.x. Major (`v2.0`) requiere coordinación de migración con los sitios consumidores.
-- **Hotfixes en una versión estable previa**: crea rama `release/1.6.x` desde el tag, fix, tag patch (`v1.6.7`). No retroactives a tags alpha.
+### Track A — Alpha (canario)
 
-Tags históricos `-alphaN` (v1.6.5-alpha1, v1.6.3-alpha1, etc.) son legacy de cuando se permitía esa convención. No replicar.
+Tags `-alphaN` (`v1.6.6-alpha1`, `v1.6.6-alpha2`, ...) para work-in-progress que necesita validación en producción real. **Fiancee es el sitio canario**: corre el engine en tráfico real y nos avisa de problemas antes de que lleguen a sitios externos.
+
+Cómo Fiancee (y cualquier canario) consume alphas — **`composer.json` del sitio**:
+
+```json
+{
+    "require": {
+        "rkn/cms": "^1.6"
+    },
+    "minimum-stability": "alpha",
+    "prefer-stable": true
+}
+```
+
+- `minimum-stability: alpha` — abre el rango a alpha/beta/rc/stable.
+- `prefer-stable: true` — cuando hay stable y alpha disponibles, prefiere stable; si solo hay alpha, la usa.
+- Constraint plana `^1.6` (NO `^1.6.5-alpha1`): el sufijo inline solo abre la versión nombrada, no expande el rango a alphas futuras. Esa es la trampa que rompe `composer update`.
+
+Resultado operativo: cada `composer update` en Fiancee captura la última alpha del rango sin tocar config.
+
+### Track B — Stable
+
+Tags `vX.Y.Z` sin sufijo cuando:
+1. Fiancee corrió la versión en producción sin issues por ~2 semanas.
+2. La feature está documentada (CHANGELOG, SOPs si aplica).
+3. Hay señal de que otro sitio se beneficiará.
+
+Sitios non-canario (consumidores tradicionales) usan `minimum-stability: stable` (default) + `^X.Y` y solo captan stables. Cero fricción operacional.
+
+### Reglas
+
+- **Liberar pocas stables, muchas alphas**. Las alphas son baratas; las stables comprometen contrato con sitios externos.
+- **Nunca skip de stable**. v1.6.6-alpha1 → v1.6.6-alpha2 → ... → v1.6.6. No saltar de alpha a v1.7 stable.
+- **Cambios breaking** → bump de minor (`v1.6 → v1.7`) en track 1.x. Major (`v2.0`) requiere coordinación de migración con sitios consumidores.
+- **Hotfix de stable previa**: rama `release/X.Y.x` desde el tag, fix, tag patch (`vX.Y.Z+1`). No mezclar con la línea alpha de `main`.
+
+### Anti-patrón: `minimum-stability: stable` + constraint con sufijo `-alpha1`
+
+Si ves `"rkn/cms": "^1.6.5-alpha1"` en un sitio con `minimum-stability: stable`, está usando un atajo frágil. Composer acepta esa versión específica pero NO captará alphas posteriores (síntoma: `composer update` no encuentra nada nuevo aunque la nueva alpha exista en Packagist). Fix: cambiar a `minimum-stability: alpha` + constraint plana `^1.6`.
 
 ## Key Reference Documents
 
