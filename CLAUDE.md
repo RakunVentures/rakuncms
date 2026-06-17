@@ -159,6 +159,18 @@ Sin `--base` usa `getcwd()` (comportamiento legacy preservado).
 
 SOP de deploy completo: `docs/sop/deploy-cache.md`.
 
+## Release & Versioning
+
+`rkn/cms` se distribuye vía Packagist. Convención obligatoria:
+
+- **Tags estables (`vX.Y.Z`)** — para todo lo que un sitio consume vía `composer require rkn/cms:^X.Y` con `minimum-stability` por defecto (`stable`).
+- **NO tags `-alphaN` / `-betaN` / `-rcN`** en `main` salvo coordinación explícita con el sitio. Composer ignora pre-releases bajo `minimum-stability: stable`; el síntoma es "el tag se publica en Packagist pero `composer update` no lo ve". Si el sitio quisiera consumirlos, tendría que añadir `minimum-stability: alpha` + `prefer-stable: true` o sufijo `@alpha` en la constraint — fricción operacional que no escala.
+- **Si necesitas validar antes del release estable**: usa una rama (`next`, `wip-feature`) sin tag. El sitio puede pinear `dev-next` para probar. Cuando esté listo, merge a `main` y tag estable.
+- **Cambios breaking** → bump de minor (`v1.6 → v1.7`) en track 1.x. Major (`v2.0`) requiere coordinación de migración con los sitios consumidores.
+- **Hotfixes en una versión estable previa**: crea rama `release/1.6.x` desde el tag, fix, tag patch (`v1.6.7`). No retroactives a tags alpha.
+
+Tags históricos `-alphaN` (v1.6.5-alpha1, v1.6.3-alpha1, etc.) son legacy de cuando se permitía esa convención. No replicar.
+
 ## Key Reference Documents
 
 | Document | When to consult |
