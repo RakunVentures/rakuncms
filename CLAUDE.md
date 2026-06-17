@@ -174,16 +174,17 @@ Cómo Fiancee (y cualquier canario) consume alphas — **`composer.json` del sit
     "require": {
         "rkn/cms": "^1.6"
     },
-    "minimum-stability": "alpha",
-    "prefer-stable": true
+    "minimum-stability": "alpha"
 }
 ```
 
 - `minimum-stability: alpha` — abre el rango a alpha/beta/rc/stable.
-- `prefer-stable: true` — cuando hay stable y alpha disponibles, prefiere stable; si solo hay alpha, la usa.
+- **SIN `prefer-stable: true`** (ni en `true` ni en `false` explícito — omitir la clave). Razón: con `prefer-stable: true` Composer elige la última STABLE del rango aunque exista una ALPHA con número de versión mayor. Ejemplo real observado: `^1.6` con alphas v1.6.5-alpha1, v1.6.6-alpha1 + stable v1.6.4 → `prefer-stable: true` resuelve a v1.6.4 (downgrade desde la alpha actual). Sin la clave, Composer elige siempre la versión más alta independientemente de stability — el comportamiento que quiere un canario.
 - Constraint plana `^1.6` (NO `^1.6.5-alpha1`): el sufijo inline solo abre la versión nombrada, no expande el rango a alphas futuras. Esa es la trampa que rompe `composer update`.
 
-Resultado operativo: cada `composer update` en Fiancee captura la última alpha del rango sin tocar config.
+Resultado operativo: cada `composer update` en Fiancee captura la última alpha (o stable, si es más alta) del rango sin tocar config.
+
+Cuando v1.6.6 stable se libere: v1.6.6 > v1.6.6-alpha1 por orden semver, Composer la elige naturalmente. Cuando luego salga v1.6.7-alpha1: salta al nuevo alpha. Sin intervención manual.
 
 ### Track B — Stable
 
@@ -193,6 +194,8 @@ Tags `vX.Y.Z` sin sufijo cuando:
 3. Hay señal de que otro sitio se beneficiará.
 
 Sitios non-canario (consumidores tradicionales) usan `minimum-stability: stable` (default) + `^X.Y` y solo captan stables. Cero fricción operacional.
+
+Esos sitios pueden añadir `prefer-stable: true` por seguridad, pero con `minimum-stability: stable` es redundante (la stability ya filtra alphas afuera).
 
 ### Reglas
 
