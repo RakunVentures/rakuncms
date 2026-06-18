@@ -78,6 +78,17 @@ test('upload never overwrites: same name yields a unique file', function () {
     expect(file_exists($this->tempDir . '/public/' . $p2['data']['path']))->toBeTrue();
 });
 
+test('upload makes the file world-readable (0644), not 0600', function () {
+    // tempnam() crea el archivo 0600 y rename() lo preserva → en hosts donde el
+    // servidor web sirve estáticos como otro usuario (Plesk+nginx) eso da 403.
+    // El upload debe dejarlo 0644.
+    [$status, $payload] = uploadPng($this->controller, $this->png, 'cover.png');
+
+    expect($status)->toBe(201);
+    $full = $this->tempDir . '/public/' . $payload['data']['path'];
+    expect(fileperms($full) & 0777)->toBe(0644);
+});
+
 test('upload rejects a disallowed MIME type', function () {
     $text    = "just some text, not an image";
     $upload  = new UploadedFile(Stream::create($text), strlen($text), UPLOAD_ERR_OK, 'note.txt', 'text/plain');

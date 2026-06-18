@@ -94,6 +94,12 @@ final class MediaApiController
         $targetPath = $targetDir . '/' . $filename;
         rename($tempPath, $targetPath);
 
+        // tempnam() crea el archivo con modo 0600 y rename() lo preserva. En hosts
+        // donde el servidor web sirve estáticos como un usuario distinto al de
+        // PHP-FPM (p.ej. Plesk + nginx), 0600 deja el asset ilegible → 403 al
+        // servirlo. chmod 0644 lo hace world-readable, como cualquier estático.
+        @chmod($targetPath, 0644);
+
         $width  = null;
         $height = null;
         if (str_starts_with($mimeType, 'image/') && $mimeType !== 'image/svg+xml') {
