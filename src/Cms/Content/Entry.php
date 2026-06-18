@@ -29,7 +29,19 @@ final class Entry
         private array $tags = [],
         private string $section = '',
         private ?string $storedUrl = null,
+        private ?string $computedStatus = null,
     ) {
+    }
+
+    /**
+     * Estado de publicación YA computado por el índice (EntryStatus::of, que es
+     * date-aware: una entrada `future` con fecha pasada es 'published'). Null si
+     * el row no lo trae (índices viejos). Consumidores deben preferir esto al
+     * `meta.status` crudo, que no considera la fecha.
+     */
+    public function status(): ?string
+    {
+        return $this->computedStatus;
     }
 
     /**
@@ -55,6 +67,9 @@ final class Entry
             tags: $data['tags'] ?? [],
             section: (string) ($data['section'] ?? ''),
             storedUrl: isset($data['url']) ? (string) $data['url'] : null,
+            computedStatus: isset($data['status']) && is_string($data['status']) && $data['status'] !== ''
+                ? $data['status']
+                : null,
         );
     }
 

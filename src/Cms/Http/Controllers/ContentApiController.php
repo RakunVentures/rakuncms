@@ -614,7 +614,11 @@ final class ContentApiController
             'title'      => $entry->title(),
             'slug'       => $entry->slug(),
             'collection' => $entry->collection(),
-            'status'     => $this->normalizeStatus($meta),
+            // Preferir el status computado por el índice (date-aware: una entrada
+            // `future` con fecha pasada es 'published'). normalizeStatus($meta)
+            // solo mira el status crudo y no la fecha → mostraba "Programado" en
+            // el admin para entradas ya vencidas. Mismo criterio que rowSummary().
+            'status'     => $entry->status() ?? $this->normalizeStatus($meta),
             'date'       => $entry->date(),
             'meta'       => $meta,
         ];

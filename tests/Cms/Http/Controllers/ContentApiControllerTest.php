@@ -67,6 +67,52 @@ afterEach(function () {
     }
 });
 
+test('list reports a past-dated future entry as published (date-aware, not raw status)', function () {
+    // status:future + fecha PASADA → el índice computa 'published'. El listado
+    // por colección NO debe mostrarlo 'scheduled' por mirar solo el meta crudo.
+    file_put_contents($this->tempDir . '/content/blog/past-future.en.md', <<<'MD'
+---
+title: "Past Future Post"
+status: "future"
+date: "2020-01-01 00:00:00"
+---
+body
+MD);
+    $controller = new ContentApiController($this->tempDir);
+
+    $request = (new ServerRequest('GET', new Uri('/api/v1/entries')))
+        ->withQueryParams(['collection' => 'blog', 'status' => 'all']);
+    $data = json_decode((string) $controller->list($request)->getBody(), true);
+
+    $byTitle = [];
+    foreach ($data['data'] as $row) {
+        $byTitle[$row['title']] = $row['status'];
+    }
+    expect($byTitle['Past Future Post'])->toBe('published');
+});
+
+test('list reports a genuinely future entry as scheduled', function () {
+    file_put_contents($this->tempDir . '/content/blog/real-future.en.md', <<<'MD'
+---
+title: "Real Future Post"
+status: "future"
+date: "2099-01-01 00:00:00"
+---
+body
+MD);
+    $controller = new ContentApiController($this->tempDir);
+
+    $request = (new ServerRequest('GET', new Uri('/api/v1/entries')))
+        ->withQueryParams(['collection' => 'blog', 'status' => 'all']);
+    $data = json_decode((string) $controller->list($request)->getBody(), true);
+
+    $byTitle = [];
+    foreach ($data['data'] as $row) {
+        $byTitle[$row['title']] = $row['status'];
+    }
+    expect($byTitle['Real Future Post'])->toBe('scheduled');
+});
+
 test('list returns paginated entries', function () {
     $request = new ServerRequest('GET', new Uri('/api/v1/entries'));
     $response = $this->controller->list($request);
