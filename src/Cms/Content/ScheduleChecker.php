@@ -92,7 +92,39 @@ final class ScheduleChecker
     }
 
     /** Status crudos que indican "programado" (WP/WXR + admin). */
-    private const SCHEDULED_STATUSES = ['future', 'scheduled', 'pending'];
+    public const SCHEDULED_STATUSES = ['future', 'scheduled', 'pending'];
+
+    /**
+     * Predicado central: ¿este frontmatter es una entrada PROGRAMADA ya exigible
+     * (su fecha efectiva pasó)? Es programada si tiene `publish_date` o un `status`
+     * future/scheduled/pending; exigible si la fecha efectiva (publish_date, o el
+     * `date` como fallback) es <= ahora. Opera sobre el frontmatter venga de donde
+     * venga (archivo .md o fila MySQL vía ContentStorage::read), así la promoción
+     * la hace el caller en la FUENTE DE VERDAD, no tocando rutas.
+     *
+     * @param array<string, mixed> $matter
+     */
+    public function isDuePublishable(array $matter, ?\DateTimeInterface $now = null): bool
+    {
+        $now ??= new \DateTimeImmutable();
+
+        $rawStatus = strtolower(trim((string) ($matter['status'] ?? ($matter['meta']['status'] ?? ''))));
+        $isScheduledRaw = in_array($rawStatus, self::SCHEDULED_STATUSES, true);
+        $publishDate = $matter['publish_date'] ?? ($matter['meta']['publish_date'] ?? null);
+
+        if ($publishDate === null && !$isScheduledRaw) {
+            return false;
+        }
+
+        $effective = $publishDate ?? $matter['date'] ?? ($matter['meta']['date'] ?? null);
+        if ($effective === null) {
+            return false;
+        }
+
+        $scheduled = $this->parseDate((string) $effective);
+
+        return $scheduled !== null && $scheduled <= $now;
+    }
 
     /**
      * Escanea el contenido por entradas PROGRAMADAS que ya son exigibles (su
@@ -139,33 +171,15 @@ final class ScheduleChecker
                 }
                 $matter = $document->matter();
 
-                $rawStatus = strtolower(trim((string) ($matter['status'] ?? ($matter['meta']['status'] ?? ''))));
-                $isScheduledRaw = in_array($rawStatus, self::SCHEDULED_STATUSES, true);
-                $publishDate = $matter['publish_date'] ?? ($matter['meta']['publish_date'] ?? null);
-
-                // No es una entrada programada: ni publish_date ni status programado.
-                if ($publishDate === null && !$isScheduledRaw) {
+                if (!$this->isDuePublishable($matter, $now)) {
                     continue;
-                }
-
-                // Fecha efectiva: publish_date manda; si no, el `date` (WXR/admin).
-                $effective = $publishDate
-                    ?? $matter['date']
-                    ?? ($matter['meta']['date'] ?? null);
-                if ($effective === null) {
-                    continue;
-                }
-
-                $scheduled = $this->parseDate((string) $effective);
-                if ($scheduled === null || $scheduled > $now) {
-                    continue; // aún en el futuro → sigue programada
                 }
 
                 $publishable[] = [
                     'file' => $file,
                     'collection' => $collectionName,
                     'title' => $matter['title'] ?? basename($file, '.md'),
-                    'status' => $rawStatus,
+                    'status' => strtolower(trim((string) ($matter['status'] ?? ''))),
                 ];
             }
         }

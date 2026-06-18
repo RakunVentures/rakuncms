@@ -39,4 +39,14 @@ interface ContentStorage
      * @return iterable<ContentRef>
      */
     public function listKeys(): iterable;
+
+    /**
+     * Enumerate references to entries whose stored status is "scheduled-ish"
+     * (future/scheduled/pending). The date/"due" check is the caller's job. This
+     * lets `publish:check` find candidates cheaply (MySQL resolves it with a WHERE
+     * on the indexed `status` column) instead of reading every entry.
+     *
+     * @return iterable<ContentRef>
+     */
+    public function listScheduled(): iterable;
 }

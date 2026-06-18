@@ -134,6 +134,25 @@ final class MysqlContentStorage implements ContentStorage
         }
     }
 
+    public function listScheduled(): iterable
+    {
+        // SCHEDULED_STATUSES son literales de una constante (sin input de usuario)
+        // → seguro interpolarlos. Resuelto por el índice ix_coll_loc_status.
+        $in = "'" . implode("','", \Rkn\Cms\Content\ScheduleChecker::SCHEDULED_STATUSES) . "'";
+        $stmt = $this->pdo->query("SELECT collection, locale, slug FROM contents WHERE status IN ({$in})");
+        if ($stmt === false) {
+            return;
+        }
+        while (($row = $stmt->fetch(PDO::FETCH_ASSOC)) !== false) {
+            yield new ContentRef(
+                (string) $row['collection'],
+                (string) $row['locale'],
+                (string) $row['slug'],
+                $this->cacheRelativePath((string) $row['collection'], (string) $row['locale'], (string) $row['slug']),
+            );
+        }
+    }
+
     /**
      * Revision history for an entry, newest first.
      *

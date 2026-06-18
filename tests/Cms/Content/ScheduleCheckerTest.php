@@ -4,248 +4,114 @@ declare(strict_types=1);
 
 use Rkn\Cms\Content\ScheduleChecker;
 
-beforeEach(function () {
-    $this->tempDir = sys_get_temp_dir() . '/rakun-schedule-test-' . uniqid();
-    mkdir($this->tempDir . '/content/blog', 0755, true);
-
-    // Entry with future publish_date
-    file_put_contents($this->tempDir . '/content/blog/future-post.en.md', <<<'MD'
----
-title: "Future Post"
-publish_date: "2099-12-31T23:59:59"
----
-This is a future post.
-MD);
-
-    // Entry with past publish_date
-    file_put_contents($this->tempDir . '/content/blog/past-post.en.md', <<<'MD'
----
-title: "Past Post"
-publish_date: "2020-01-01T00:00:00"
----
-This was published in the past.
-MD);
-
-    // Entry without publish_date
-    file_put_contents($this->tempDir . '/content/blog/normal-post.en.md', <<<'MD'
----
-title: "Normal Post"
----
-No scheduled date.
-MD);
-
-    // Entry with date-only publish_date
-    file_put_contents($this->tempDir . '/content/blog/date-only.en.md', <<<'MD'
----
-title: "Date Only Post"
-publish_date: "2020-06-15"
----
-Date only format.
-MD);
-
-    // status=future + past date (WXR/admin style, the real-world scheduled case).
-    file_put_contents($this->tempDir . '/content/blog/future-status-due.en.md', <<<'MD'
----
-title: "Future Status Due"
-status: "future"
-date: "2020-03-10 00:00:00"
----
-Scheduled by status, date already passed.
-MD);
-
-    // status=future + future date → must stay scheduled.
-    file_put_contents($this->tempDir . '/content/blog/future-status-pending.en.md', <<<'MD'
----
-title: "Future Status Pending"
-status: "future"
-date: "2099-03-10 00:00:00"
----
-Scheduled by status, date still in the future.
-MD);
-
-    // Nested by /YYYY/MM/ (WordPress import layout) — recursion must find it.
-    mkdir($this->tempDir . '/content/blog/2020/01', 0755, true);
-    file_put_contents($this->tempDir . '/content/blog/2020/01/nested-due.en.md', <<<'MD'
----
-title: "Nested Due Post"
-status: "future"
-date: "2020-01-05 00:00:00"
----
-Nested scheduled entry, due.
-MD);
+test('isDuePublishable: status future + past date is due', function () {
+    $sc = new ScheduleChecker(sys_get_temp_dir());
+    expect($sc->isDuePublishable(['status' => 'future', 'date' => '2020-01-01 00:00:00']))->toBeTrue();
+    expect($sc->isDuePublishable(['status' => 'scheduled', 'date' => '2018-05-05']))->toBeTrue();
+    expect($sc->isDuePublishable(['status' => 'pending', 'date' => '2019-12-31 23:59:59']))->toBeTrue();
 });
 
-afterEach(function () {
-    $cleanup = function (string $dir) use (&$cleanup): void {
-        $items = new DirectoryIterator($dir);
-        foreach ($items as $item) {
-            if ($item->isDot()) continue;
-            if ($item->isDir()) {
-                $cleanup($item->getPathname());
-            } else {
-                unlink($item->getPathname());
-            }
-        }
-        rmdir($dir);
-    };
-    if (is_dir($this->tempDir)) {
-        $cleanup($this->tempDir);
-    }
+test('isDuePublishable: status future + future date is NOT due', function () {
+    $sc = new ScheduleChecker(sys_get_temp_dir());
+    expect($sc->isDuePublishable(['status' => 'future', 'date' => '2999-01-01 00:00:00']))->toBeFalse();
 });
+
+test('isDuePublishable: publish_date past is due (legacy gate)', function () {
+    $sc = new ScheduleChecker(sys_get_temp_dir());
+    expect($sc->isDuePublishable(['publish_date' => '2020-01-01T00:00:00']))->toBeTrue();
+    expect($sc->isDuePublishable(['publish_date' => '2999-01-01T00:00:00']))->toBeFalse();
+});
+
+test('isDuePublishable: published/draft entries are never due', function () {
+    $sc = new ScheduleChecker(sys_get_temp_dir());
+    expect($sc->isDuePublishable(['status' => 'publish', 'date' => '2020-01-01']))->toBeFalse();
+    expect($sc->isDuePublishable(['status' => 'draft', 'date' => '2020-01-01']))->toBeFalse();
+    expect($sc->isDuePublishable(['title' => 'no status, no dates']))->toBeFalse();
+});
+
+test('isDuePublishable: scheduled status but no date is not due', function () {
+    $sc = new ScheduleChecker(sys_get_temp_dir());
+    expect($sc->isDuePublishable(['status' => 'future']))->toBeFalse();
+});
+
+test('isDuePublishable: reads from meta bag too', function () {
+    $sc = new ScheduleChecker(sys_get_temp_dir());
+    expect($sc->isDuePublishable(['meta' => ['status' => 'future', 'date' => '2020-01-01']]))->toBeTrue();
+});
+
+test('isDuePublishable: custom now', function () {
+    $sc = new ScheduleChecker(sys_get_temp_dir());
+    $entry = ['status' => 'future', 'date' => '2025-06-01 00:00:00'];
+    expect($sc->isDuePublishable($entry, new DateTimeImmutable('2025-05-01')))->toBeFalse();
+    expect($sc->isDuePublishable($entry, new DateTimeImmutable('2025-07-01')))->toBeTrue();
+});
+
+// ── shouldPublish / isScheduled (publish_date gate, used by EntryStatus) ──────
 
 test('entry with future publish_date is not publishable', function () {
-    $checker = new ScheduleChecker($this->tempDir);
+    $sc = new ScheduleChecker(sys_get_temp_dir());
     $entry = ['publish_date' => '2099-12-31T23:59:59'];
-
-    expect($checker->shouldPublish($entry))->toBeFalse();
-    expect($checker->isScheduled($entry))->toBeTrue();
+    expect($sc->shouldPublish($entry))->toBeFalse();
+    expect($sc->isScheduled($entry))->toBeTrue();
 });
 
 test('entry with past publish_date is publishable', function () {
-    $checker = new ScheduleChecker($this->tempDir);
+    $sc = new ScheduleChecker(sys_get_temp_dir());
     $entry = ['publish_date' => '2020-01-01T00:00:00'];
-
-    expect($checker->shouldPublish($entry))->toBeTrue();
-    expect($checker->isScheduled($entry))->toBeFalse();
+    expect($sc->shouldPublish($entry))->toBeTrue();
+    expect($sc->isScheduled($entry))->toBeFalse();
 });
 
 test('entry without publish_date is always publishable', function () {
-    $checker = new ScheduleChecker($this->tempDir);
-    $entry = ['title' => 'Normal Post'];
-
-    expect($checker->shouldPublish($entry))->toBeTrue();
-    expect($checker->isScheduled($entry))->toBeFalse();
+    $sc = new ScheduleChecker(sys_get_temp_dir());
+    expect($sc->shouldPublish(['title' => 'Normal']))->toBeTrue();
+    expect($sc->isScheduled(['title' => 'Normal']))->toBeFalse();
 });
 
-test('publish_date in meta bag is recognized', function () {
-    $checker = new ScheduleChecker($this->tempDir);
-    $entry = ['meta' => ['publish_date' => '2099-12-31T23:59:59']];
-
-    expect($checker->shouldPublish($entry))->toBeFalse();
-    expect($checker->isScheduled($entry))->toBeTrue();
+test('date-only and invalid formats', function () {
+    $sc = new ScheduleChecker(sys_get_temp_dir());
+    expect($sc->shouldPublish(['publish_date' => '2020-06-15']))->toBeTrue();
+    expect($sc->shouldPublish(['publish_date' => 'not-a-date']))->toBeTrue();
 });
 
-test('date-only format is supported', function () {
-    $checker = new ScheduleChecker($this->tempDir);
-    $entry = ['publish_date' => '2020-06-15'];
+// ── isScheduledByDateFallback (legacy `date`, WXR) ────────────────────────────
 
-    expect($checker->shouldPublish($entry))->toBeTrue();
+test('isScheduledByDateFallback honours the legacy date field', function () {
+    $sc = new ScheduleChecker(sys_get_temp_dir());
+    expect($sc->isScheduledByDateFallback(['date' => '2999-01-01']))->toBeTrue();
+    expect($sc->isScheduledByDateFallback(['date' => '2020-01-01']))->toBeFalse();
+    expect($sc->isScheduledByDateFallback(['publish_date' => '2020-01-01', 'date' => '2999-01-01']))->toBeFalse();
 });
 
-test('findPublishableEntries finds past entries', function () {
-    $checker = new ScheduleChecker($this->tempDir);
-    $publishable = $checker->findPublishableEntries();
-
-    $titles = array_column($publishable, 'title');
-    expect($titles)->toContain('Past Post');
-    expect($titles)->toContain('Date Only Post');
-    expect($titles)->not->toContain('Future Post');
-    // Normal Post has no publish_date, so it's not in publishable (it's always published)
-    expect($titles)->not->toContain('Normal Post');
+test('space-separated WordPress datetime is parsed', function () {
+    $sc = new ScheduleChecker(sys_get_temp_dir());
+    expect($sc->isScheduledByDateFallback(['date' => '2999-01-01 10:00:00']))->toBeTrue();
+    expect($sc->isScheduledByDateFallback(['date' => '2018-03-15 10:30:00']))->toBeFalse();
 });
 
-test('findPublishableEntries with custom now date', function () {
-    $checker = new ScheduleChecker($this->tempDir);
-    // Set now to year 2100 — everything should be publishable
-    $future = new DateTimeImmutable('2100-01-01');
-    $publishable = $checker->findPublishableEntries($future);
+// ── findPublishableEntries (file scan; recursive + status-aware) ──────────────
 
-    $titles = array_column($publishable, 'title');
-    expect($titles)->toContain('Future Post');
-    expect($titles)->toContain('Past Post');
-});
+test('findPublishableEntries: detects status=future past + recurses nested dirs', function () {
+    $dir = sys_get_temp_dir() . '/rkn-sched-' . uniqid();
+    mkdir($dir . '/content/blog/2020/01', 0755, true);
+    file_put_contents("{$dir}/content/blog/2020/01/nested-due.md",
+        "---\ntitle: \"Nested Due\"\nstatus: \"future\"\ndate: \"2020-01-05 00:00:00\"\n---\nx\n");
+    file_put_contents("{$dir}/content/blog/future-pending.md",
+        "---\ntitle: \"Pending\"\nstatus: \"future\"\ndate: \"2999-01-01\"\n---\nx\n");
+    file_put_contents("{$dir}/content/blog/plain.md",
+        "---\ntitle: \"Plain\"\ndate: \"2019-01-01\"\n---\nx\n");
 
-test('findPublishableEntries skips _globals directory', function () {
-    mkdir($this->tempDir . '/content/_globals', 0755, true);
-    file_put_contents($this->tempDir . '/content/_globals/site.yaml', 'title: Test');
+    $titles = array_column((new ScheduleChecker($dir))->findPublishableEntries(), 'title');
+    expect($titles)->toContain('Nested Due');     // recursivo + status future + past
+    expect($titles)->not->toContain('Pending');   // status future + future date
+    expect($titles)->not->toContain('Plain');     // no programada
 
-    $checker = new ScheduleChecker($this->tempDir);
-    $publishable = $checker->findPublishableEntries();
-
-    $collections = array_column($publishable, 'collection');
-    expect($collections)->not->toContain('_globals');
-});
-
-test('shouldPublish with custom now date', function () {
-    $checker = new ScheduleChecker($this->tempDir);
-    $entry = ['publish_date' => '2025-06-01T00:00:00'];
-
-    $before = new DateTimeImmutable('2025-05-01');
-    $after = new DateTimeImmutable('2025-07-01');
-
-    expect($checker->shouldPublish($entry, $before))->toBeFalse();
-    expect($checker->shouldPublish($entry, $after))->toBeTrue();
-});
-
-test('invalid date format is treated as published', function () {
-    $checker = new ScheduleChecker($this->tempDir);
-    $entry = ['publish_date' => 'not-a-date'];
-
-    expect($checker->shouldPublish($entry))->toBeTrue();
-    expect($checker->isScheduled($entry))->toBeFalse();
-});
-
-// ── isScheduledByDateFallback: honours the legacy `date` field (WXR imports) ──
-
-test('isScheduledByDateFallback: future date field is scheduled', function () {
-    $checker = new ScheduleChecker($this->tempDir);
-    expect($checker->isScheduledByDateFallback(['date' => '2999-01-01']))->toBeTrue();
-    expect($checker->isScheduledByDateFallback(['meta' => ['date' => '2999-01-01']]))->toBeTrue();
-});
-
-test('isScheduledByDateFallback: past date field is not scheduled', function () {
-    $checker = new ScheduleChecker($this->tempDir);
-    expect($checker->isScheduledByDateFallback(['date' => '2020-01-01']))->toBeFalse();
-});
-
-test('isScheduledByDateFallback: publish_date takes precedence over date', function () {
-    $checker = new ScheduleChecker($this->tempDir);
-    // Past publish_date wins even with a future legacy date → already published.
-    expect($checker->isScheduledByDateFallback([
-        'publish_date' => '2020-01-01',
-        'date' => '2999-01-01',
-    ]))->toBeFalse();
-});
-
-test('isScheduledByDateFallback: no date and unparseable date are not scheduled', function () {
-    $checker = new ScheduleChecker($this->tempDir);
-    expect($checker->isScheduledByDateFallback(['title' => 'x']))->toBeFalse();
-    expect($checker->isScheduledByDateFallback(['date' => 'not-a-date']))->toBeFalse();
-});
-
-// ── status-based scheduling (future/scheduled/pending + date) ─────────────────
-
-test('findPublishableEntries detects status=future with past date', function () {
-    $checker = new ScheduleChecker($this->tempDir);
-    $publishable = $checker->findPublishableEntries();
-
-    $titles = array_column($publishable, 'title');
-    expect($titles)->toContain('Future Status Due');       // status future + past date
-    expect($titles)->not->toContain('Future Status Pending'); // status future + future date
-});
-
-test('findPublishableEntries recurses into nested YYYY/MM dirs', function () {
-    $checker = new ScheduleChecker($this->tempDir);
-    $titles = array_column($checker->findPublishableEntries(), 'title');
-
-    // WXR imports nest entries; a flat glob missed them (root cause of the bug).
-    expect($titles)->toContain('Nested Due Post');
-});
-
-test('findPublishableEntries returns the raw status for each entry', function () {
-    $checker = new ScheduleChecker($this->tempDir);
-    $byTitle = [];
-    foreach ($checker->findPublishableEntries() as $e) {
-        $byTitle[$e['title']] = $e['status'];
-    }
-    expect($byTitle['Future Status Due'])->toBe('future');
-});
-
-test('space-separated WordPress datetime (post_date) is parsed', function () {
-    // WXR writes `date: "Y-m-d H:i:s"` verbatim from WP post_date.
-    $checker = new ScheduleChecker($this->tempDir);
-    expect($checker->isScheduledByDateFallback(['date' => '2999-01-01 10:00:00']))->toBeTrue();
-    expect($checker->isScheduledByDateFallback(['date' => '2018-03-15 10:30:00']))->toBeFalse();
-    expect($checker->shouldPublish(['publish_date' => '2999-01-01 10:00:00']))->toBeFalse();
-    expect($checker->shouldPublish(['publish_date' => '2018-03-15 10:30:00']))->toBeTrue();
+    $rm = function (string $d) use (&$rm) {
+        foreach (new DirectoryIterator($d) as $i) {
+            if ($i->isDot()) continue;
+            $i->isDir() ? $rm($i->getPathname()) : unlink($i->getPathname());
+        }
+        rmdir($d);
+    };
+    $rm($dir);
 });

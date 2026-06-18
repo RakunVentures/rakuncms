@@ -109,6 +109,22 @@ final class FileContentStorage implements ContentStorage
         }
     }
 
+    public function listScheduled(): iterable
+    {
+        // Flat-file: no hay índice por status, así que recorremos y filtramos por
+        // el frontmatter. Igual de barato que el escaneo previo de ScheduleChecker.
+        foreach ($this->listKeys() as $ref) {
+            $body = $this->read($ref->collection, $ref->locale, $ref->slug);
+            if ($body === null) {
+                continue;
+            }
+            $status = strtolower(trim((string) ($body->frontmatter['status'] ?? '')));
+            if (in_array($status, \Rkn\Cms\Content\ScheduleChecker::SCHEDULED_STATUSES, true)) {
+                yield $ref;
+            }
+        }
+    }
+
     // --------------------------------------------------------------- internals
 
     private function locate(string $collection, string $locale, string $slug): ?string

@@ -68,55 +68,54 @@ final class PublishCheckCommand extends Command
             new Application($basePath);
         }
 
-        $checker = new ScheduleChecker($basePath);
-        $due = $checker->findPublishableEntries();
-
-        if ($due === []) {
-            $output->writeln('<info>No scheduled entries are due.</info>');
-            return Command::SUCCESS;
-        }
-
         $storage = ContentStorageFactory::make($basePath);
+        $checker = new ScheduleChecker($basePath);
+        $now = new \DateTimeImmutable();
 
-        // Mapa archivo-relativo → ContentRef. listKeys() es la vista de la fuente
-        // de verdad (1 query en MySQL); ContentRef->file coincide con el .md que
-        // escaneó ScheduleChecker por construcción (el cache se genera ahí mismo).
-        $refByFile = [];
-        foreach ($storage->listKeys() as $ref) {
-            $refByFile[$ref->file] = $ref;
-        }
-
-        $output->writeln(sprintf(
-            '<info>Found %d due entr%s:</info>',
-            count($due),
-            count($due) === 1 ? 'y' : 'ies',
-        ));
-
+        // Recorre la FUENTE DE VERDAD por su propia identidad (listScheduled+read),
+        // NO por rutas: en sitios MySQL el .md es un cache y su ruta
+        // (cacheRelativePath, con sufijo de locale) no coincide con el layout real
+        // (p.ej. WXR anidado sin locale) — casar por path fallaba y promovía 0.
+        // read()/write() usan (collection, locale, slug) tal cual los emite el
+        // store, así la escritura golpea exactamente la misma fila/archivo.
+        // listScheduled() acota a las ~programadas (MySQL: índice de status),
+        // evitando leer las ~10k entradas en cada corrida del cron.
         $promoted = 0;
-        foreach ($due as $entry) {
-            $rel = ltrim(substr((string) $entry['file'], strlen($basePath)), '/');
-            $ref = $refByFile[$rel] ?? null;
-            if ($ref === null) {
-                $output->writeln(sprintf('  - [%s] %s (no en el store, omitida)', $entry['collection'], $entry['title']));
-                continue;
-            }
-
+        $titles = [];
+        foreach ($storage->listScheduled() as $ref) {
             $body = $storage->read($ref->collection, $ref->locale, $ref->slug);
             if ($body === null) {
                 continue;
             }
 
             $meta = $body->frontmatter;
+            if (!$checker->isDuePublishable($meta, $now)) {
+                continue;
+            }
+
             $rawStatus = strtolower(trim((string) ($meta['status'] ?? '')));
             if (in_array($rawStatus, self::SCHEDULED_STATUSES, true)) {
                 $meta['status'] = 'publish';
             }
-            // Quitar el gate publish_date (si lo hubiera) → idempotente.
-            unset($meta['publish_date']);
+            unset($meta['publish_date']); // quita el gate → idempotente
 
             $storage->write(new ContentDraft($ref->collection, $ref->locale, $ref->slug, $meta, $body->body));
             $promoted++;
-            $output->writeln(sprintf('  - [%s] %s', $entry['collection'], $entry['title']));
+            $titles[] = sprintf('  - [%s] %s', $ref->collection, $meta['title'] ?? $ref->slug);
+        }
+
+        if ($promoted === 0) {
+            $output->writeln('<info>No scheduled entries are due.</info>');
+            return Command::SUCCESS;
+        }
+
+        $output->writeln(sprintf(
+            '<info>Promoting %d due entr%s:</info>',
+            $promoted,
+            $promoted === 1 ? 'y' : 'ies',
+        ));
+        foreach ($titles as $line) {
+            $output->writeln($line);
         }
 
         // Re-sync del índice: el write de storage actualizó el .md (mtime), así que
