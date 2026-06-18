@@ -598,6 +598,7 @@ $application = new Application('RakunCMS', '0.1.0');
 $application->addCommand(new \Rkn\Cms\Cli\InitCommand());
 $application->addCommand(new \Rkn\Cms\Cli\WxrImportCommand());
 $application->addCommand(new \Rkn\Cms\Cli\IndexRebuildCommand());
+$application->addCommand(new \Rkn\Cms\Cli\PublishCheckCommand());
 $application->addCommand(new \Rkn\Cms\Cli\DbDumpCommand());
 $application->addCommand(new \Rkn\Cms\Cli\CacheClearCommand());
 $application->addCommand(new \Rkn\Cms\Cli\CacheWarmupCommand());

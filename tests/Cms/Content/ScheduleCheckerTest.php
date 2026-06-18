@@ -42,6 +42,37 @@ publish_date: "2020-06-15"
 ---
 Date only format.
 MD);
+
+    // status=future + past date (WXR/admin style, the real-world scheduled case).
+    file_put_contents($this->tempDir . '/content/blog/future-status-due.en.md', <<<'MD'
+---
+title: "Future Status Due"
+status: "future"
+date: "2020-03-10 00:00:00"
+---
+Scheduled by status, date already passed.
+MD);
+
+    // status=future + future date → must stay scheduled.
+    file_put_contents($this->tempDir . '/content/blog/future-status-pending.en.md', <<<'MD'
+---
+title: "Future Status Pending"
+status: "future"
+date: "2099-03-10 00:00:00"
+---
+Scheduled by status, date still in the future.
+MD);
+
+    // Nested by /YYYY/MM/ (WordPress import layout) — recursion must find it.
+    mkdir($this->tempDir . '/content/blog/2020/01', 0755, true);
+    file_put_contents($this->tempDir . '/content/blog/2020/01/nested-due.en.md', <<<'MD'
+---
+title: "Nested Due Post"
+status: "future"
+date: "2020-01-05 00:00:00"
+---
+Nested scheduled entry, due.
+MD);
 });
 
 afterEach(function () {
@@ -180,6 +211,34 @@ test('isScheduledByDateFallback: no date and unparseable date are not scheduled'
     $checker = new ScheduleChecker($this->tempDir);
     expect($checker->isScheduledByDateFallback(['title' => 'x']))->toBeFalse();
     expect($checker->isScheduledByDateFallback(['date' => 'not-a-date']))->toBeFalse();
+});
+
+// ── status-based scheduling (future/scheduled/pending + date) ─────────────────
+
+test('findPublishableEntries detects status=future with past date', function () {
+    $checker = new ScheduleChecker($this->tempDir);
+    $publishable = $checker->findPublishableEntries();
+
+    $titles = array_column($publishable, 'title');
+    expect($titles)->toContain('Future Status Due');       // status future + past date
+    expect($titles)->not->toContain('Future Status Pending'); // status future + future date
+});
+
+test('findPublishableEntries recurses into nested YYYY/MM dirs', function () {
+    $checker = new ScheduleChecker($this->tempDir);
+    $titles = array_column($checker->findPublishableEntries(), 'title');
+
+    // WXR imports nest entries; a flat glob missed them (root cause of the bug).
+    expect($titles)->toContain('Nested Due Post');
+});
+
+test('findPublishableEntries returns the raw status for each entry', function () {
+    $checker = new ScheduleChecker($this->tempDir);
+    $byTitle = [];
+    foreach ($checker->findPublishableEntries() as $e) {
+        $byTitle[$e['title']] = $e['status'];
+    }
+    expect($byTitle['Future Status Due'])->toBe('future');
 });
 
 test('space-separated WordPress datetime (post_date) is parsed', function () {

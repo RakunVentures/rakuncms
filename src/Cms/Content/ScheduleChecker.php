@@ -91,10 +91,23 @@ final class ScheduleChecker
         return $scheduled !== null && $scheduled > $now;
     }
 
+    /** Status crudos que indican "programado" (WP/WXR + admin). */
+    private const SCHEDULED_STATUSES = ['future', 'scheduled', 'pending'];
+
     /**
-     * Scan content directory for entries with publish_date that should now be published.
+     * Escanea el contenido por entradas PROGRAMADAS que ya son exigibles (su
+     * fecha efectiva pasó) y por tanto deben pasar a publicadas.
      *
-     * @return list<array{file: string, collection: string, title: string}>
+     * Una entrada es programada si:
+     *   - tiene `publish_date` (gate explícito), o
+     *   - su `status` es future/scheduled/pending (estilo WXR/admin).
+     * Es exigible si su fecha efectiva (publish_date, o el `date` como fallback)
+     * es <= ahora.
+     *
+     * Recursivo: el contenido importado de WordPress anida por /YYYY/MM/, así que
+     * un glob plano no veía esas entradas (causa raíz de que nunca se publicaran).
+     *
+     * @return list<array{file: string, collection: string, title: string, status: string}>
      */
     public function findPublishableEntries(?\DateTimeInterface $now = null): array
     {
@@ -112,8 +125,7 @@ final class ScheduleChecker
                 continue;
             }
 
-            $files = glob($collectionDir . '/*.md') ?: [];
-            foreach ($files as $file) {
+            foreach ($this->markdownFiles($collectionDir) as $file) {
                 $content = file_get_contents($file);
                 if ($content === false) {
                     continue;
@@ -127,26 +139,64 @@ final class ScheduleChecker
                 }
                 $matter = $document->matter();
 
+                $rawStatus = strtolower(trim((string) ($matter['status'] ?? ($matter['meta']['status'] ?? ''))));
+                $isScheduledRaw = in_array($rawStatus, self::SCHEDULED_STATUSES, true);
                 $publishDate = $matter['publish_date'] ?? ($matter['meta']['publish_date'] ?? null);
-                if ($publishDate === null) {
+
+                // No es una entrada programada: ni publish_date ni status programado.
+                if ($publishDate === null && !$isScheduledRaw) {
                     continue;
                 }
 
-                $scheduled = $this->parseDate((string) $publishDate);
+                // Fecha efectiva: publish_date manda; si no, el `date` (WXR/admin).
+                $effective = $publishDate
+                    ?? $matter['date']
+                    ?? ($matter['meta']['date'] ?? null);
+                if ($effective === null) {
+                    continue;
+                }
+
+                $scheduled = $this->parseDate((string) $effective);
                 if ($scheduled === null || $scheduled > $now) {
-                    continue;
+                    continue; // aún en el futuro → sigue programada
                 }
 
-                // This entry has a publish_date in the past — it should be in the index
                 $publishable[] = [
                     'file' => $file,
                     'collection' => $collectionName,
                     'title' => $matter['title'] ?? basename($file, '.md'),
+                    'status' => $rawStatus,
                 ];
             }
         }
 
         return $publishable;
+    }
+
+    /**
+     * Todos los .md bajo un directorio de colección, recursivo. Salta cualquier
+     * subdirectorio con prefijo `_` (drafts, layouts, etc.).
+     *
+     * @return list<string>
+     */
+    private function markdownFiles(string $dir): array
+    {
+        $out = [];
+        $it = new \RecursiveIteratorIterator(
+            new \RecursiveDirectoryIterator($dir, \FilesystemIterator::SKIP_DOTS),
+        );
+        foreach ($it as $entry) {
+            if (!$entry->isFile() || strtolower($entry->getExtension()) !== 'md') {
+                continue;
+            }
+            $rel = substr($entry->getPathname(), strlen($dir) + 1);
+            if (preg_match('#(^|/)_#', $rel) === 1) {
+                continue;
+            }
+            $out[] = $entry->getPathname();
+        }
+
+        return $out;
     }
 
     private function parseDate(string $date): ?\DateTimeImmutable
