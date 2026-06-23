@@ -13,8 +13,8 @@ final class MediaApiController
     /** Tope por chunk individual. Holgura sobre los ~1.5 MB que envía el cliente. */
     private const MAX_CHUNK_BYTES = 4 * 1024 * 1024; // 4 MB
 
-    /** Tope del archivo ensamblado (anti-DoS). 100 MB de revista + margen. */
-    private const MAX_UPLOAD_BYTES = 150 * 1024 * 1024; // 150 MB
+    /** Tope del archivo ensamblado (anti-DoS). ~2.5x la revista más grande observada (97 MB). */
+    private const MAX_UPLOAD_BYTES = 256 * 1024 * 1024; // 256 MB
 
     /** TTL de las sesiones de chunks abandonadas. */
     private const CHUNK_TTL_SECONDS = 86400; // 24 h
