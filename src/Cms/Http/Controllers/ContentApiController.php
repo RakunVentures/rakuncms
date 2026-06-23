@@ -461,6 +461,15 @@ final class ContentApiController
 
         $storage = ContentStorageFactory::make($this->basePath);
 
+        // Limpieza de media: si la colección declara `cleanup_media: true`, los
+        // archivos referenciados por los campos de media (image/pdf/file/media) de la
+        // entrada se borran de assets/ al borrarla, para no dejar residuos (p.ej. el
+        // PDF y la portada de una revista). Opt-in por colección: solo donde los
+        // archivos son propios de la entrada (no compartidos).
+        $def         = $this->collectionDef($collection);
+        $cleanupMedia = (bool) ($def['cleanup_media'] ?? false);
+        $mediaFiles  = [];
+
         // (a) Gate por filesystem (flat-file legacy): un `.md` directamente bajo
         //     content/{collection}/ con variantes por locale. Conserva la
         //     semántica histórica de borrar TODAS las variantes locales en una
@@ -478,9 +487,13 @@ final class ContentApiController
                 $fileLocale = (count($segments) >= 2 && strlen((string) end($segments)) === 2)
                     ? (string) end($segments)
                     : $this->defaultLocale();
+                if ($cleanupMedia) {
+                    $mediaFiles = array_merge($mediaFiles, $this->mediaFilesFromFrontmatter($def, $storage->read($collection, $fileLocale, $slug)));
+                }
                 $storage->delete($collection, $fileLocale, $slug);
             }
             $this->refreshIndex();
+            $this->deleteMediaFiles($mediaFiles);
 
             return $this->json(200, ['message' => 'Deleted']);
         }
@@ -494,10 +507,83 @@ final class ContentApiController
             return $this->json(404, ['error' => "Entry '{$slug}' not found in '{$collection}'"]);
         }
 
+        if ($cleanupMedia) {
+            $mediaFiles = $this->mediaFilesFromFrontmatter($def, $storage->read($collection, $locale, $storageSlug));
+        }
         $storage->delete($collection, $locale, $storageSlug);
         $this->refreshIndex();
+        $this->deleteMediaFiles($mediaFiles);
 
         return $this->json(200, ['message' => 'Deleted']);
+    }
+
+    /**
+     * Definición de la colección desde la config (collections.{name}).
+     *
+     * @return array<string, mixed>
+     */
+    private function collectionDef(string $collection): array
+    {
+        $config      = $this->fullConfig();
+        $collections = $config['collections'] ?? ($config['rakun']['collections'] ?? []);
+        $def         = is_array($collections) ? ($collections[$collection] ?? null) : null;
+
+        return is_array($def) ? $def : [];
+    }
+
+    /**
+     * Rutas absolutas (contenidas en public/) de los archivos de media que referencia
+     * la entrada en sus campos de tipo image/pdf/file/media. Ignora URLs externas.
+     *
+     * @param  array<string, mixed>  $def
+     * @return list<string>
+     */
+    private function mediaFilesFromFrontmatter(array $def, ?\Rkn\Cms\Content\ContentBody $body): array
+    {
+        if ($body === null) {
+            return [];
+        }
+        $mediaKeys = [];
+        foreach (($def['fields'] ?? []) as $f) {
+            if (is_array($f) && in_array((string) ($f['type'] ?? ''), ['image', 'pdf', 'file', 'media'], true)) {
+                $key = (string) ($f['key'] ?? $f['name'] ?? '');
+                if ($key !== '') {
+                    $mediaKeys[] = $key;
+                }
+            }
+        }
+        if ($mediaKeys === []) {
+            return [];
+        }
+
+        $publicReal = realpath($this->basePath . '/public');
+        if ($publicReal === false) {
+            return [];
+        }
+
+        $files = [];
+        foreach ($mediaKeys as $key) {
+            $val = $body->frontmatter[$key] ?? null;
+            if (!is_string($val) || $val === '' || str_starts_with($val, 'http')) {
+                continue; // vacío o URL externa → no es un archivo local que poseamos
+            }
+            $abs = realpath($this->basePath . '/public/' . ltrim($val, '/'));
+            if ($abs !== false && str_starts_with($abs, $publicReal) && is_file($abs)) {
+                $files[] = $abs;
+            }
+        }
+
+        return array_values(array_unique($files));
+    }
+
+    /**
+     * @param  list<string>  $files
+     */
+    private function deleteMediaFiles(array $files): void
+    {
+        foreach ($files as $file) {
+            @unlink($file);
+        }
     }
 
     /**
