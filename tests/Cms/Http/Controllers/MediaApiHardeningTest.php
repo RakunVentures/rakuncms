@@ -66,6 +66,14 @@ test('upload sanitizes filename and rejects directory traversal', function () {
     expect(file_exists($full))->toBeTrue();
 });
 
+test('upload transliterates accents instead of turning them into dashes', function () {
+    [$status, $payload] = uploadPng($this->controller, $this->png, 'Edición Niñez Año.png');
+
+    expect($status)->toBe(201);
+    // "edicion-ninez-ano.png", NO "edici-n-ni-ez-a-o.png".
+    expect($payload['data']['path'])->toBe('assets/uploads/edicion-ninez-ano.png');
+});
+
 test('upload never overwrites: same name yields a unique file', function () {
     [$s1, $p1] = uploadPng($this->controller, $this->png, 'logo.png');
     [$s2, $p2] = uploadPng($this->controller, $this->png, 'logo.png');

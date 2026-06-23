@@ -279,11 +279,28 @@ final class MediaApiController
 
     private function sanitizeStem(string $name): string
     {
+        $name = $this->transliterate($name); // á→a, ñ→n, ç→c (antes de slugificar)
         $name = strtolower($name);
         $name = preg_replace('/[^a-z0-9]+/', '-', $name) ?? '';
         $name = trim($name, '-');
 
         return $name === '' ? 'file' : substr($name, 0, 80);
+    }
+
+    /**
+     * Translitera acentos/diacríticos a ASCII para que no se conviertan en guiones
+     * ("edición" → "edicion", no "edici-n"). strtr matchea las secuencias UTF-8.
+     */
+    private function transliterate(string $s): string
+    {
+        return strtr($s, [
+            'á' => 'a', 'à' => 'a', 'ä' => 'a', 'â' => 'a', 'ã' => 'a', 'Á' => 'A', 'À' => 'A', 'Ä' => 'A', 'Â' => 'A', 'Ã' => 'A',
+            'é' => 'e', 'è' => 'e', 'ë' => 'e', 'ê' => 'e', 'É' => 'E', 'È' => 'E', 'Ë' => 'E', 'Ê' => 'E',
+            'í' => 'i', 'ì' => 'i', 'ï' => 'i', 'î' => 'i', 'Í' => 'I', 'Ì' => 'I', 'Ï' => 'I', 'Î' => 'I',
+            'ó' => 'o', 'ò' => 'o', 'ö' => 'o', 'ô' => 'o', 'õ' => 'o', 'Ó' => 'O', 'Ò' => 'O', 'Ö' => 'O', 'Ô' => 'O', 'Õ' => 'O',
+            'ú' => 'u', 'ù' => 'u', 'ü' => 'u', 'û' => 'u', 'Ú' => 'U', 'Ù' => 'U', 'Ü' => 'U', 'Û' => 'U',
+            'ñ' => 'n', 'Ñ' => 'N', 'ç' => 'c', 'Ç' => 'C',
+        ]);
     }
 
     private function uniqueFilename(string $dir, string $stem, string $ext): string
