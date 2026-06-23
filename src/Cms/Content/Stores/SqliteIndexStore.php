@@ -84,8 +84,27 @@ final class SqliteIndexStore implements IndexStore
     public function count(QuerySpec $spec): int
     {
         [$where, $params] = $this->filterSql($spec);
+
+        // Las condiciones (has/array/contains) se evalúan en PHP, igual que en
+        // query(): el SQL solo filtra por collection/locale/section/status. Sin
+        // esto, count() sobrecontaba (devolvía TODA la colección) y rompía la
+        // paginación de páginas de tag/categoría (totales y nº de páginas inflados).
+        if ($spec->conditions !== []) {
+            $stmt = $this->db()->prepare("SELECT * FROM entries{$where}");
+            $stmt->execute($params);
+            $n = 0;
+            foreach ($stmt->fetchAll(\PDO::FETCH_ASSOC) as $r) {
+                if ($this->matchesAll($this->hydrate($r), $spec->conditions)) {
+                    $n++;
+                }
+            }
+
+            return $n;
+        }
+
         $stmt = $this->db()->prepare("SELECT COUNT(*) FROM entries{$where}");
         $stmt->execute($params);
+
         return (int) $stmt->fetchColumn();
     }
 

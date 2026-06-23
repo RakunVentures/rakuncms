@@ -110,6 +110,25 @@ test('count parity (collection/locale/section filters)', function () {
     }
 });
 
+test('count parity con condiciones y == al nº de items (regresión del sobreconteo)', function () {
+    // El sqlite count() ignoraba las condiciones (has/=/contains) y devolvía TODA
+    // la colección -> rompía la paginación de tag/categoría. Debe coincidir con php
+    // Y con el nº real de items devueltos.
+    $cases = [
+        fn (Query $q) => $q->collection('blog')->locale('es')->where('tags', 'has', 'moda'),
+        fn (Query $q) => $q->collection('blog')->locale('en')->where('featured', '=', true),
+        fn (Query $q) => $q->collection('blog')->locale('es')->where('title', 'contains', 'post 03'),
+    ];
+    foreach ($cases as $chain) {
+        $sqlite = $chain(new Query($this->sqlite));
+        $php    = $chain(new Query($this->php));
+
+        expect($sqlite->count())->toBe($php->count());
+        expect($sqlite->count())->toBeGreaterThan(0);
+        expect($sqlite->count())->toBe(count($sqlite->get()));
+    }
+});
+
 test('findBySlug parity across every entry (routing)', function () {
     foreach ($this->php->each() as $row) {
         $c = $row['collection'];

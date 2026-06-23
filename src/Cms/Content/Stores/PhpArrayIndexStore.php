@@ -31,23 +31,7 @@ final class PhpArrayIndexStore implements IndexStore
 
     public function query(QuerySpec $spec): array
     {
-        $keys = $this->resolveKeys($spec);
-
-        // Conditions
-        if ($spec->conditions !== []) {
-            $keys = array_filter($keys, function (string $key) use ($spec) {
-                $entry = $this->entries[$key] ?? null;
-                if ($entry === null) {
-                    return false;
-                }
-                foreach ($spec->conditions as $condition) {
-                    if (!$this->matchCondition($entry, $condition)) {
-                        return false;
-                    }
-                }
-                return true;
-            });
-        }
+        $keys = $this->filterByConditions($this->resolveKeys($spec), $spec);
 
         // Sort
         if ($spec->sortField !== null) {
@@ -76,7 +60,38 @@ final class PhpArrayIndexStore implements IndexStore
 
     public function count(QuerySpec $spec): int
     {
-        return count($this->resolveKeys($spec));
+        // count() DEBE aplicar las condiciones igual que query(); si no,
+        // sobrecuenta (devuelve toda la colección) y rompe la paginación de las
+        // páginas de tag/categoría.
+        return count($this->filterByConditions($this->resolveKeys($spec), $spec));
+    }
+
+    /**
+     * Filtra las keys por las condiciones del spec (has/=/contains/...). Mismo
+     * criterio que usa query(); extraído para que count() no diverja.
+     *
+     * @param  array<string, string>  $keys
+     * @return array<string, string>
+     */
+    private function filterByConditions(array $keys, QuerySpec $spec): array
+    {
+        if ($spec->conditions === []) {
+            return $keys;
+        }
+
+        return array_filter($keys, function (string $key) use ($spec): bool {
+            $entry = $this->entries[$key] ?? null;
+            if ($entry === null) {
+                return false;
+            }
+            foreach ($spec->conditions as $condition) {
+                if (!$this->matchCondition($entry, $condition)) {
+                    return false;
+                }
+            }
+
+            return true;
+        });
     }
 
     public function findBySlug(string $collection, string $locale, string $slug): ?array
