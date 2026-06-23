@@ -254,6 +254,7 @@ function bootNamingTemplateFixture(string $dir): void
         slug_template: "{year}-revista-digital-{month}-{year}"
         title_template: "Revista {month|title} {year}"
         window: { start: starts_at, end: ends_at }
+        body: false
       pages:
         name: "Páginas"
         active: true
@@ -262,7 +263,7 @@ function bootNamingTemplateFixture(string $dir): void
     new Application($dir);
 }
 
-test('schema emits slug_template/title_template/window when declared, null otherwise', function () {
+test('schema emits slug_template/title_template/window/body when declared, defaults otherwise', function () {
     $dir = $this->makeTempDir();
     bootNamingTemplateFixture($dir);
 
@@ -278,11 +279,13 @@ test('schema emits slug_template/title_template/window when declared, null other
     expect($revista['slug_template'])->toBe('{year}-revista-digital-{month}-{year}');
     expect($revista['title_template'])->toBe('Revista {month|title} {year}');
     expect($revista['window'])->toBe(['start' => 'starts_at', 'end' => 'ends_at']);
+    expect($revista['body'])->toBeFalse();
 
     expect($pages)->not->toBeNull();
     expect($pages['slug_template'])->toBeNull();
     expect($pages['title_template'])->toBeNull();
     expect($pages['window'])->toBeNull();
+    expect($pages['body'])->toBeTrue(); // default: usa cuerpo editorial
 });
 
 function bootGalleryFieldFixture(string $dir): void

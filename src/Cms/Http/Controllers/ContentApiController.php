@@ -65,6 +65,9 @@ final class ContentApiController
                 // Ventana de vigencia (banners): {start, end} con las keys de los campos
                 // de fecha. El admin la usa para el filtro "activo en fecha".
                 'window'           => is_array($def['window'] ?? null) ? $def['window'] : null,
+                // ¿La colección usa cuerpo editorial? false (banners/revista) → el admin
+                // oculta el editor y muestra una vista previa. Default true.
+                'body'             => array_key_exists('body', $def) ? (bool) $def['body'] : true,
             ];
         }
 
