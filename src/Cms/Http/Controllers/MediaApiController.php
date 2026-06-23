@@ -224,10 +224,20 @@ final class MediaApiController
             return $this->json(415, ['error' => "MIME type $mimeType not allowed"]);
         }
 
-        $stem = $this->sanitizeStem(pathinfo($originalName, PATHINFO_FILENAME));
+        // on_conflict: 'increment' (default, anti-colisión -1) o 'error' (nombre por
+        // plantilla determinista → NO reemplazar; preserva mayúsculas de la convención).
+        $onConflict = is_array($body) ? (string) ($body['on_conflict'] ?? 'increment') : 'increment';
         $ext  = $this->allowedMimeTypes[$mimeType][0];
+        $stem = $onConflict === 'error'
+            ? $this->sanitizeTemplatedStem(pathinfo($originalName, PATHINFO_FILENAME))
+            : $this->sanitizeStem(pathinfo($originalName, PATHINFO_FILENAME));
 
-        $data = $this->moveToAssets($assembled, $stem, $ext, $subDir, $mimeType);
+        if ($onConflict === 'error' && file_exists($this->assetsDir . '/' . $subDir . '/' . $stem . '.' . $ext)) {
+            $this->removeDir($dir);
+            return $this->json(409, ['error' => "File '{$stem}.{$ext}' already exists"]);
+        }
+
+        $data = $this->moveToAssets($assembled, $stem, $ext, $subDir, $mimeType, $onConflict);
 
         $this->removeDir($dir);
 
@@ -288,6 +298,20 @@ final class MediaApiController
     }
 
     /**
+     * Saneador para nombres por PLANTILLA (deterministas): PRESERVA mayúsculas (la
+     * convención productiva las usa, p.ej. "2025-Revista-Digital-DICIEMBRE-2025") y
+     * solo bloquea traversal/caracteres peligrosos. No translitera ni baja a minúsculas.
+     */
+    private function sanitizeTemplatedStem(string $name): string
+    {
+        $name = $this->transliterate($name);
+        $name = preg_replace('/[^A-Za-z0-9._-]+/', '-', $name) ?? '';
+        $name = trim($name, '-.');
+
+        return $name === '' ? 'file' : substr($name, 0, 120);
+    }
+
+    /**
      * Translitera acentos/diacríticos a ASCII para que no se conviertan en guiones
      * ("edición" → "edicion", no "edici-n"). strtr matchea las secuencias UTF-8.
      */
@@ -322,14 +346,16 @@ final class MediaApiController
      *
      * @return array<string, mixed>
      */
-    private function moveToAssets(string $tmpPath, string $stem, string $ext, string $subDir, string $mimeType): array
+    private function moveToAssets(string $tmpPath, string $stem, string $ext, string $subDir, string $mimeType, string $onConflict = 'increment'): array
     {
         $targetDir = $this->assetsDir . '/' . $subDir;
         if (!is_dir($targetDir)) {
             mkdir($targetDir, 0755, true);
         }
 
-        $filename   = $this->uniqueFilename($targetDir, $stem, $ext);
+        // 'error': nombre determinista (plantilla) — usar tal cual (el caller ya validó
+        // que no exista). 'increment': anti-colisión -1/-2 para subidas libres.
+        $filename   = $onConflict === 'error' ? "{$stem}.{$ext}" : $this->uniqueFilename($targetDir, $stem, $ext);
         $targetPath = $targetDir . '/' . $filename;
         rename($tmpPath, $targetPath);
 

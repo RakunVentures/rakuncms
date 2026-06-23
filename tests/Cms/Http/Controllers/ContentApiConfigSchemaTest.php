@@ -238,6 +238,50 @@ test('schema returns image_variants as empty array for a collection without the 
     expect($pages['image_variants'])->toBe([]);
 });
 
+function bootNamingTemplateFixture(string $dir): void
+{
+    mkdir($dir . '/config', 0755, true);
+    mkdir($dir . '/content/revista', 0755, true);
+    mkdir($dir . '/content/pages', 0755, true);
+    file_put_contents($dir . '/.env', '');
+    file_put_contents($dir . '/config/rakun.yaml', <<<'YAML'
+    site:
+      default_locale: es
+    collections:
+      revista:
+        name: "Revistas"
+        active: true
+        slug_template: "{year}-revista-digital-{month}-{year}"
+        title_template: "Revista {month|title} {year}"
+      pages:
+        name: "Páginas"
+        active: true
+    YAML);
+
+    new Application($dir);
+}
+
+test('schema emits slug_template/title_template when declared, null otherwise', function () {
+    $dir = $this->makeTempDir();
+    bootNamingTemplateFixture($dir);
+
+    $data = json_decode((string) (new ContentApiController($dir))->schema()->getBody(), true);
+
+    $revista = $pages = null;
+    foreach ($data['data'] as $c) {
+        if ($c['slug'] === 'revista') $revista = $c;
+        if ($c['slug'] === 'pages') $pages = $c;
+    }
+
+    expect($revista)->not->toBeNull();
+    expect($revista['slug_template'])->toBe('{year}-revista-digital-{month}-{year}');
+    expect($revista['title_template'])->toBe('Revista {month|title} {year}');
+
+    expect($pages)->not->toBeNull();
+    expect($pages['slug_template'])->toBeNull();
+    expect($pages['title_template'])->toBeNull();
+});
+
 function bootGalleryFieldFixture(string $dir): void
 {
     // El sitio declara un field `gallery` con `item_fields` anidados; el contrato

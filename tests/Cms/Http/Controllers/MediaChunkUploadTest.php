@@ -48,10 +48,16 @@ function sendChunk(MediaApiController $c, string $uploadId, int $index, string $
     return [$res->getStatusCode(), json_decode((string) $res->getBody(), true)];
 }
 
-function finalizeUpload(MediaApiController $c, string $uploadId, int $total, string $filename = 'revista.pdf', string $dir = 'uploads'): array
+function finalizeUpload(MediaApiController $c, string $uploadId, int $total, string $filename = 'revista.pdf', string $dir = 'uploads', string $onConflict = 'increment'): array
 {
     $req = (new ServerRequest('POST', new Uri('/api/v1/media/finalize')))
-        ->withParsedBody(['upload_id' => $uploadId, 'total_chunks' => $total, 'filename' => $filename, 'directory' => $dir]);
+        ->withParsedBody([
+            'upload_id'    => $uploadId,
+            'total_chunks' => $total,
+            'filename'     => $filename,
+            'directory'    => $dir,
+            'on_conflict'  => $onConflict,
+        ]);
     $res = $c->finalize($req);
 
     return [$res->getStatusCode(), json_decode((string) $res->getBody(), true)];
@@ -148,4 +154,46 @@ test('finalize devuelve 404 si la sesión no existe', function () {
 test('finalize rechaza upload_id con formato inválido (400)', function () {
     [$status] = finalizeUpload($this->controller, '../../etc', 1);
     expect($status)->toBe(400);
+});
+
+// ── on_conflict (nombre por plantilla) ───────────────────────────────────────
+
+test('finalize on_conflict=error preserva mayúsculas y subdir', function () {
+    sendChunk($this->controller, $this->uploadId, 0, $this->pdf);
+
+    [$status, $payload] = finalizeUpload(
+        $this->controller, $this->uploadId, 1,
+        '2025-Revista-Digital-DICIEMBRE-2025', 'pdfs/revista', 'error'
+    );
+
+    expect($status)->toBe(201);
+    // Mayúsculas intactas (convención productiva), NO lowercased ni con -1.
+    expect($payload['data']['path'])->toBe('assets/pdfs/revista/2025-Revista-Digital-DICIEMBRE-2025.pdf');
+});
+
+test('finalize on_conflict=error devuelve 409 si el archivo ya existe (no reemplaza)', function () {
+    sendChunk($this->controller, $this->uploadId, 0, $this->pdf);
+    [$s1] = finalizeUpload($this->controller, $this->uploadId, 1, 'edicion-fija', 'pdfs/revista', 'error');
+    expect($s1)->toBe(201);
+
+    $id2 = bin2hex(random_bytes(16));
+    sendChunk($this->controller, $id2, 0, $this->pdf);
+    [$s2, $p2] = finalizeUpload($this->controller, $id2, 1, 'edicion-fija', 'pdfs/revista', 'error');
+
+    expect($s2)->toBe(409);
+    // El archivo original sigue siendo uno solo (no se creó -1 ni se reemplazó).
+    expect(glob($this->tempDir . '/public/assets/pdfs/revista/*.pdf'))->toHaveCount(1);
+});
+
+test('finalize increment (default) añade -1 ante colisión', function () {
+    sendChunk($this->controller, $this->uploadId, 0, $this->pdf);
+    [$s1, $p1] = finalizeUpload($this->controller, $this->uploadId, 1, 'revista', 'uploads', 'increment');
+
+    $id2 = bin2hex(random_bytes(16));
+    sendChunk($this->controller, $id2, 0, $this->pdf);
+    [$s2, $p2] = finalizeUpload($this->controller, $id2, 1, 'revista', 'uploads', 'increment');
+
+    expect($s1)->toBe(201);
+    expect($s2)->toBe(201);
+    expect($p2['data']['path'])->not->toBe($p1['data']['path']); // revista.pdf vs revista-1.pdf
 });

@@ -58,6 +58,10 @@ final class ContentApiController
                 'fields'           => is_array($def['fields'] ?? null) ? $def['fields'] : [],
                 'positions'        => is_array($def['positions'] ?? null) ? $def['positions'] : [],
                 'image_variants'   => is_array($def['image_variants'] ?? null) ? $def['image_variants'] : [],
+                // Plantillas de nomenclatura (opcionales): el admin calcula slug/título
+                // del registro a partir de campos capturados (p. ej. año + mes).
+                'slug_template'    => isset($def['slug_template']) ? (string) $def['slug_template'] : null,
+                'title_template'   => isset($def['title_template']) ? (string) $def['title_template'] : null,
             ];
         }
 
