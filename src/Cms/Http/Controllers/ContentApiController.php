@@ -62,6 +62,9 @@ final class ContentApiController
                 // del registro a partir de campos capturados (p. ej. año + mes).
                 'slug_template'    => isset($def['slug_template']) ? (string) $def['slug_template'] : null,
                 'title_template'   => isset($def['title_template']) ? (string) $def['title_template'] : null,
+                // Ventana de vigencia (banners): {start, end} con las keys de los campos
+                // de fecha. El admin la usa para el filtro "activo en fecha".
+                'window'           => is_array($def['window'] ?? null) ? $def['window'] : null,
             ];
         }
 
