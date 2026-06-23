@@ -35,8 +35,11 @@ class PageCacheWriter implements MiddlewareInterface
 
         $uri = $request->getUri()->getPath();
 
-        // Skip API and Yoyo requests
-        if (str_starts_with($uri, '/api/') || str_starts_with($uri, '/yoyo')) {
+        // Skip API, Yoyo y vista previa (?preview). NUNCA cachear un preview: la
+        // clave de cache es solo el path, así que el HTML del draft (con banner)
+        // se serviría al público en la URL real. Bypass crítico de seguridad.
+        if (str_starts_with($uri, '/api/') || str_starts_with($uri, '/yoyo')
+            || ((string) ($request->getQueryParams()['preview'] ?? '')) !== '') {
             return $response;
         }
 

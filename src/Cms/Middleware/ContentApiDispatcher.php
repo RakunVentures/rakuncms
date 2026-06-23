@@ -71,6 +71,12 @@ final class ContentApiDispatcher implements MiddlewareInterface
             return $controller->collections();
         }
 
+        // URL firmada de vista previa (para el panel): GET /api/v1/preview-url
+        if ($segments[0] === 'preview-url' && $method === 'GET') {
+            if ($denied = $this->requirePermission($request, 'write')) return $denied;
+            return $controller->previewUrl($request);
+        }
+
         if ($segments[0] === 'index' && ($segments[1] ?? '') === 'rebuild' && $method === 'POST') {
             if ($denied = $this->requirePermission($request, 'write')) return $denied;
             $store = \app('index_store');

@@ -3,142 +3,140 @@
 declare(strict_types=1);
 
 use Rkn\Cms\Content\DraftResolver;
+use Rkn\Framework\Application;
+
+/**
+ * Vista previa: token firmado (por-entrada, expirable) + resolución de la entrada
+ * desde la FUENTE DE VERDAD (ContentStorage), sin filtrar por status.
+ */
 
 beforeEach(function () {
-    // Create a temporary content directory with a draft entry
-    $this->tempDir = sys_get_temp_dir() . '/rakun-draft-test-' . uniqid();
-    mkdir($this->tempDir . '/content/blog', 0755, true);
+    $this->dir = sys_get_temp_dir() . '/rkn-preview-' . uniqid();
+    mkdir($this->dir . '/content/blog', 0755, true);
+    mkdir($this->dir . '/config', 0755, true);
+    file_put_contents(
+        $this->dir . '/config/rakun.yaml',
+        "site:\n  default_locale: en\npreview:\n  secret: \"s3cr3t-test\"\n  ttl: 3600\n"
+    );
 
-    // Published entry
-    file_put_contents($this->tempDir . '/content/blog/published-post.en.md', <<<'MD'
----
-title: "Published Post"
-draft: false
----
-This is published content.
-MD);
+    file_put_contents($this->dir . '/content/blog/draft-post.en.md', "---\ntitle: \"My Draft Post\"\nstatus: \"draft\"\n---\nCuerpo draft.\n");
+    file_put_contents($this->dir . '/content/blog/future-post.en.md', "---\ntitle: \"Future Post\"\nstatus: \"future\"\ndate: \"2099-01-01\"\n---\nCuerpo programado.\n");
+    file_put_contents($this->dir . '/content/blog/published-post.en.md', "---\ntitle: \"Published Post\"\nstatus: \"publish\"\n---\nCuerpo publicado.\n");
 
-    // Draft entry
-    file_put_contents($this->tempDir . '/content/blog/draft-post.en.md', <<<'MD'
----
-title: "My Draft Post"
-draft: true
-meta:
-  description: "A draft post"
----
-This is draft content.
-MD);
-
-    // Draft entry in Spanish
-    file_put_contents($this->tempDir . '/content/blog/borrador.es.md', <<<'MD'
----
-title: "Mi Borrador"
-draft: true
----
-Contenido borrador.
-MD);
+    new Application($this->dir); // hace disponible config (preview.secret, content.driver)
 });
 
 afterEach(function () {
-    // Clean up temp directory
-    $cleanup = function (string $dir) use (&$cleanup): void {
-        $items = new DirectoryIterator($dir);
-        foreach ($items as $item) {
-            if ($item->isDot()) continue;
-            if ($item->isDir()) {
-                $cleanup($item->getPathname());
-            } else {
-                unlink($item->getPathname());
-            }
+    Application::reset(); // no filtrar el singleton (config/locale) al siguiente test
+    $rm = function (string $d) use (&$rm): void {
+        if (!is_dir($d)) return;
+        foreach (new DirectoryIterator($d) as $i) {
+            if ($i->isDot()) continue;
+            $i->isDir() ? $rm($i->getPathname()) : unlink($i->getPathname());
         }
-        rmdir($dir);
+        rmdir($d);
     };
-    if (is_dir($this->tempDir)) {
-        $cleanup($this->tempDir);
-    }
+    $rm($this->dir);
 });
 
-test('finds draft entry by collection locale and slug', function () {
-    $resolver = new DraftResolver($this->tempDir);
-    $entry = $resolver->findDraft('blog', 'en', 'draft-post');
+// ── Token firmado ────────────────────────────────────────────────────────────
 
-    expect($entry)->not->toBeNull();
-    expect($entry->title())->toBe('My Draft Post');
-    expect($entry->isDraft())->toBeTrue();
-    expect($entry->locale())->toBe('en');
+test('signToken + verifyToken devuelve la identidad de la entrada', function () {
+    $r = new DraftResolver($this->dir);
+    $token = $r->signToken('blog', 'en', 'draft-post');
+
+    expect($r->verifyToken($token))->toBe(['collection' => 'blog', 'locale' => 'en', 'slug' => 'draft-post']);
 });
 
-test('returns null for published entries', function () {
-    $resolver = new DraftResolver($this->tempDir);
-    $entry = $resolver->findDraft('blog', 'en', 'published-post');
+test('verifyToken rechaza un token expirado', function () {
+    $r = new DraftResolver($this->dir);
+    // Firmado "en el pasado": exp = 100 + ttl(3600) ≈ 1970 → ya expiró.
+    $token = $r->signToken('blog', 'en', 'draft-post', 100);
 
-    expect($entry)->toBeNull();
+    expect($r->verifyToken($token, time()))->toBeNull();
 });
 
-test('returns null for nonexistent entry', function () {
-    $resolver = new DraftResolver($this->tempDir);
-    $entry = $resolver->findDraft('blog', 'en', 'nonexistent');
+test('verifyToken rechaza una firma manipulada', function () {
+    $r = new DraftResolver($this->dir);
+    $token = $r->signToken('blog', 'en', 'draft-post');
 
-    expect($entry)->toBeNull();
+    expect($r->verifyToken($token . 'x'))->toBeNull();
 });
 
-test('returns null for nonexistent collection', function () {
-    $resolver = new DraftResolver($this->tempDir);
-    $entry = $resolver->findDraft('nonexistent', 'en', 'draft-post');
-
-    expect($entry)->toBeNull();
+test('verifyToken rechaza vacío y basura', function () {
+    $r = new DraftResolver($this->dir);
+    expect($r->verifyToken(''))->toBeNull();
+    expect($r->verifyToken('no-es-un-token'))->toBeNull();
 });
 
-test('finds draft by correct locale', function () {
-    $resolver = new DraftResolver($this->tempDir);
-
-    $en = $resolver->findDraft('blog', 'en', 'draft-post');
-    $es = $resolver->findDraft('blog', 'es', 'borrador');
-
-    expect($en)->not->toBeNull();
-    expect($en->title())->toBe('My Draft Post');
-    expect($es)->not->toBeNull();
-    expect($es->title())->toBe('Mi Borrador');
+test('un token firmado para otra entrada no sirve (scope)', function () {
+    $r = new DraftResolver($this->dir);
+    $token = $r->signToken('blog', 'en', 'draft-post');
+    $v = $r->verifyToken($token);
+    // El scope viene del payload: el caller debe usar SOLO (c,l,s) del token.
+    expect($v['slug'])->toBe('draft-post');
+    expect($v['slug'])->not->toBe('future-post');
 });
 
-test('wrong locale returns null', function () {
-    $resolver = new DraftResolver($this->tempDir);
-    $entry = $resolver->findDraft('blog', 'fr', 'draft-post');
+// ── Resolución desde la fuente de verdad (cualquier status) ──────────────────
 
-    expect($entry)->toBeNull();
+test('resolveEntry lee cualquier status del store (draft, future, publish)', function () {
+    $r = new DraftResolver($this->dir);
+    expect($r->resolveEntry('blog', 'en', 'draft-post')?->title())->toBe('My Draft Post');
+    expect($r->resolveEntry('blog', 'en', 'future-post')?->title())->toBe('Future Post');
+    expect($r->resolveEntry('blog', 'en', 'published-post')?->title())->toBe('Published Post');
 });
 
-test('injects draft banner after body tag', function () {
-    $resolver = new DraftResolver($this->tempDir);
-    $html = '<html><body><h1>Hello</h1></body></html>';
-    $result = $resolver->injectDraftBanner($html);
-
-    expect($result)->toContain('DRAFT PREVIEW');
-    expect($result)->toContain('<body>');
-    // Banner should be between body and h1
-    $bodyPos = strpos($result, '<body>');
-    $bannerPos = strpos($result, 'DRAFT PREVIEW');
-    $h1Pos = strpos($result, '<h1>');
-    expect($bannerPos)->toBeGreaterThan($bodyPos);
-    expect($bannerPos)->toBeLessThan($h1Pos);
+test('resolveEntry devuelve null para inexistente', function () {
+    $r = new DraftResolver($this->dir);
+    expect($r->resolveEntry('blog', 'en', 'no-existe'))->toBeNull();
 });
 
-test('injects draft banner at top when no body tag', function () {
-    $resolver = new DraftResolver($this->tempDir);
-    $html = '<h1>Hello</h1>';
-    $result = $resolver->injectDraftBanner($html);
-
-    expect($result)->toStartWith('<div style=');
-    expect($result)->toContain('DRAFT PREVIEW');
+test('resolveEntry precarga el cuerpo desde el store', function () {
+    $r = new DraftResolver($this->dir);
+    expect($r->resolveEntry('blog', 'en', 'draft-post')->content())->toContain('Cuerpo draft');
 });
 
-test('isValidToken rejects empty token', function () {
-    $resolver = new DraftResolver($this->tempDir);
-    expect($resolver->isValidToken(''))->toBeFalse();
+// ── Banner ───────────────────────────────────────────────────────────────────
+
+test('injectDraftBanner inserta tras <body> con la etiqueta de preview', function () {
+    $r = new DraftResolver($this->dir);
+    $out = $r->injectDraftBanner('<html><body><h1>Hi</h1></body></html>', 'future');
+
+    expect($out)->toContain('VISTA PREVIA');
+    expect(strpos($out, 'VISTA PREVIA'))->toBeGreaterThan(strpos($out, '<body>'));
+    expect(strpos($out, 'VISTA PREVIA'))->toBeLessThan(strpos($out, '<h1>'));
 });
 
-test('isValidToken rejects when no config token set', function () {
-    // No Application bootstrapped = no config = always false
-    $resolver = new DraftResolver($this->tempDir);
-    expect($resolver->isValidToken('any-token'))->toBeFalse();
+test('injectDraftBanner sin <body> antepone el banner', function () {
+    $r = new DraftResolver($this->dir);
+    $out = $r->injectDraftBanner('<h1>Hi</h1>');
+    expect($out)->toStartWith('<div style=');
+    expect($out)->toContain('VISTA PREVIA');
+});
+
+// ── Endpoint del API (lo consume el panel) ───────────────────────────────────
+
+test('ContentApiController::previewUrl devuelve una URL con token verificable', function () {
+    $controller = new \Rkn\Cms\Http\Controllers\ContentApiController($this->dir);
+    $req = (new \Nyholm\Psr7\ServerRequest('GET', '/api/v1/preview-url'))
+        ->withQueryParams(['collection' => 'blog', 'slug' => 'draft-post', 'locale' => 'en']);
+
+    $res = $controller->previewUrl($req);
+    expect($res->getStatusCode())->toBe(200);
+
+    $data = json_decode((string) $res->getBody(), true)['data'];
+    expect($data['url'])->toContain('preview=');
+
+    parse_str((string) parse_url($data['url'], PHP_URL_QUERY), $q);
+    $verified = (new DraftResolver($this->dir))->verifyToken($q['preview']);
+    expect($verified)->toMatchArray(['collection' => 'blog', 'slug' => 'draft-post']);
+});
+
+test('ContentApiController::previewUrl 404 si la entrada no existe', function () {
+    $controller = new \Rkn\Cms\Http\Controllers\ContentApiController($this->dir);
+    $req = (new \Nyholm\Psr7\ServerRequest('GET', '/api/v1/preview-url'))
+        ->withQueryParams(['collection' => 'blog', 'slug' => 'no-existe']);
+
+    expect($controller->previewUrl($req)->getStatusCode())->toBe(404);
 });

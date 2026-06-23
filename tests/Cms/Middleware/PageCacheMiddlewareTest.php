@@ -96,6 +96,29 @@ it('reader: bypasses /yoyo* paths', function () {
     expect((string) $response->getBody())->toBe('yoyo-render');
 });
 
+it('reader: bypasses preview requests (?preview) so el draft no se sirve público', function () {
+    // La clave de cache es solo el path; sin esta guarda, un ?preview leería la
+    // versión PÚBLICA cacheada del mismo path.
+    $this->cache->set('/blog/foo', '<html>public cached</html>');
+    $reader = new PageCacheReader($this->cache);
+
+    $request = (new ServerRequest('GET', '/blog/foo'))->withQueryParams(['preview' => 'tok123']);
+    $response = $reader->process($request, pageCacheHandler(body: '<html>preview</html>'));
+
+    expect((string) $response->getBody())->toBe('<html>preview</html>');
+});
+
+it('writer: NO cachea preview requests (evita poisoning de la clave pública)', function () {
+    // Crítico de seguridad: sin esto, el HTML del draft (con banner) quedaría
+    // cacheado bajo /blog/foo y se serviría al público en la URL real.
+    $writer = new PageCacheWriter($this->cache);
+
+    $request = (new ServerRequest('GET', '/blog/foo'))->withQueryParams(['preview' => 'tok123']);
+    $writer->process($request, pageCacheHandler(body: '<html>DRAFT</html>'));
+
+    expect($this->cache->has('/blog/foo'))->toBeFalse();
+});
+
 it('reader: disabled flag bypasses the cache entirely', function () {
     $this->cache->set('/blog/foo', '<html>cached</html>');
     $reader = new PageCacheReader($this->cache, enabled: false);

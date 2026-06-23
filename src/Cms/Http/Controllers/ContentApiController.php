@@ -10,6 +10,7 @@ use Psr\Http\Message\ServerRequestInterface;
 use Rkn\Cms\Cache\PageCache;
 use Rkn\Cms\Content\ContentDraft;
 use Rkn\Cms\Content\ContentStorageFactory;
+use Rkn\Cms\Content\DraftResolver;
 use Rkn\Cms\Content\Entry;
 use Rkn\Cms\Content\Indexer;
 use Rkn\Cms\Content\IndexStoreFactory;
@@ -101,6 +102,46 @@ final class ContentApiController
         }
 
         return $config;
+    }
+
+    /**
+     * Devuelve una URL firmada de vista previa para una entrada (publicada o no),
+     * para que el panel la abra/comparta. El secreto vive SOLO en el sitio: el
+     * panel no firma ni resuelve URLs de slugs compuestos (lo hace el engine).
+     * GET /api/v1/preview-url?collection=&slug=&locale=
+     */
+    public function previewUrl(ServerRequestInterface $request): ResponseInterface
+    {
+        $qp         = $request->getQueryParams();
+        $collection = (string) ($qp['collection'] ?? '');
+        $slug       = (string) ($qp['slug'] ?? '');
+        $locale     = (string) ($qp['locale'] ?? $this->defaultLocale());
+
+        if ($collection === '' || $slug === '') {
+            return $this->json(422, ['error' => 'collection y slug son requeridos']);
+        }
+
+        $resolver = new DraftResolver($this->basePath);
+        if (!$resolver->isConfigured()) {
+            return $this->json(409, ['error' => 'Vista previa no configurada: falta preview.secret en el sitio.']);
+        }
+
+        $entry = $resolver->resolveEntry($collection, $locale, $slug);
+        if ($entry === null) {
+            return $this->json(404, ['error' => "Entrada '{$slug}' no encontrada en '{$collection}'"]);
+        }
+
+        $token = $resolver->signToken($collection, $locale, $slug);
+        $base  = rtrim((string) (\config('site.url') ?? \config('rakun.site.url') ?? ''), '/');
+        $path  = $entry->url();
+        $url   = $base . $path . (str_contains($path, '?') ? '&' : '?') . 'preview=' . rawurlencode($token);
+
+        return $this->json(200, [
+            'data' => [
+                'url'        => $url,
+                'expires_at' => date('c', $resolver->expiresAt()),
+            ],
+        ]);
     }
 
     public function list(ServerRequestInterface $request): ResponseInterface

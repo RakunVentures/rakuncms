@@ -46,6 +46,34 @@ final class ContentRouter implements MiddlewareInterface
             $segments = [$segments[0]];
         }
 
+        // ── Vista previa: con un token válido se renderiza la versión de la
+        // FUENTE DE VERDAD (MySQL/.md) SIN filtrar por status, tomando
+        // precedencia sobre la búsqueda pública. El bypass de page cache vive en
+        // PageCacheReader/Writer (no se sirve ni se cachea con ?preview). ──────
+        $isPreview = false;
+        $previewToken = (string) ($request->getQueryParams()['preview'] ?? '');
+        if ($previewToken !== '') {
+            $resolver = new DraftResolver($basePath);
+            $verified = $resolver->verifyToken($previewToken);
+            if ($verified !== null) {
+                if (!empty($verified['global'])) {
+                    [$pc, $pl, $ps] = $this->previewIdentity($segments, $locale);
+                } else {
+                    $pc = (string) ($verified['collection'] ?? '');
+                    $pl = ((string) ($verified['locale'] ?? '')) ?: $locale;
+                    $ps = (string) ($verified['slug'] ?? '');
+                }
+                if ($pc !== '' && $ps !== '') {
+                    $entry = $resolver->resolveEntry($pc, $pl, $ps);
+                    if ($entry !== null) {
+                        $locale = $pl;
+                        $isPreview = true;
+                    }
+                }
+            }
+        }
+
+        if (!$isPreview) {
         if (empty($segments) || (count($segments) === 1 && $segments[0] === '')) {
             // Homepage: try empty slug first (frontmatter slugs.es: ""), then named slugs
             $entry = $query->findBySlug('pages', $locale, '')
@@ -75,6 +103,7 @@ final class ContentRouter implements MiddlewareInterface
                 }
             }
         }
+        } // fin: búsqueda pública (omitida en modo preview)
 
         // Taxonomy routes: /{collection}/tag/{tag}, /{collection}/archive/{year}/{month}
         if ($entry === null && count($segments) >= 3) {
@@ -115,27 +144,6 @@ final class ContentRouter implements MiddlewareInterface
             }
         }
 
-        // Draft preview: try finding a draft if preview token is valid
-        $isPreview = false;
-        if ($entry === null) {
-            $previewToken = $request->getQueryParams()['preview'] ?? '';
-            if ($previewToken !== '') {
-                $draftResolver = new DraftResolver($basePath);
-                if ($draftResolver->isValidToken($previewToken)) {
-                    $collection = 'pages';
-                    $slug = '';
-                    if (count($segments) === 1) {
-                        $slug = $segments[0];
-                    } elseif (count($segments) === 2) {
-                        $collection = $segments[0];
-                        $slug = $segments[1];
-                    }
-                    $entry = $draftResolver->findDraft($collection, $locale, $slug);
-                    $isPreview = $entry !== null;
-                }
-            }
-        }
-
         if ($entry === null) {
             return $handler->handle($request);
         }
@@ -170,12 +178,32 @@ final class ContentRouter implements MiddlewareInterface
             'globals' => $globals,
         ]);
 
-        // Inject draft banner for preview mode
+        // Modo preview: banner + no indexar + no cachear.
+        $headers = ['Content-Type' => 'text/html; charset=UTF-8'];
         if ($isPreview) {
-            $html = (new DraftResolver($basePath))->injectDraftBanner($html);
+            $status = (string) ($entry->meta()['status'] ?? '');
+            $html = (new DraftResolver($basePath))->injectDraftBanner($html, $status);
+            $headers['Cache-Control'] = 'no-store, max-age=0';
+            $headers['X-Robots-Tag'] = 'noindex, nofollow';
         }
 
-        return new Response(200, ['Content-Type' => 'text/html; charset=UTF-8'], $html);
+        return new Response(200, $headers, $html);
+    }
+
+    /**
+     * Identidad de la entrada a partir de los segmentos de la URL (para el token
+     * global legacy, que no lleva scope). 1 segmento => página; 2+ => colección/slug.
+     *
+     * @param  list<string>  $segments
+     * @return array{0: string, 1: string, 2: string}  [collection, locale, slug]
+     */
+    private function previewIdentity(array $segments, string $locale): array
+    {
+        if (count($segments) <= 1) {
+            return ['pages', $locale, $segments[0] ?? ''];
+        }
+
+        return [$segments[0], $locale, implode('/', array_slice($segments, 1))];
     }
 
     /**

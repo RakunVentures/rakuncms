@@ -125,22 +125,6 @@ test('ScheduleChecker::findPublishableEntries skips a malformed .md and still re
     expect($log)->toContain('[rakun]');
 });
 
-test('DraftResolver::findDraft skips a malformed .md and still finds the good draft', function () {
-    file_put_contents($this->dir . '/content/blog/bad.md', BAD_FM);
-    file_put_contents(
-        $this->dir . '/content/blog/ready.en.md',
-        "---\ntitle: \"Ready Draft\"\ndraft: true\n---\nBody.\n"
-    );
-
-    [$entry, $log] = captureErrorLog(fn () =>
-        (new DraftResolver($this->dir))->findDraft('blog', 'en', 'ready')
-    );
-
-    expect($entry)->not->toBeNull();
-    expect($entry->title())->toBe('Ready Draft');
-    expect($log)->toContain('[rakun]');
-});
-
 test('GlobalsApiController::show returns empty data for a malformed global instead of 500', function () {
     mkdir($this->dir . '/content/_globals', 0755, true);
     file_put_contents($this->dir . '/content/_globals/bad.yaml', "foo: \"unterminated\n");

@@ -4,148 +4,205 @@ declare(strict_types=1);
 
 namespace Rkn\Cms\Content;
 
-use Spatie\YamlFrontMatter\YamlFrontMatter;
-
+/**
+ * Vista previa de entradas NO publicadas (o de la versión en BD de una
+ * publicada). Resuelve la entrada desde la FUENTE DE VERDAD (ContentStorage:
+ * MySQL en sitios gestionados, .md en flat-file), SIN filtrar por status, y
+ * firma/valida enlaces de preview compartibles.
+ *
+ * Token: firmado (HMAC-SHA256), por-entrada y expirable, para poder mandar el
+ * enlace al cliente sin login pero sin que sea adivinable ni reutilizable para
+ * otra entrada. Compat: un `preview.token` global de config sigue valiendo
+ * (debug/MVP), pero sin scope.
+ */
 final class DraftResolver
 {
-    private string $contentPath;
+    private string $basePath;
 
     public function __construct(string $basePath)
     {
-        $this->contentPath = $basePath . '/content';
+        $this->basePath = rtrim($basePath, '/');
+    }
+
+    // ── Token firmado ────────────────────────────────────────────────────────
+
+    /** Firma un token de preview para una entrada concreta. */
+    public function signToken(string $collection, string $locale, string $slug, ?int $now = null): string
+    {
+        $now ??= time();
+        $payload = ['c' => $collection, 'l' => $locale, 's' => $slug, 'exp' => $now + $this->ttl()];
+        $b64 = $this->b64UrlEncode((string) json_encode($payload, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
+
+        return $b64 . '.' . hash_hmac('sha256', $b64, $this->secret());
+    }
+
+    /** Epoch en que expira un token firmado emitido "ahora". */
+    public function expiresAt(?int $now = null): int
+    {
+        return ($now ?? time()) + $this->ttl();
     }
 
     /**
-     * Check if the preview token is valid.
+     * Valida un token. Para un token FIRMADO válido y vigente devuelve la
+     * identidad de la entrada {collection, locale, slug}. Para el token GLOBAL
+     * legacy válido devuelve ['global' => true] (sin scope: el caller usa la URL).
+     * Null si es inválido o expiró.
+     *
+     * @return array{collection?: string, locale?: string, slug?: string, global?: bool}|null
      */
-    public function isValidToken(string $token): bool
+    public function verifyToken(string $token, ?int $now = null): ?array
     {
         if ($token === '') {
-            return false;
+            return null;
+        }
+        $now ??= time();
+
+        // Token global legacy (config preview.token).
+        $legacy = $this->legacyToken();
+        if ($legacy !== '' && hash_equals($legacy, $token)) {
+            return ['global' => true];
         }
 
-        $configToken = '';
-        try {
-            $configToken = (string) \config('preview.token', '');
-        } catch (\Throwable) {
+        // Token firmado: base64url(payload).hmac
+        if (!str_contains($token, '.')) {
+            return null;
         }
-
-        return $configToken !== '' && hash_equals($configToken, $token);
-    }
-
-    /**
-     * Find a draft entry by collection, locale, and slug.
-     */
-    public function findDraft(string $collection, string $locale, string $slug): ?Entry
-    {
-        $collectionPath = $this->contentPath . '/' . $collection;
-        if (!is_dir($collectionPath)) {
+        $secret = $this->secret();
+        if ($secret === '') {
+            return null;
+        }
+        [$b64, $sig] = explode('.', $token, 2);
+        if (!hash_equals(hash_hmac('sha256', $b64, $secret), $sig)) {
+            return null;
+        }
+        $payload = json_decode($this->b64UrlDecode($b64), true);
+        if (!is_array($payload) || (int) ($payload['exp'] ?? 0) < $now) {
             return null;
         }
 
-        $files = glob($collectionPath . '/*.md') ?: [];
-        foreach ($files as $file) {
-            $content = file_get_contents($file);
-            if ($content === false) {
-                continue;
-            }
-
-            try {
-                $document = YamlFrontMatter::parse($content);
-            } catch (\Throwable $e) {
-                error_log('[rakun] skipping unparseable draft frontmatter in ' . $file . ': ' . $e->getMessage());
-                continue;
-            }
-            $matter = $document->matter();
-
-            if (empty($matter['draft'])) {
-                continue;
-            }
-
-            $basename = basename($file, '.md');
-            $entrySlug = $this->extractSlug($basename);
-            $entryLocale = $this->detectLocale($basename, $locale);
-
-            if ($entrySlug === $slug && $entryLocale === $locale) {
-                return Entry::fromArray([
-                    'title' => $matter['title'] ?? ucfirst($slug),
-                    'slug' => $matter['slug'] ?? $entrySlug,
-                    'collection' => $collection,
-                    'locale' => $entryLocale,
-                    'file' => $this->relativePath($file),
-                    'template' => $matter['template'] ?? null,
-                    'date' => isset($matter['date']) ? (string) $matter['date'] : null,
-                    'order' => (int) ($matter['order'] ?? 0),
-                    'draft' => true,
-                    'meta' => $matter['meta'] ?? $matter,
-                    'slugs' => $matter['slugs'] ?? [],
-                    'mtime' => filemtime($file) ?: 0,
-                ]);
-            }
-        }
-
-        return null;
+        return [
+            'collection' => (string) ($payload['c'] ?? ''),
+            'locale' => (string) ($payload['l'] ?? ''),
+            'slug' => (string) ($payload['s'] ?? ''),
+        ];
     }
 
-    /**
-     * Wrap rendered HTML with a draft banner.
-     */
-    public function injectDraftBanner(string $html): string
+    /** ¿Hay configuración de preview (secreto firmado o token legacy)? */
+    public function isConfigured(): bool
     {
-        $banner = '<div style="position:fixed;top:0;left:0;right:0;z-index:99999;background:#f59e0b;color:#000;text-align:center;padding:8px 16px;font-family:system-ui,sans-serif;font-weight:bold;font-size:14px;">DRAFT PREVIEW</div>';
+        return $this->secret() !== '' || $this->legacyToken() !== '';
+    }
 
-        // Inject after <body> tag if present
+    // ── Resolución de la entrada desde la fuente de verdad ───────────────────
+
+    /**
+     * Lee la entrada desde el ContentStorage (MySQL/SSoT o .md) sin filtrar por
+     * status, e inyecta el cuerpo renderizado desde la fuente de verdad. Devuelve
+     * null si no existe en el store.
+     */
+    public function resolveEntry(string $collection, string $locale, string $slug): ?Entry
+    {
+        $storage = ContentStorageFactory::make($this->basePath);
+
+        $body = $storage->read($collection, $locale, $slug);
+        if ($body === null) {
+            // El slug puede no ser la clave de storage (WXR usa full_slug). Buscar
+            // por la enumeración del store y reintentar con su clave canónica.
+            foreach ($storage->listKeys() as $ref) {
+                if ($ref->collection === $collection && $ref->slug === $slug) {
+                    $body = $storage->read($ref->collection, $ref->locale, $ref->slug);
+                    $locale = $ref->locale;
+                    break;
+                }
+            }
+        }
+        if ($body === null) {
+            return null;
+        }
+
+        $fm = $body->frontmatter;
+        $entry = Entry::fromArray([
+            'title' => $fm['title'] ?? $slug,
+            'slug' => $slug,
+            'collection' => $collection,
+            'locale' => $locale,
+            'file' => $body->file,
+            'template' => $fm['template'] ?? null,
+            'date' => isset($fm['date']) ? (string) $fm['date'] : null,
+            'order' => (int) ($fm['order'] ?? 0),
+            'draft' => ($fm['status'] ?? '') === 'draft' || !empty($fm['draft']),
+            'meta' => $fm,
+            'slugs' => is_array($fm['slugs'] ?? null) ? $fm['slugs'] : [],
+            'mtime' => time(),
+        ]);
+
+        // Cuerpo desde la fuente de verdad (no del .md cache).
+        return $entry->preloadContent((new Parser())->renderString($body->body));
+    }
+
+    // ── Banner ───────────────────────────────────────────────────────────────
+
+    /** Envuelve el HTML con un banner de vista previa (no publicado). */
+    public function injectDraftBanner(string $html, string $status = ''): string
+    {
+        $label = 'VISTA PREVIA — no publicado';
+        if ($status !== '') {
+            $label .= ' · estado: ' . htmlspecialchars($status, ENT_QUOTES);
+        }
+        $banner = '<div style="position:fixed;top:0;left:0;right:0;z-index:99999;background:#f59e0b;color:#000;text-align:center;padding:8px 16px;font-family:system-ui,sans-serif;font-weight:bold;font-size:14px;">'
+            . $label . '</div>';
+
         if (preg_match('/<body[^>]*>/i', $html, $matches, PREG_OFFSET_CAPTURE)) {
             $pos = $matches[0][1] + strlen($matches[0][0]);
+
             return substr($html, 0, $pos) . $banner . substr($html, $pos);
         }
 
         return $banner . $html;
     }
 
-    private function extractSlug(string $basename): string
+    // ── internals ────────────────────────────────────────────────────────────
+
+    private function secret(): string
     {
-        $name = preg_replace('/^\d+\./', '', $basename);
-        if ($name === null) {
-            $name = $basename;
-        }
+        $s = $this->config('preview.secret') ?? $this->config('rakun.preview.secret');
 
-        $parts = explode('.', $name);
-        if (count($parts) >= 2) {
-            $possibleLocale = end($parts);
-            if (strlen($possibleLocale) === 2) {
-                array_pop($parts);
-                return implode('.', $parts);
-            }
-        }
-
-        return $name;
+        return is_string($s) ? $s : '';
     }
 
-    private function detectLocale(string $basename, string $defaultLocale): string
+    private function legacyToken(): string
     {
-        $name = preg_replace('/^\d+\./', '', $basename);
-        if ($name === null) {
-            $name = $basename;
-        }
+        $t = $this->config('preview.token') ?? $this->config('rakun.preview.token');
 
-        $parts = explode('.', $name);
-        if (count($parts) >= 2) {
-            $possibleLocale = end($parts);
-            if (strlen($possibleLocale) === 2) {
-                return $possibleLocale;
-            }
-        }
-
-        return $defaultLocale;
+        return is_string($t) ? $t : '';
     }
 
-    private function relativePath(string $filePath): string
+    private function ttl(): int
     {
-        $contentParent = dirname($this->contentPath);
-        if (str_starts_with($filePath, $contentParent)) {
-            return ltrim(substr($filePath, strlen($contentParent)), '/');
+        $t = $this->config('preview.ttl') ?? $this->config('rakun.preview.ttl');
+
+        return is_numeric($t) ? max(60, (int) $t) : 604800; // 7 días por defecto
+    }
+
+    private function config(string $key): mixed
+    {
+        if (!function_exists('config')) {
+            return null;
         }
-        return $filePath;
+        try {
+            return \config($key);
+        } catch (\Throwable) {
+            return null;
+        }
+    }
+
+    private function b64UrlEncode(string $raw): string
+    {
+        return rtrim(strtr(base64_encode($raw), '+/', '-_'), '=');
+    }
+
+    private function b64UrlDecode(string $b64): string
+    {
+        return (string) base64_decode(strtr($b64, '-_', '+/'), true);
     }
 }

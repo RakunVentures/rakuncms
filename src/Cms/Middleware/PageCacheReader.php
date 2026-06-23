@@ -34,8 +34,12 @@ class PageCacheReader implements MiddlewareInterface
 
         $uri = $request->getUri()->getPath();
 
-        // Skip API and Yoyo requests
-        if (str_starts_with($uri, '/api/') || str_starts_with($uri, '/yoyo')) {
+        // Skip API, Yoyo y vista previa (?preview). El preview NO debe leerse de
+        // cache (devolvería la versión pública, no el draft) — la clave de cache
+        // es solo el path, así que sin esta guarda el preview leería/escribiría la
+        // clave pública y filtraría el borrador.
+        if (str_starts_with($uri, '/api/') || str_starts_with($uri, '/yoyo')
+            || ((string) ($request->getQueryParams()['preview'] ?? '')) !== '') {
             return $handler->handle($request);
         }
 

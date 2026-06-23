@@ -33,8 +33,25 @@ final class Application
 
         $this->loadDotenv($basePath);
         $this->loadConfig($basePath . '/config');
+        $this->applyTimezone();
         $this->registerCoreServices();
         $this->registerRoutes();
+    }
+
+    /**
+     * Fija la zona horaria por defecto desde config (`site.timezone`). Es la TZ
+     * editorial con la que el engine interpreta las fechas de programación y las
+     * compara con "ahora": sin esto PHP suele correr en UTC y las publicaciones
+     * programadas se disparan con horas de desfase respecto a la hora local.
+     * Aplica tanto a peticiones web como al CLI (que también arranca Application,
+     * p.ej. el cron de publish:check). Inválida/ausente → no toca el default PHP.
+     */
+    private function applyTimezone(): void
+    {
+        $tz = $this->config('site.timezone') ?? $this->config('rakun.site.timezone');
+        if (is_string($tz) && $tz !== '' && in_array($tz, \DateTimeZone::listIdentifiers(), true)) {
+            date_default_timezone_set($tz);
+        }
     }
 
     private function loadDotenv(string $basePath): void
@@ -182,6 +199,15 @@ final class Application
     public static function getInstance(): ?self
     {
         return self::$instance;
+    }
+
+    /**
+     * Limpia el singleton (principalmente para tests que arrancan una Application
+     * efímera y no deben filtrar config/estado global al siguiente test).
+     */
+    public static function reset(): void
+    {
+        self::$instance = null;
     }
 
     public function getContainer(): Container

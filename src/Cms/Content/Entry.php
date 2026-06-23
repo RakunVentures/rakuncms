@@ -172,6 +172,18 @@ final class Entry
     }
 
     /**
+     * Inyecta el HTML del cuerpo ya renderizado, evitando la lectura del .md.
+     * Lo usa la vista previa para renderizar la versión que vive en la FUENTE
+     * DE VERDAD (MySQL) en vez del cache .md (que puede estar desfasado).
+     */
+    public function preloadContent(string $html): static
+    {
+        $this->renderedContent = $html;
+
+        return $this;
+    }
+
+    /**
      * Get the URL for this entry.
      */
     public function url(): string
