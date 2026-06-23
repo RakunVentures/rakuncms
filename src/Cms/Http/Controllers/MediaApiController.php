@@ -10,6 +10,15 @@ use Psr\Http\Message\ServerRequestInterface;
 
 final class MediaApiController
 {
+    /** Tope por chunk individual. Holgura sobre los ~1.5 MB que envía el cliente. */
+    private const MAX_CHUNK_BYTES = 4 * 1024 * 1024; // 4 MB
+
+    /** Tope del archivo ensamblado (anti-DoS). 100 MB de revista + margen. */
+    private const MAX_UPLOAD_BYTES = 150 * 1024 * 1024; // 150 MB
+
+    /** TTL de las sesiones de chunks abandonadas. */
+    private const CHUNK_TTL_SECONDS = 86400; // 24 h
+
     private string $basePath;
     private string $assetsDir;
 
@@ -84,45 +93,145 @@ final class MediaApiController
         $stem = $this->sanitizeStem(pathinfo($originalName, PATHINFO_FILENAME));
         $ext  = $this->allowedMimeTypes[$mimeType][0];
 
-        $targetDir = $this->assetsDir . '/' . $subDir;
-        if (!is_dir($targetDir)) {
-            mkdir($targetDir, 0755, true);
+        $data = $this->moveToAssets($tempPath, $stem, $ext, $subDir, $mimeType);
+
+        return $this->json(201, ['data' => $data, 'message' => 'File uploaded']);
+    }
+
+    /**
+     * Recibe un trozo (chunk) de una subida grande. Mismo origen → el admin lo
+     * reenvía; cada request es chico (cabe en cualquier post_max_size por defecto),
+     * así que NO requiere tocar el servidor. Los chunks se anexan a disco por índice
+     * en una carpeta scratch (fuera de public/), y finalize() los ensambla.
+     *
+     * Body (multipart): upload_id (hex32), chunk_index (>=0), chunk (archivo).
+     */
+    public function chunk(ServerRequestInterface $request): ResponseInterface
+    {
+        $body = $request->getParsedBody();
+        $uploadId = is_array($body) ? (string) ($body['upload_id'] ?? '') : '';
+        if (!$this->isValidUploadId($uploadId)) {
+            return $this->json(400, ['error' => 'Invalid upload_id']);
         }
 
-        // Never silently overwrite an existing asset.
-        $filename   = $this->uniqueFilename($targetDir, $stem, $ext);
-        $targetPath = $targetDir . '/' . $filename;
-        rename($tempPath, $targetPath);
+        $indexRaw = is_array($body) ? ($body['chunk_index'] ?? null) : null;
+        if (!is_numeric($indexRaw) || (int) $indexRaw < 0) {
+            return $this->json(400, ['error' => 'Invalid chunk_index']);
+        }
+        $index = (int) $indexRaw;
 
-        // tempnam() crea el archivo con modo 0600 y rename() lo preserva. En hosts
-        // donde el servidor web sirve estáticos como un usuario distinto al de
-        // PHP-FPM (p.ej. Plesk + nginx), 0600 deja el asset ilegible → 403 al
-        // servirlo. chmod 0644 lo hace world-readable, como cualquier estático.
-        @chmod($targetPath, 0644);
+        $chunk = $request->getUploadedFiles()['chunk'] ?? null;
+        if ($chunk === null || $chunk->getError() !== UPLOAD_ERR_OK) {
+            return $this->json(400, ['error' => 'No chunk uploaded or upload error']);
+        }
 
-        $width  = null;
-        $height = null;
-        if (str_starts_with($mimeType, 'image/') && $mimeType !== 'image/svg+xml') {
-            $dims = @getimagesize($targetPath);
-            if (is_array($dims)) {
-                $width  = $dims[0];
-                $height = $dims[1];
+        $this->sweepStaleChunks();
+
+        $dir = $this->chunksBaseDir() . '/' . $uploadId;
+        if (!is_dir($dir)) {
+            mkdir($dir, 0755, true);
+        }
+
+        // Idempotente: un reintento del mismo índice sobreescribe el .part.
+        $partPath = $dir . '/' . $index . '.part';
+        file_put_contents($partPath, (string) $chunk->getStream());
+
+        // Tope por chunk y total acumulado (anti-DoS), con tamaños reales en disco.
+        if ((int) (filesize($partPath) ?: 0) > self::MAX_CHUNK_BYTES) {
+            @unlink($partPath);
+            return $this->json(413, ['error' => 'Chunk too large']);
+        }
+        $total = 0;
+        foreach (glob($dir . '/*.part') ?: [] as $p) {
+            $total += (int) (filesize($p) ?: 0);
+        }
+        if ($total > self::MAX_UPLOAD_BYTES) {
+            @unlink($partPath);
+            return $this->json(413, ['error' => 'Total upload size exceeded']);
+        }
+
+        return $this->json(201, ['data' => [
+            'upload_id'      => $uploadId,
+            'chunk_index'    => $index,
+            'bytes_received' => (int) (filesize($partPath) ?: 0),
+        ]]);
+    }
+
+    /**
+     * Ensambla los chunks de una sesión, valida el MIME del archivo COMPLETO y lo
+     * mueve a assets/. El ensamblado es por stream (nunca carga el archivo entero
+     * en memoria). Mismo shape de respuesta que upload().
+     *
+     * Body: upload_id, total_chunks, filename, directory.
+     */
+    public function finalize(ServerRequestInterface $request): ResponseInterface
+    {
+        $body = $request->getParsedBody();
+        $uploadId = is_array($body) ? (string) ($body['upload_id'] ?? '') : '';
+        if (!$this->isValidUploadId($uploadId)) {
+            return $this->json(400, ['error' => 'Invalid upload_id']);
+        }
+        $total = is_array($body) ? (int) ($body['total_chunks'] ?? 0) : 0;
+        if ($total < 1) {
+            return $this->json(400, ['error' => 'Invalid total_chunks']);
+        }
+        $subDir = is_array($body) && isset($body['directory'])
+            ? $this->sanitizeSubDir((string) $body['directory'])
+            : 'uploads';
+        $originalName = is_array($body) ? (string) ($body['filename'] ?? 'upload') : 'upload';
+
+        $dir      = $this->chunksBaseDir() . '/' . $uploadId;
+        $realDir  = realpath($dir);
+        $realBase = realpath($this->chunksBaseDir());
+        if ($realDir === false || $realBase === false || !str_starts_with($realDir, $realBase)) {
+            return $this->json(404, ['error' => 'Upload session not found']);
+        }
+
+        $missing = [];
+        for ($i = 0; $i < $total; $i++) {
+            if (!is_file($dir . '/' . $i . '.part')) {
+                $missing[] = $i;
             }
         }
+        if ($missing !== []) {
+            return $this->json(409, ['error' => 'Missing chunks', 'missing' => $missing]);
+        }
 
-        $relative = $subDir . '/' . $filename;
+        // Ensamblar por stream → nunca todo el archivo en RAM.
+        $assembled = $dir . '/assembled.tmp';
+        $out = fopen($assembled, 'wb');
+        if ($out === false) {
+            $this->removeDir($dir);
+            return $this->json(500, ['error' => 'Cannot assemble upload']);
+        }
+        for ($i = 0; $i < $total; $i++) {
+            $in = fopen($dir . '/' . $i . '.part', 'rb');
+            if ($in === false) {
+                fclose($out);
+                $this->removeDir($dir);
+                return $this->json(500, ['error' => 'Cannot read chunk']);
+            }
+            stream_copy_to_stream($in, $out);
+            fclose($in);
+        }
+        fclose($out);
 
-        return $this->json(201, [
-            'data' => [
-                'url'    => '/assets/' . $relative,
-                'path'   => 'assets/' . $relative,
-                'mime'   => $mimeType,
-                'size'   => filesize($targetPath) ?: 0,
-                'width'  => $width,
-                'height' => $height,
-            ],
-            'message' => 'File uploaded',
-        ]);
+        $finfo = finfo_open(FILEINFO_MIME_TYPE);
+        $mimeType = finfo_file($finfo, $assembled);
+        finfo_close($finfo);
+        if (!isset($this->allowedMimeTypes[$mimeType])) {
+            $this->removeDir($dir);
+            return $this->json(415, ['error' => "MIME type $mimeType not allowed"]);
+        }
+
+        $stem = $this->sanitizeStem(pathinfo($originalName, PATHINFO_FILENAME));
+        $ext  = $this->allowedMimeTypes[$mimeType][0];
+
+        $data = $this->moveToAssets($assembled, $stem, $ext, $subDir, $mimeType);
+
+        $this->removeDir($dir);
+
+        return $this->json(201, ['data' => $data, 'message' => 'File uploaded']);
     }
 
     /**
@@ -187,6 +296,87 @@ final class MediaApiController
         }
 
         return $candidate;
+    }
+
+    /**
+     * Mueve un archivo temporal a assets/{subDir}/ con nombre único, lo deja
+     * world-readable (0644) y arma la respuesta. Compartido por upload() y
+     * finalize() (DRY).
+     *
+     * @return array<string, mixed>
+     */
+    private function moveToAssets(string $tmpPath, string $stem, string $ext, string $subDir, string $mimeType): array
+    {
+        $targetDir = $this->assetsDir . '/' . $subDir;
+        if (!is_dir($targetDir)) {
+            mkdir($targetDir, 0755, true);
+        }
+
+        $filename   = $this->uniqueFilename($targetDir, $stem, $ext);
+        $targetPath = $targetDir . '/' . $filename;
+        rename($tmpPath, $targetPath);
+
+        // En Plesk+nginx los estáticos se sirven como otro usuario; 0644 evita 403.
+        @chmod($targetPath, 0644);
+
+        $width = null;
+        $height = null;
+        if (str_starts_with($mimeType, 'image/') && $mimeType !== 'image/svg+xml') {
+            $dims = @getimagesize($targetPath);
+            if (is_array($dims)) {
+                $width  = $dims[0];
+                $height = $dims[1];
+            }
+        }
+
+        $relative = $subDir . '/' . $filename;
+
+        return [
+            'url'    => '/assets/' . $relative,
+            'path'   => 'assets/' . $relative,
+            'mime'   => $mimeType,
+            'size'   => filesize($targetPath) ?: 0,
+            'width'  => $width,
+            'height' => $height,
+        ];
+    }
+
+    /** Carpeta scratch de chunks, fuera de public/ (mismo volumen → rename EXDEV-safe). */
+    private function chunksBaseDir(): string
+    {
+        return $this->basePath . '/storage/uploads/chunks';
+    }
+
+    /** uploadId generado por el cliente: 32 hex aleatorios. Bloquea traversal por construcción. */
+    private function isValidUploadId(string $id): bool
+    {
+        return preg_match('/^[a-f0-9]{32}$/', $id) === 1;
+    }
+
+    private function removeDir(string $dir): void
+    {
+        if (!is_dir($dir)) {
+            return;
+        }
+        foreach (glob($dir . '/*') ?: [] as $f) {
+            @unlink($f);
+        }
+        @rmdir($dir);
+    }
+
+    /** Borra sesiones de chunks abandonadas (best-effort, oportunista en cada chunk). */
+    private function sweepStaleChunks(): void
+    {
+        $base = $this->chunksBaseDir();
+        if (!is_dir($base)) {
+            return;
+        }
+        $cutoff = time() - self::CHUNK_TTL_SECONDS;
+        foreach (glob($base . '/*', GLOB_ONLYDIR) ?: [] as $dir) {
+            if ((int) (@filemtime($dir) ?: 0) < $cutoff) {
+                $this->removeDir($dir);
+            }
+        }
     }
 
     public function delete(string $mediaPath): ResponseInterface

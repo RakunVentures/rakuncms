@@ -48,6 +48,12 @@ final class ContentApiDispatcher implements MiddlewareInterface
             if ($method === 'GET') return $mediaController->list();
             if ($method === 'POST') {
                 if ($denied = $this->requirePermission($request, 'media')) return $denied;
+                // Subida por chunks (archivos grandes en hosting con límites chicos):
+                // /media/chunk (append) y /media/finalize (ensambla) van ANTES del
+                // upload directo.
+                $sub = $segments[1] ?? '';
+                if ($sub === 'chunk')    return $mediaController->chunk($request);
+                if ($sub === 'finalize') return $mediaController->finalize($request);
                 return $mediaController->upload($request);
             }
             if ($method === 'DELETE') {
