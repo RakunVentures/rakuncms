@@ -155,14 +155,8 @@ final class ContentRouter implements MiddlewareInterface
         $container->set('locale', $locale);
         $container->set('current_page_number', $currentPageNumber);
 
-        // Resolve template (honours collections.{name}.default_template from rakun.yaml)
-        $defaults = [];
-        foreach ((array) \config('collections', []) as $name => $cfg) {
-            if (is_array($cfg) && isset($cfg['default_template']) && is_string($cfg['default_template'])) {
-                $defaults[(string) $name] = $cfg['default_template'];
-            }
-        }
-        $templateName = (new TemplateResolver($basePath . '/templates', $defaults))->resolve($entry);
+        // Resolve template (honours collections.{name}.default_template from rakun.yaml).
+        $templateName = (new TemplateResolver($basePath . '/templates', self::collectionDefaultTemplates()))->resolve($entry);
 
         // Load globals
         $globals = $this->loadGlobals($basePath, $locale);
@@ -188,6 +182,33 @@ final class ContentRouter implements MiddlewareInterface
         }
 
         return new Response(200, $headers, $html);
+    }
+
+    /**
+     * Mapa colección → default_template, leído de la config. Soporta los DOS layouts
+     * (igual que Application::boot con site.timezone y schema()): plano (`collections`)
+     * y namespaced por archivo (`rakun.collections`). Sin el fallback, en sitios con
+     * config split (p.ej. fiancee) el mapa salía vacío → default_template se ignoraba →
+     * entries sin `template:` en frontmatter caían al fallback `page.twig` (las revistas
+     * nuevas del panel no abrían el lector revista-reader).
+     *
+     * @return array<string, string>
+     */
+    public static function collectionDefaultTemplates(): array
+    {
+        $collections = (array) (\config('collections') ?? []);
+        if ($collections === []) {
+            $collections = (array) (\config('rakun.collections') ?? []);
+        }
+
+        $defaults = [];
+        foreach ($collections as $name => $cfg) {
+            if (is_array($cfg) && isset($cfg['default_template']) && is_string($cfg['default_template'])) {
+                $defaults[(string) $name] = $cfg['default_template'];
+            }
+        }
+
+        return $defaults;
     }
 
     /**
