@@ -144,15 +144,20 @@ final class ContentApiController
             return $this->json(404, ['error' => "Entrada '{$slug}' no encontrada en '{$collection}'"]);
         }
 
-        $token = $resolver->signToken($collection, $locale, $slug);
-        $base  = rtrim((string) (\config('site.url') ?? \config('rakun.site.url') ?? ''), '/');
-        $path  = $entry->url();
-        $url   = $base . $path . (str_contains($path, '?') ? '&' : '?') . 'preview=' . rawurlencode($token);
+        // Expiry consciente de la fecha de la entrada: artículos programados con
+        // mucho tiempo de anticipación reciben un token que dura hasta su fecha
+        // de publicación + 30 días de buffer. Default (sin fecha o fecha pasada):
+        // 1 año desde ahora.
+        $expiresAt = $resolver->expiresForEntry($entry);
+        $token     = $resolver->signToken($collection, $locale, $slug, null, $expiresAt);
+        $base      = rtrim((string) (\config('site.url') ?? \config('rakun.site.url') ?? ''), '/');
+        $path      = $entry->url();
+        $url       = $base . $path . (str_contains($path, '?') ? '&' : '?') . 'preview=' . rawurlencode($token);
 
         return $this->json(200, [
             'data' => [
                 'url'        => $url,
-                'expires_at' => date('c', $resolver->expiresAt()),
+                'expires_at' => date('c', $expiresAt),
             ],
         ]);
     }

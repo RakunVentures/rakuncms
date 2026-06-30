@@ -26,20 +26,53 @@ final class DraftResolver
 
     // ── Token firmado ────────────────────────────────────────────────────────
 
-    /** Firma un token de preview para una entrada concreta. */
-    public function signToken(string $collection, string $locale, string $slug, ?int $now = null): string
+    /**
+     * Firma un token de preview para una entrada concreta. `expiresAt` opcional
+     * permite al caller sobreescribir el TTL por defecto (útil para extender el
+     * token hasta la fecha de publicación de un artículo programado — los
+     * editores programan con semanas/meses de anticipación y un token de 7d
+     * caducaba antes del lanzamiento).
+     */
+    public function signToken(string $collection, string $locale, string $slug, ?int $now = null, ?int $expiresAt = null): string
     {
-        $now ??= time();
-        $payload = ['c' => $collection, 'l' => $locale, 's' => $slug, 'exp' => $now + $this->ttl()];
+        $now       ??= time();
+        $expiresAt ??= $now + $this->ttl();
+        $payload = ['c' => $collection, 'l' => $locale, 's' => $slug, 'exp' => $expiresAt];
         $b64 = $this->b64UrlEncode((string) json_encode($payload, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
 
         return $b64 . '.' . hash_hmac('sha256', $b64, $this->secret());
     }
 
-    /** Epoch en que expira un token firmado emitido "ahora". */
+    /** Epoch en que expira un token firmado emitido "ahora" con el TTL por defecto. */
     public function expiresAt(?int $now = null): int
     {
         return ($now ?? time()) + $this->ttl();
+    }
+
+    /**
+     * Epoch en que debería expirar el token de una entrada concreta. Para
+     * entradas con fecha futura (programadas), extiende el token hasta
+     * `publish_date + 30 días de buffer` — así el link compartido con el cliente
+     * sobrevive todo el periodo de programación, sin importar cuán lejos esté.
+     * Para entradas sin fecha o con fecha pasada, devuelve el default TTL.
+     */
+    public function expiresForEntry(?Entry $entry = null, ?int $now = null): int
+    {
+        $now  ??= time();
+        $base   = $now + $this->ttl();
+        if ($entry === null) {
+            return $base;
+        }
+        $date = (string) ($entry->date() ?? '');
+        if ($date === '') {
+            return $base;
+        }
+        $ts = strtotime($date);
+        if ($ts === false) {
+            return $base;
+        }
+        $buffer = 30 * 86400;
+        return max($base, $ts + $buffer);
     }
 
     /**
@@ -181,7 +214,11 @@ final class DraftResolver
     {
         $t = $this->config('preview.ttl') ?? $this->config('rakun.preview.ttl');
 
-        return is_numeric($t) ? max(60, (int) $t) : 604800; // 7 días por defecto
+        // Default: 1 año. Los editores programan artículos con meses de
+        // anticipación; un default de 7 días caducaba los links de preview
+        // mucho antes de la publicación. Sitios que prefieran ventana más corta
+        // por seguridad declaran `preview.ttl` en su yaml.
+        return is_numeric($t) ? max(60, (int) $t) : 31_536_000;
     }
 
     private function config(string $key): mixed

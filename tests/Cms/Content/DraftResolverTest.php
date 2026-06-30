@@ -133,6 +133,47 @@ test('ContentApiController::previewUrl devuelve una URL con token verificable', 
     expect($verified)->toMatchArray(['collection' => 'blog', 'slug' => 'draft-post']);
 });
 
+test('expiresForEntry extiende el token hasta publish_date + 30d cuando hay fecha futura', function () {
+    // ttl config: 3600 (1h). Una entrada programada para "2099-01-01" debería
+    // generar un token que dura hasta ~2099-01-31 (30d buffer), no solo 1h.
+    $r = new DraftResolver($this->dir);
+    $entry = $r->resolveEntry('blog', 'en', 'future-post');
+    expect($entry)->not->toBeNull();
+
+    $now      = time();
+    $expires  = $r->expiresForEntry($entry, $now);
+    $publishTs = strtotime('2099-01-01');
+
+    expect($expires)->toBeGreaterThan($now + 3600);  // mucho más que el ttl base
+    expect($expires)->toBeGreaterThanOrEqual($publishTs + 30 * 86400 - 1);
+    expect($expires)->toBeLessThanOrEqual($publishTs + 30 * 86400 + 1);
+});
+
+test('expiresForEntry usa ttl base cuando la fecha es pasada (o no hay)', function () {
+    $r = new DraftResolver($this->dir);
+    $entry = $r->resolveEntry('blog', 'en', 'published-post'); // sin date futura
+    $now = time();
+    expect($r->expiresForEntry($entry, $now))->toBe($now + 3600);
+    expect($r->expiresForEntry(null, $now))->toBe($now + 3600);
+});
+
+test('previewUrl extiende expires_at para artículos programados a futuro', function () {
+    $controller = new \Rkn\Cms\Http\Controllers\ContentApiController($this->dir);
+    $req = (new \Nyholm\Psr7\ServerRequest('GET', '/api/v1/preview-url'))
+        ->withQueryParams(['collection' => 'blog', 'slug' => 'future-post', 'locale' => 'en']);
+
+    $data = json_decode((string) $controller->previewUrl($req)->getBody(), true)['data'];
+    $expiresTs = strtotime($data['expires_at']);
+    // > 30 días en el futuro (ttl base = 3600s en este test). Como future-post
+    // tiene date=2099-01-01, el token vive mucho más que 1h.
+    expect($expiresTs)->toBeGreaterThan(time() + 30 * 86400);
+
+    // Y el token aún verifica: el exp embebido debe matchear expires_at.
+    parse_str((string) parse_url($data['url'], PHP_URL_QUERY), $q);
+    $payload = json_decode(base64_decode(strtr(explode('.', $q['preview'])[0], '-_', '+/')), true);
+    expect($payload['exp'])->toBe($expiresTs);
+});
+
 test('ContentApiController::previewUrl 404 si la entrada no existe', function () {
     $controller = new \Rkn\Cms\Http\Controllers\ContentApiController($this->dir);
     $req = (new \Nyholm\Psr7\ServerRequest('GET', '/api/v1/preview-url'))
