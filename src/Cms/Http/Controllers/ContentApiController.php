@@ -457,7 +457,11 @@ final class ContentApiController
                 'slug'       => $slug,
                 'collection' => $collection,
                 'locale'     => $locale,
-                'meta'       => $meta,
+                // Devolver el frontmatter post-aliasing — refleja la verdad persistida.
+                // Sin esto, el cliente veía los valores crudos que envió (p.ej. "Boda")
+                // mientras la BD almacenaba la forma canónica ("Bodas"), generando
+                // divergencia de UI.
+                'meta'       => $frontmatter,
             ],
             'message' => 'Created',
         ]);

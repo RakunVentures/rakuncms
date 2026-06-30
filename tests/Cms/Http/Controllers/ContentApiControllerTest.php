@@ -343,6 +343,10 @@ test('field_aliases canonicalize editorial inputs at write time', function () {
     $res = $controller->create($req, 'blog');
     expect($res->getStatusCode())->toBe(201);
 
+    // El response refleja la VERDAD PERSISTIDA (post-aliasing), no el input crudo.
+    $payload = json_decode((string) $res->getBody(), true);
+    expect($payload['data']['meta']['categories'])->toBe(['Bodas', 'Pareja', 'Moda']);
+
     // El .md ya tiene las canónicas — y deduplicadas (Boda+Bodas → 1×Bodas).
     $md = file_get_contents($this->tempDir . '/content/blog/alias-create.en.md');
     expect($md)->toContain('Bodas');
