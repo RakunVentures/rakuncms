@@ -532,7 +532,11 @@ final class SqliteIndexStore implements IndexStore
                 '<=' => $entryValue <= $value,
                 'contains' => is_string($entryValue) && str_contains(strtolower($entryValue), strtolower((string) $value)),
                 'in' => is_array($value) && in_array($entryValue, $value),
-                'has' => is_array($entryValue) && in_array($value, $entryValue),
+                // 'has': pertenencia case-insensitive para strings (tags/categorías). Las
+                // taxonomías son editoriales — un artículo guardado como 'bodas' debe
+                // matchear la URL /category/Bodas. Strict in_array() solo cubría el
+                // 1-de-3 casos por defecto y dejaba afuera la mitad de los listados.
+                'has' => is_array($entryValue) && self::hasValue($entryValue, $value),
                 default => false,
             };
             if (!$ok) {
@@ -540,6 +544,27 @@ final class SqliteIndexStore implements IndexStore
             }
         }
         return true;
+    }
+
+    /**
+     * Pertenencia para el operador `has`. Para strings es case-insensitive
+     * (Unicode-aware vía mb_strtolower) y trim; para no-strings cae a
+     * comparación laxa, preservando el contrato original.
+     *
+     * @param array<array-key, mixed> $haystack
+     */
+    private static function hasValue(array $haystack, mixed $needle): bool
+    {
+        if (is_string($needle)) {
+            $n = mb_strtolower(trim($needle));
+            foreach ($haystack as $item) {
+                if (is_string($item) && mb_strtolower(trim($item)) === $n) {
+                    return true;
+                }
+            }
+            return false;
+        }
+        return in_array($needle, $haystack);
     }
 
     /**

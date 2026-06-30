@@ -262,8 +262,24 @@ final class PhpArrayIndexStore implements IndexStore
             '<=' => $entryValue <= $value,
             'contains' => is_string($entryValue) && str_contains(strtolower($entryValue), strtolower((string) $value)),
             'in' => is_array($value) && in_array($entryValue, $value),
-            'has' => is_array($entryValue) && in_array($value, $entryValue),
+            // 'has' case-insensitive para strings (paridad con SqliteIndexStore).
+            'has' => is_array($entryValue) && self::hasValue($entryValue, $value),
             default => false,
         };
+    }
+
+    /** @param array<array-key, mixed> $haystack */
+    private static function hasValue(array $haystack, mixed $needle): bool
+    {
+        if (is_string($needle)) {
+            $n = mb_strtolower(trim($needle));
+            foreach ($haystack as $item) {
+                if (is_string($item) && mb_strtolower(trim($item)) === $n) {
+                    return true;
+                }
+            }
+            return false;
+        }
+        return in_array($needle, $haystack);
     }
 }

@@ -171,6 +171,25 @@ test('findEntryByPath parity (exact + prefix+locale)', function () {
     }
 });
 
+test("'has' es case-insensitive y trim para strings (bug categorias/tags)", function () {
+    // El fixture guarda tag 'moda' (minúscula). El operador 'has' debe matchear
+    // 'Moda', 'MODA' y '  moda  ' por igual — las categorías son editoriales y
+    // mezclan capitalización ('Bodas' en URL vs 'bodas' en frontmatter). Paridad
+    // exigida entre Php y Sqlite (TaxonomyRouter pasa el segmento URL verbatim).
+    $cases = ['moda', 'Moda', 'MODA', "  moda\t"];
+    foreach ($cases as $needle) {
+        foreach ([$this->php, $this->sqlite] as $store) {
+            $rows = (new Query($store))->collection('blog')->locale('es')->where('tags', 'has', $needle)->get();
+            expect($rows)->not->toBeEmpty();
+        }
+    }
+
+    // No-string needles (e.g. bool/int) preservan comparación laxa: el contrato
+    // original (in_array no-strict) seguía existiendo, no se debe romper.
+    $rows = (new Query($this->sqlite))->collection('blog')->locale('en')->where('featured', '=', true)->get();
+    expect($rows)->not->toBeEmpty();
+});
+
 test('idempotent sync (second sync changes nothing)', function () {
     $report = $this->sqlite->sync();
     expect($report['inserted'])->toBe(0);
