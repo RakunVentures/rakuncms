@@ -319,6 +319,54 @@ test('update returns 404 for missing entry', function () {
     expect($response->getStatusCode())->toBe(404);
 });
 
+test('field_aliases canonicalize editorial inputs at write time', function () {
+    // Sitio que declara aliases para 'categories' en blog: las variantes equivocadas
+    // se reescriben a su canónica en write — independiente de quién las haya tipeado
+    // (admin/API/import). Sin aliases declarados, los meta salen intactos.
+    file_put_contents(
+        $this->tempDir . '/config/rakun.yaml',
+        "site:\n  default_locale: en\ncollections:\n  blog:\n    field_aliases:\n      categories:\n        Boda: Bodas\n        Parejas: Pareja\n",
+    );
+    // Boot Application so \config() resolve aliases (constructor re-carga config).
+    new \Rkn\Framework\Application($this->tempDir);
+    $controller = new ContentApiController($this->tempDir);
+
+    // (1) Create con categorías mixtas (Boda + Bodas, Parejas, y un valor canónico).
+    $body = json_encode([
+        'title' => 'Alias Create',
+        'slug'  => 'alias-create',
+        'locale' => 'en',
+        'meta'  => ['categories' => ['Boda', 'Bodas', 'Parejas', 'Pareja', 'Moda']],
+    ]);
+    $req = (new ServerRequest('POST', new Uri('/api/v1/entries/blog')))
+        ->withBody(\Nyholm\Psr7\Stream::create((string) $body));
+    $res = $controller->create($req, 'blog');
+    expect($res->getStatusCode())->toBe(201);
+
+    // El .md ya tiene las canónicas — y deduplicadas (Boda+Bodas → 1×Bodas).
+    $md = file_get_contents($this->tempDir . '/content/blog/alias-create.en.md');
+    expect($md)->toContain('Bodas');
+    expect($md)->toContain('Pareja');
+    expect($md)->toContain('Moda');
+    expect($md)->not->toContain('"Boda"');     // forma equivocada no persistida (yaml usa - quoting)
+    expect($md)->not->toContain("- Boda\n");   // ni como yaml flow
+    expect($md)->not->toContain('Parejas');
+
+    // (2) Update sobre una entrada existente con la misma normalización.
+    $upd = json_encode(['meta' => ['categories' => ['Boda', 'Parejas']]]);
+    $req2 = (new ServerRequest('PUT', new Uri('/api/v1/entries/blog/alias-create')))
+        ->withBody(\Nyholm\Psr7\Stream::create((string) $upd));
+    $res2 = $controller->update($req2, 'blog', 'alias-create');
+    expect($res2->getStatusCode())->toBe(200);
+
+    $data2 = json_decode((string) $res2->getBody(), true);
+    expect($data2['data']['meta']['categories'])->toBe(['Bodas', 'Pareja']);
+
+    // Reset config para no contaminar otros tests del archivo.
+    file_put_contents($this->tempDir . '/config/rakun.yaml', "site:\n  default_locale: en\n");
+    new \Rkn\Framework\Application($this->tempDir);
+});
+
 test('update returns 400 for invalid JSON body', function () {
     $request = (new ServerRequest('PUT', new Uri('/api/v1/entries/blog/hello')))
         ->withBody(\Nyholm\Psr7\Stream::create('not-json'));

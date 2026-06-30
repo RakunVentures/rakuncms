@@ -68,6 +68,9 @@ final class ContentApiController
                 // ¿La colección usa cuerpo editorial? false (banners/revista) → el admin
                 // oculta el editor y muestra una vista previa. Default true.
                 'body'             => array_key_exists('body', $def) ? (bool) $def['body'] : true,
+                // Aliases canónicos por field (categories/tags...). El engine los aplica
+                // en write; el admin puede usarlos para autocompletado/feedback al editor.
+                'field_aliases'    => is_array($def['field_aliases'] ?? null) ? $def['field_aliases'] : null,
             ];
         }
 
@@ -398,6 +401,7 @@ final class ContentApiController
         if (isset($body['meta']) && is_array($body['meta'])) {
             $meta = array_merge($meta, $body['meta']);
         }
+        $meta    = $this->applyFieldAliases($collection, $meta);
         $content = array_key_exists('content', $body) ? (string) $body['content'] : $existing->body;
 
         $storage->write(new ContentDraft($collection, $locale, $storageSlug, $meta, $content));
@@ -442,6 +446,7 @@ final class ContentApiController
             ['title' => $title, 'date' => date('Y-m-d H:i:s')],
             $meta,
         );
+        $frontmatter = $this->applyFieldAliases($collection, $frontmatter);
 
         $storage->write(new ContentDraft($collection, $locale, $slug, $frontmatter, $content));
         $this->refreshIndex();
@@ -521,6 +526,57 @@ final class ContentApiController
         $this->deleteMediaFiles($mediaFiles);
 
         return $this->json(200, ['message' => 'Deleted']);
+    }
+
+    /**
+     * Aplica `field_aliases` (canonicalización editorial) al frontmatter antes
+     * de persistir. Mapa por colección: `field_aliases: { categories: {Boda:
+     * Bodas, Parejas: Pareja}, tags: {...} }`. Si un valor del array (o el
+     * escalar) coincide con una clave del mapa, se reemplaza por el canónico.
+     * Sin mapa declarado, el frontmatter sale intacto (default, zero-impact).
+     * Resultado: aunque un editor escriba "Boda" en el form, el dato persistido
+     * y la próxima lectura siempre devuelven "Bodas" — sin tocar UI ni hacer
+     * cruzadas en SQL.
+     *
+     * @param  array<string, mixed>  $meta
+     * @return array<string, mixed>
+     */
+    private function applyFieldAliases(string $collection, array $meta): array
+    {
+        $def     = $this->collectionDef($collection);
+        $aliases = $def['field_aliases'] ?? null;
+        if (!is_array($aliases) || $aliases === []) {
+            return $meta;
+        }
+
+        foreach ($aliases as $field => $map) {
+            if (!is_string($field) || $field === '' || !is_array($map) || $map === []) {
+                continue;
+            }
+            if (!array_key_exists($field, $meta)) {
+                continue;
+            }
+            $value = $meta[$field];
+
+            if (is_array($value)) {
+                $out  = [];
+                $seen = [];
+                foreach ($value as $item) {
+                    $canon = is_string($item) && isset($map[$item]) ? $map[$item] : $item;
+                    $key   = is_string($canon) ? $canon : json_encode($canon);
+                    if ($key !== false && isset($seen[$key])) {
+                        continue;
+                    }
+                    $seen[$key] = true;
+                    $out[]      = $canon;
+                }
+                $meta[$field] = $out;
+            } elseif (is_string($value) && isset($map[$value])) {
+                $meta[$field] = $map[$value];
+            }
+        }
+
+        return $meta;
     }
 
     /**
