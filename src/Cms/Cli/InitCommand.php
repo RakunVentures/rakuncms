@@ -7,6 +7,7 @@ namespace Rkn\Cms\Cli;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputArgument;
+use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Attribute\AsCommand;
 
@@ -20,6 +21,13 @@ class InitCommand extends Command
     protected function configure(): void
     {
         $this->addArgument('path', InputArgument::OPTIONAL, 'Ruta donde inicializar el proyecto', getcwd());
+        $this->addOption(
+            'core-path',
+            null,
+            InputOption::VALUE_REQUIRED,
+            'Ruta (relativa o absoluta) al checkout del core rkn/cms para el repositorio path de composer.local.json',
+            '../rakuncms'
+        );
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
@@ -27,7 +35,6 @@ class InitCommand extends Command
         $basePath = rtrim($input->getArgument('path'), '/');
 
         $directories = [
-            'bin',
             'cache/assets',
             'cache/pages',
             'cache/templates',
@@ -73,20 +80,46 @@ class InitCommand extends Command
         $this->createFile($basePath . '/content/_globals/site.yaml', $this->getSiteYamlContent());
         $this->createFile($basePath . '/content/pages/index.md', $this->getIndexMdContent());
         $this->createFile($basePath . '/templates/_layouts/base.twig', $this->getBaseTwigContent());
-        $this->createFile($basePath . '/templates/_layouts/page.twig', $this->getPageTwigContent());
+        // El template de página va en la raíz de templates/ (no en _layouts/): el
+        // frontmatter `template: page` resuelve a templates/page.twig, mientras que
+        // _layouts/ guarda solo los layouts base que las páginas extienden.
+        $this->createFile($basePath . '/templates/page.twig', $this->getPageTwigContent());
         $this->createFile($basePath . '/src/Components/Counter.php', $this->getCounterComponentContent());
         $this->createFile($basePath . '/templates/yoyo/counter.twig', $this->getCounterTwigContent());
         $this->createFile($basePath . '/public/assets/css/style.css', $this->getCssContent());
         $this->createFile($basePath . '/templates/_partials/seo.twig', $this->getSeoPartialContent());
 
-        $rakunCliPath = $basePath . '/rakun';
-        $this->createFile($rakunCliPath, $this->getRakunCliContent());
-        chmod($rakunCliPath, 0755);
+        $packageName = $this->derivePackageName($basePath);
+        $corePath = (string) $input->getOption('core-path');
+        $this->createFile($basePath . '/composer.json', $this->getComposerJsonContent($packageName));
+        $this->createFile($basePath . '/composer.local.json', $this->getComposerLocalJsonContent($packageName, $corePath));
 
         $output->writeln("<info>¡Proyecto RakunCMS inicializado correctamente en {$basePath}!</info>");
-        $output->writeln("Puedes iniciar el servidor con: <comment>php rakun serve</comment>");
+        $output->writeln('');
+        $output->writeln('Siguientes pasos:');
+        $output->writeln("  <comment>cd {$basePath}</comment>");
+        $output->writeln('  <comment>COMPOSER=composer.local.json herd composer install</comment>   # desarrollo (core local vía repo path)');
+        $output->writeln('  <comment>herd php vendor/bin/rakun serve</comment>                       # servidor local');
+        $output->writeln('');
+        $output->writeln('Para desplegar, instala con el composer.json de Packagist:');
+        $output->writeln('  <comment>herd composer install --no-dev --optimize-autoloader</comment>');
 
         return Command::SUCCESS;
+    }
+
+    /**
+     * Deriva un nombre de paquete Composer válido (vendor/slug) a partir del
+     * nombre del directorio del proyecto: minúsculas y no-alfanuméricos → guiones.
+     */
+    private function derivePackageName(string $basePath): string
+    {
+        $slug = strtolower(basename($basePath));
+        $slug = (string) preg_replace('/[^a-z0-9]+/', '-', $slug);
+        $slug = trim($slug, '-');
+        if ($slug === '') {
+            $slug = 'site';
+        }
+        return "rkn/{$slug}";
     }
 
     private function createFile(string $path, string $content): void
@@ -122,6 +155,9 @@ class InitCommand extends Command
             '/node_modules/',
             '/.env',
             '/.env.*.local',
+            '# composer.local.json SÍ se commitea (manifiesto de dev), pero su lock NO:',
+            '# apunta al core local y no debe viajar al servidor.',
+            '/composer.local.lock',
             '# Content API keys live only on each server — template in config/api.yaml.example.',
             '/config/api.yaml',
             '# Database dumps (db:dump) hold the full content store — never commit them.',
@@ -174,23 +210,9 @@ if (PHP_SAPI === 'cli-server') {
 
 require __DIR__ . '/../vendor/autoload.php';
 
-// Custom Autoloader for local components in /components/
-spl_autoload_register(function ($class) {
-    $prefix = 'App\\';
-    $base_dir = __DIR__ . '/../';
-
-    $len = strlen($prefix);
-    if (strncmp($prefix, $class, $len) !== 0) {
-        return;
-    }
-
-    $relative_class = substr($class, $len);
-    $file = $base_dir . str_replace('\\', '/', $relative_class) . '.php';
-
-    if (file_exists($file)) {
-        require $file;
-    }
-});
+// Los componentes del sitio (App\Components\*) se autocargan vía PSR-4 desde
+// composer.json (App\Components\ => src/Components/). Yoyo resuelve por defecto
+// el namespace App\Components\, así que no hace falta un autoloader manual.
 
 $app = new \Rkn\Framework\Application(dirname(__DIR__));
 
@@ -255,6 +277,11 @@ debug: "${APP_DEBUG:-false}"
 site:
   url: "${APP_URL:-http://localhost:8080}"
   default_locale: "es"
+  # Locales servidos por el sitio. Debe coincidir con el contenido en content/.
+  # LocaleDetector redirige "/" al locale del navegador SOLO si está en esta lista;
+  # si no, cae a default_locale. El scaffold solo genera /es/, así que declara "es".
+  # Añade "en" (y su contenido en content/) cuando internacionalices.
+  locales: ["es"]
 
 mail:
   smtp_host: "${MAIL_HOST:-localhost}"
@@ -373,11 +400,9 @@ template: page
 Edita este archivo en `content/pages/index.md` para cambiar el contenido. La magia ocurre al combinar la simplicidad de Markdown con el poder de Yoyo.
 
 ### Componente Reactivo Server-Side (Yoyo)
-A continuación verás un contador interactivo. Está escrito enteramente en PHP, reacciona sin recargar la página y no requiere escribir una sola línea de JavaScript:
+Debajo de este contenido verás un contador interactivo. Está escrito enteramente en PHP, reacciona sin recargar la página y no requiere escribir una sola línea de JavaScript.
 
-{{ yoyo('counter') }}
-
-Puedes ver cómo funciona esto editando:
+El contador lo inyecta la plantilla `templates/page.twig` (el bloque `.demo`), porque el Markdown se compila solo a HTML y no evalúa expresiones Twig. Puedes ver cómo funciona editando:
 * `src/Components/Counter.php`
 * `templates/yoyo/counter.twig`
 MD;
@@ -433,8 +458,12 @@ TWIG;
             <h2>{{ entry.title }}</h2>
         </header>
         <div class="content">
-            {# Transforma el markdown a HTML #}
-            {{ markdown(entry.content) }}
+            {# entry.content ya viene renderizado a HTML por el pipeline de contenido #}
+            {{ entry.content|raw }}
+        </div>
+        {# Demo del componente Yoyo. Elimina este bloque cuando ya no lo necesites. #}
+        <div class="demo">
+            {{ yoyo('counter') }}
         </div>
     </article>
 {% endblock %}
@@ -446,7 +475,7 @@ TWIG;
         return <<<'PHP'
 <?php
 
-namespace Rkn\Cms\Components;
+namespace App\Components;
 
 use Clickfwd\Yoyo\Component;
 
@@ -463,7 +492,7 @@ class Counter extends Component
 
     public function render()
     {
-        return $this->view('counter', ['count' => $this->count]);
+        return $this->view('yoyo/counter', ['count' => $this->count]);
     }
 }
 PHP;
@@ -474,7 +503,7 @@ PHP;
         return <<<'TWIG'
 <div id="counter-component" class="yoyo-box">
     <h3>Contador interactivo: {{ count }}</h3>
-    <button yoyo:click="increment" class="btn">Incrementar +1</button>
+    <button yoyo:post="increment" class="btn">Incrementar +1</button>
 </div>
 TWIG;
     }
@@ -575,42 +604,65 @@ CSS;
 TWIG;
     }
 
-    private function getRakunCliContent(): string
+    /**
+     * Manifiesto de DESPLIEGUE: consume rkn/cms estable desde Packagist.
+     * Es el composer.json que viaja al servidor (composer install --no-dev).
+     */
+    private function getComposerJsonContent(string $name): string
     {
-        return <<<'PHP'
-#!/usr/bin/env php
-<?php
+        $data = [
+            'name' => $name,
+            'description' => 'Sitio web construido con RakunCMS.',
+            'type' => 'project',
+            'require' => [
+                'php' => '^8.3',
+                'rkn/cms' => '^1.6',
+            ],
+            'autoload' => [
+                'psr-4' => [
+                    'RakunWebsite\\' => 'src/',
+                    'App\\Components\\' => 'src/Components/',
+                ],
+            ],
+            'config' => [
+                'platform' => ['php' => '8.3'],
+            ],
+            'minimum-stability' => 'stable',
+            'prefer-stable' => true,
+        ];
 
-declare(strict_types=1);
+        return json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . "\n";
+    }
 
-if (file_exists(__DIR__ . '/vendor/autoload.php')) {
-    require __DIR__ . '/vendor/autoload.php';
-} else {
-    fwrite(STDERR, "Could not find autoload.php. Run 'composer install' first.\n");
-    exit(1);
-}
+    /**
+     * Manifiesto LOCAL de desarrollo: enlaza rkn/cms al checkout del monorepo
+     * vía un repositorio path. Se usa con:
+     *   COMPOSER=composer.local.json herd composer install
+     * NUNCA se sube al servidor (apunta a una ruta local y rompe el deploy);
+     * su lock (composer.local.lock) está en .gitignore.
+     */
+    private function getComposerLocalJsonContent(string $name, string $corePath): string
+    {
+        $data = [
+            '_comment' => 'Manifiesto LOCAL de desarrollo. Úsalo con: COMPOSER=composer.local.json herd composer install. NUNCA lo subas al servidor: apunta a una ruta local (repo path) y rompe el deploy.',
+            'name' => $name,
+            'require' => [
+                'php' => '^8.3',
+                'rkn/cms' => '*',
+            ],
+            'repositories' => [
+                ['type' => 'path', 'url' => $corePath],
+            ],
+            'autoload' => [
+                'psr-4' => [
+                    'RakunWebsite\\' => 'src/',
+                    'App\\Components\\' => 'src/Components/',
+                ],
+            ],
+            'minimum-stability' => 'dev',
+            'prefer-stable' => true,
+        ];
 
-use Symfony\Component\Console\Application;
-
-$application = new Application('RakunCMS', '0.1.0');
-
-// Register commands
-$application->addCommand(new \Rkn\Cms\Cli\InitCommand());
-$application->addCommand(new \Rkn\Cms\Cli\WxrImportCommand());
-$application->addCommand(new \Rkn\Cms\Cli\IndexRebuildCommand());
-$application->addCommand(new \Rkn\Cms\Cli\PublishCheckCommand());
-$application->addCommand(new \Rkn\Cms\Cli\DbDumpCommand());
-$application->addCommand(new \Rkn\Cms\Cli\CacheClearCommand());
-$application->addCommand(new \Rkn\Cms\Cli\CacheWarmupCommand());
-$application->addCommand(new \Rkn\Cms\Cli\TemplateWarmupCommand());
-$application->addCommand(new \Rkn\Cms\Cli\QueueProcessCommand());
-$application->addCommand(new \Rkn\Cms\Cli\ServeCommand());
-$application->addCommand(new \Rkn\Cms\Cli\MakeComponentCommand());
-$application->addCommand(new \Rkn\Cms\Cli\MakeCollectionCommand());
-$application->addCommand(new \Rkn\Cms\Cli\SitemapGenerateCommand());
-$application->addCommand(new \Rkn\Cms\Cli\BuildCommand());
-
-$application->run();
-PHP;
+        return json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . "\n";
     }
 }
