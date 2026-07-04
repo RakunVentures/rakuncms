@@ -27,7 +27,10 @@ final class ServeCommand extends Command
             ->addOption('host', null, InputOption::VALUE_REQUIRED, 'Host to bind to', 'localhost')
             ->addOption('port', 'p', InputOption::VALUE_REQUIRED, 'Port to listen on', '8080')
             ->addOption('no-watch', null, InputOption::VALUE_NONE, 'Disable auto-cache clear on file changes')
-            ->addOption('workers', null, InputOption::VALUE_REQUIRED, 'PHP_CLI_SERVER_WORKERS — concurrent worker processes', '4');
+            ->addOption('workers', null, InputOption::VALUE_REQUIRED, 'PHP_CLI_SERVER_WORKERS — concurrent worker processes', '4')
+            ->addOption('no-rdc', null, InputOption::VALUE_NONE, 'Do not delegate to Rakun Dev Console even if rdc is installed')
+            ->addOption('detach', null, InputOption::VALUE_NONE, 'With rdc delegation: adopt and return without attaching to the logs')
+            ->addOption('stop', null, InputOption::VALUE_NONE, 'Stop the rdc-supervised server for this site');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
@@ -38,6 +41,21 @@ final class ServeCommand extends Command
         $workers = max(1, (int) $input->getOption('workers'));
 
         $basePath = $this->findBasePath();
+
+        if ($input->getOption('stop')) {
+            return $this->stopRdcSupervised($basePath, $output);
+        }
+
+        // Delegate supervision to Rakun Dev Console when available: the dev
+        // server then shows up in the RDC app with status, logs, health and
+        // queue metrics, survives crashes (launchd respawn) and outlives this
+        // terminal. Falls back silently to the local php -S below.
+        if (!$input->getOption('no-rdc')) {
+            $delegated = $this->delegateToRdc($basePath, $host, $port, (bool) $input->getOption('detach'), $output);
+            if ($delegated !== null) {
+                return $delegated;
+            }
+        }
 
         // Validate worktree: Is another instance already serving this project?
         if (!$this->handleWorktreeConflict($basePath, $input, $output)) {
@@ -366,5 +384,184 @@ final class ServeCommand extends Command
         }
 
         return getcwd() ?: dirname(__DIR__, 3);
+    }
+
+    // ------------------------------------------------------------------
+    // Rakun Dev Console (rdc) delegation
+    // ------------------------------------------------------------------
+
+    /**
+     * Delegate supervision to Rakun Dev Console via `rdc site:adopt`.
+     *
+     * Returns an exit code when delegation handled the request, or null to
+     * fall back to the local php -S server. Delegation only happens when ALL
+     * of these hold:
+     *   - rdc is on PATH,
+     *   - stdout is a TTY — this is the recursion guard: the launchd plist
+     *     written by rdc runs `rakun serve` itself, without a TTY,
+     *   - RDC_SUPERVISED is not set (belt and braces; the rdc plist sets it),
+     *   - `rdc site:adopt` answered ok (otherwise we warn and fall back).
+     *
+     * On success the terminal attaches to the supervised logs: Ctrl+C only
+     * detaches, the server keeps running under launchd. `rakun serve --stop`
+     * (or the RDC app) stops it.
+     */
+    private function delegateToRdc(string $basePath, string $host, int $port, bool $detach, OutputInterface $output): ?int
+    {
+        if (getenv('RDC_SUPERVISED') === '1') {
+            return null;
+        }
+
+        if (!function_exists('stream_isatty') || !@stream_isatty(STDOUT)) {
+            return null;
+        }
+
+        $rdc = $this->findRdcBinary();
+        if ($rdc === null) {
+            return null;
+        }
+
+        $command = sprintf(
+            '%s site:adopt %s --host=%s --port=%d --format=json 2>/dev/null',
+            escapeshellarg($rdc),
+            escapeshellarg($basePath),
+            escapeshellarg($host),
+            $port,
+        );
+        $raw = shell_exec($command);
+        $envelope = is_string($raw) ? json_decode($raw, true) : null;
+        $data = is_array($envelope) && is_array($envelope['data'] ?? null) ? $envelope['data'] : null;
+
+        if ($data === null || ($envelope['ok'] ?? false) !== true) {
+            $output->writeln('<comment>rdc está instalado pero site:adopt falló; usando el servidor local (usa --no-rdc para omitir este intento).</comment>');
+            return null;
+        }
+
+        $workspace = (string) ($data['workspace'] ?? '');
+        $site = (string) ($data['site'] ?? '');
+        $process = (string) ($data['process'] ?? 'serve');
+        $url = (string) ($data['url'] ?? "http://{$host}:{$port}");
+        $pid = $data['pid'] ?? null;
+
+        $this->writeAdoptReference($basePath, $workspace, $site, $process, $url);
+
+        $output->writeln("<info>Supervisado por Rakun Dev Console:</info> {$url}" . ($pid !== null ? " (PID {$pid})" : ''));
+        $output->writeln("Registrado como {$workspace}/{$site} · proceso '{$process}' — visible en la app de RDC.");
+        $output->writeln('El servidor corre bajo launchd: sobrevive a esta terminal y se reinicia solo.');
+        $output->writeln("Detener: <comment>rakun serve --stop</comment> (o desde Rakun Dev Console).");
+
+        if ($detach) {
+            return Command::SUCCESS;
+        }
+
+        $output->writeln('Streaming de logs (Ctrl+C desconecta; el servidor sigue corriendo)...');
+        $output->writeln('');
+
+        // Swallow SIGINT in this process so Ctrl+C only kills the child log
+        // stream and we still get to print the detach notice below.
+        if (function_exists('pcntl_async_signals') && function_exists('pcntl_signal')) {
+            pcntl_async_signals(true);
+            pcntl_signal(SIGINT, static function (): void {
+            });
+        }
+
+        passthru(sprintf(
+            '%s process:logs %s %s %s --follow',
+            escapeshellarg($rdc),
+            escapeshellarg($workspace),
+            escapeshellarg($site),
+            escapeshellarg($process),
+        ));
+
+        $output->writeln('');
+        $output->writeln("<info>Desconectado de los logs. El servidor sigue corriendo en {$url}.</info>");
+        $output->writeln('Detener: <comment>rakun serve --stop</comment> (o desde Rakun Dev Console).');
+
+        return Command::SUCCESS;
+    }
+
+    /**
+     * Stop the rdc-supervised server adopted for this site.
+     */
+    private function stopRdcSupervised(string $basePath, OutputInterface $output): int
+    {
+        $rdc = $this->findRdcBinary();
+        if ($rdc === null) {
+            $output->writeln('<error>rdc no está instalado; --stop solo aplica a servidores supervisados por Rakun Dev Console.</error>');
+            return Command::FAILURE;
+        }
+
+        $reference = $this->readAdoptReference($basePath);
+        if ($reference === null) {
+            $output->writeln('<error>No hay registro de adopción rdc para este sitio (cache/rdc-adopt.json).</error>');
+            $output->writeln('Detenlo desde la app de Rakun Dev Console o con: rdc process:disable <workspace> <site> serve');
+            return Command::FAILURE;
+        }
+
+        passthru(sprintf(
+            '%s process:disable %s %s %s',
+            escapeshellarg($rdc),
+            escapeshellarg($reference['workspace']),
+            escapeshellarg($reference['site']),
+            escapeshellarg($reference['process']),
+        ), $exitCode);
+
+        if ($exitCode === 0) {
+            $output->writeln('<info>Servidor supervisado detenido.</info>');
+            return Command::SUCCESS;
+        }
+
+        return Command::FAILURE;
+    }
+
+    private function findRdcBinary(): ?string
+    {
+        $path = trim((string) shell_exec('command -v rdc 2>/dev/null'));
+
+        return $path !== '' ? $path : null;
+    }
+
+    /**
+     * Persist which rdc workspace/site/process adopted this site so that
+     * `rakun serve --stop` can resolve the disable target without asking rdc.
+     */
+    private function writeAdoptReference(string $basePath, string $workspace, string $site, string $process, string $url): void
+    {
+        $dir = "{$basePath}/cache";
+        if (!is_dir($dir)) {
+            @mkdir($dir, 0755, true);
+        }
+        @file_put_contents("{$dir}/rdc-adopt.json", json_encode([
+            'workspace' => $workspace,
+            'site' => $site,
+            'process' => $process,
+            'url' => $url,
+            'adopted_at' => date('Y-m-d H:i:s'),
+        ], JSON_PRETTY_PRINT));
+    }
+
+    /**
+     * @return array{workspace: string, site: string, process: string}|null
+     */
+    private function readAdoptReference(string $basePath): ?array
+    {
+        $file = "{$basePath}/cache/rdc-adopt.json";
+        if (!file_exists($file)) {
+            return null;
+        }
+
+        $data = json_decode((string) file_get_contents($file), true);
+        if (!is_array($data)) {
+            return null;
+        }
+
+        $workspace = $data['workspace'] ?? null;
+        $site = $data['site'] ?? null;
+        $process = $data['process'] ?? null;
+        if (!is_string($workspace) || !is_string($site) || !is_string($process) || $workspace === '' || $site === '' || $process === '') {
+            return null;
+        }
+
+        return ['workspace' => $workspace, 'site' => $site, 'process' => $process];
     }
 }
