@@ -12,6 +12,24 @@ use Psr\Http\Server\RequestHandlerInterface;
 
 final class RedirectMiddleware implements MiddlewareInterface
 {
+    /**
+     * Builds the redirect target from an entry's locale and url without
+     * double-prefixing: `ContentScanner::buildUrlPath()` already bakes the
+     * locale prefix into `url` for non-default-locale entries (`/es/...`),
+     * while default-locale entries stay unprefixed. Prepending the locale
+     * unconditionally produced `/es/es/...` (a 404) for every non-default
+     * `old_url` redirect sitewide.
+     */
+    public static function localePrefixedUrl(string $locale, string $url): string
+    {
+        $prefix = '/' . $locale;
+        if ($url === $prefix || str_starts_with($url, $prefix . '/')) {
+            return $url;
+        }
+
+        return $prefix . $url;
+    }
+
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
         $path = $request->getUri()->getPath();
@@ -82,7 +100,7 @@ final class RedirectMiddleware implements MiddlewareInterface
                 $normalizedOldUrl = '/' . trim($oldUrl, '/');
                 if ($normalizedOldUrl === $cleanPath) {
                     $locale = $entry['locale'] ?? 'es';
-                    return '/' . $locale . $entry['url'];
+                    return self::localePrefixedUrl($locale, $entry['url']);
                 }
             }
         }
@@ -98,7 +116,7 @@ final class RedirectMiddleware implements MiddlewareInterface
                     $normalizedOldUrl = '/' . trim($oldUrl, '/');
                     if ($normalizedOldUrl === $parentPath) {
                         $locale = $entry['locale'] ?? 'es';
-                        return '/' . $locale . $entry['url'];
+                        return self::localePrefixedUrl($locale, $entry['url']);
                     }
                 }
             }
@@ -130,7 +148,7 @@ final class RedirectMiddleware implements MiddlewareInterface
 
         if ($row !== false) {
             $locale = $row['locale'] ?? 'es';
-            return '/' . $locale . $row['url'];
+            return self::localePrefixedUrl($locale, $row['url']);
         }
 
         // 2. Fallback for image attachment pages: /articulos/{year}/{month}/{post-slug}/{attachment-slug}
@@ -155,7 +173,7 @@ final class RedirectMiddleware implements MiddlewareInterface
 
             if ($row !== false) {
                 $locale = $row['locale'] ?? 'es';
-                return '/' . $locale . $row['url'];
+                return self::localePrefixedUrl($locale, $row['url']);
             }
         }
 
