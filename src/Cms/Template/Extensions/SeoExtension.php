@@ -129,20 +129,32 @@ final class SeoExtension extends AbstractExtension
         } catch (\Throwable) {
         }
 
+        $defaultLocale = 'es';
+        try {
+            $defaultLocale = \config('rakun.site.default_locale') ?? \config('site.default_locale', 'es');
+        } catch (\Throwable) {
+        }
+
+        // El prefijo de locale se omite para el default, igual que
+        // ContentScanner::buildUrlPath() (fuente de verdad para las URLs
+        // indexadas que usa el canonical). Si aquí siempre lo antepusiéramos,
+        // el hreflang self-referencing de las páginas del locale default
+        // apuntaría a una URL distinta de su propio canonical.
         $alternateUrls = [];
         if ($entry !== null && $baseUrl !== '') {
             foreach ($locales as $loc) {
                 $slug = $entry->slugForLocale($loc);
                 $collection = $entry->collection();
+                $localePrefix = $loc === $defaultLocale ? '' : '/' . $loc;
 
                 if ($collection === 'pages') {
                     if ($slug === 'home' || $slug === 'inicio') {
-                        $path = '/' . $loc . '/';
+                        $path = $localePrefix !== '' ? $localePrefix . '/' : '/';
                     } else {
-                        $path = '/' . $loc . '/' . $slug;
+                        $path = $localePrefix . '/' . $slug;
                     }
                 } else {
-                    $path = '/' . $loc . '/' . $collection . '/' . $slug;
+                    $path = $localePrefix . '/' . $collection . '/' . $slug;
                 }
 
                 $alternateUrls[$loc] = rtrim($baseUrl, '/') . $path;

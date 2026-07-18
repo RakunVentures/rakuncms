@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use Rkn\Cms\Content\Entry;
 use Rkn\Cms\Template\Extensions\SeoExtension;
 use Rkn\Framework\Application;
 
@@ -143,4 +144,85 @@ test('seoHead degrades gracefully with no SEO config', function () {
 
     expect($head)->not->toContain('"Organization"');
     expect($head)->not->toContain('"Hotel"');
+});
+
+/**
+ * G3 (SEO core): el canonical y el hreflang self-referencing del locale
+ * default deben apuntar a la MISMA URL. El canonical sale de la URL
+ * indexada de la entry (Entry::url(), que respeta
+ * ContentScanner::buildUrlPath() y omite el prefijo para el locale
+ * default). Antes del fix, el builder de alternate_urls de SeoExtension
+ * anteponía el locale SIEMPRE, produciendo un hreflang="en" con /en/ para
+ * una página cuyo canonical era la URL sin prefijo — URLs distintas para
+ * Google en la misma página.
+ */
+test('hreflang self-referencing matches canonical for the default locale', function () {
+    $dir = $this->makeTempDir();
+    bootSeoFixture($dir, 'config/rakun.yaml', <<<YAML
+    site:
+      url: "https://example.com"
+      title: "Example Site"
+      locales: ["en", "es"]
+      default_locale: "en"
+    YAML);
+
+    $file = $dir . '/pricing.md';
+    file_put_contents($file, "---\ntitle: Pricing\n---\nPricing content.\n");
+
+    $entry = Entry::fromArray([
+        'title' => 'Pricing',
+        'slug' => 'pricing',
+        'collection' => 'pages',
+        'locale' => 'en',
+        'file' => $file,
+        'meta' => ['description' => 'Pricing page'],
+        'slugs' => ['en' => 'pricing', 'es' => 'pricing'],
+        'url' => '/pricing',
+    ]);
+
+    $container = app();
+    $container->set('current_entry', $entry);
+    $container->set('locale', 'en');
+
+    $head = (new SeoExtension())->seoHead();
+
+    expect($head)->toContain('<link rel="canonical" href="https://example.com/pricing">');
+    expect($head)->toContain('hreflang="en" href="https://example.com/pricing"');
+    expect($head)->toContain('hreflang="es" href="https://example.com/es/pricing"');
+    expect($head)->not->toContain('hreflang="en" href="https://example.com/en/pricing"');
+});
+
+test('hreflang self-referencing matches canonical for the default locale home page', function () {
+    $dir = $this->makeTempDir();
+    bootSeoFixture($dir, 'config/rakun.yaml', <<<YAML
+    site:
+      url: "https://example.com"
+      title: "Example Site"
+      locales: ["en", "es"]
+      default_locale: "en"
+    YAML);
+
+    $file = $dir . '/home.md';
+    file_put_contents($file, "---\ntitle: Home\n---\nHome content.\n");
+
+    $entry = Entry::fromArray([
+        'title' => 'Home',
+        'slug' => 'home',
+        'collection' => 'pages',
+        'locale' => 'en',
+        'file' => $file,
+        'meta' => ['description' => 'Home page'],
+        'slugs' => ['en' => 'home', 'es' => 'home'],
+        'url' => '/',
+    ]);
+
+    $container = app();
+    $container->set('current_entry', $entry);
+    $container->set('locale', 'en');
+
+    $head = (new SeoExtension())->seoHead();
+
+    expect($head)->toContain('<link rel="canonical" href="https://example.com/">');
+    expect($head)->toContain('hreflang="en" href="https://example.com/"');
+    expect($head)->toContain('hreflang="es" href="https://example.com/es/"');
 });
