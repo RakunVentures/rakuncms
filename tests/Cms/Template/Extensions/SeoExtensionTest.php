@@ -226,3 +226,85 @@ test('hreflang self-referencing matches canonical for the default locale home pa
     expect($head)->toContain('hreflang="en" href="https://example.com/"');
     expect($head)->toContain('hreflang="es" href="https://example.com/es/"');
 });
+
+/**
+ * Reproduce la causa raíz real del bug de home: un archivo de home sin
+ * override de slug en el frontmatter (p.ej. index.en.md / index.es.md)
+ * indexa el slug literal "index" (ContentScanner::extractSlug del
+ * basename). Entry::slugForLocale() cae a ese slug propio para cualquier
+ * locale que no tenga override explícito en $slugs, así que el builder de
+ * alternate_urls de SeoExtension necesita tratar "index" como home igual
+ * que ContentScanner::buildUrlPath() (whitelist ['index','home','inicio','']),
+ * o genera hreflang=".../index" en vez de "/".
+ */
+test('hreflang and canonical resolve to "/" for a home entry with the literal "index" slug', function () {
+    $dir = $this->makeTempDir();
+    bootSeoFixture($dir, 'config/rakun.yaml', <<<YAML
+    site:
+      url: "https://example.com"
+      title: "Example Site"
+      locales: ["en", "es"]
+      default_locale: "en"
+    YAML);
+
+    $file = $dir . '/index.en.md';
+    file_put_contents($file, "---\ntitle: Home\n---\nHome content.\n");
+
+    $entry = Entry::fromArray([
+        'title' => 'Home',
+        'slug' => 'index',
+        'collection' => 'pages',
+        'locale' => 'en',
+        'file' => $file,
+        'meta' => ['description' => 'Home page'],
+        'slugs' => [],
+        'url' => '/',
+    ]);
+
+    $container = app();
+    $container->set('current_entry', $entry);
+    $container->set('locale', 'en');
+
+    $head = (new SeoExtension())->seoHead();
+
+    expect($head)->toContain('<link rel="canonical" href="https://example.com/">');
+    expect($head)->toContain('hreflang="en" href="https://example.com/"');
+    expect($head)->toContain('hreflang="es" href="https://example.com/es/"');
+    expect($head)->not->toContain('/index');
+});
+
+test('hreflang and canonical resolve to "/es/" for a Spanish default-locale home entry with the literal "index" slug', function () {
+    $dir = $this->makeTempDir();
+    bootSeoFixture($dir, 'config/rakun.yaml', <<<YAML
+    site:
+      url: "https://example.com"
+      title: "Example Site"
+      locales: ["en", "es"]
+      default_locale: "es"
+    YAML);
+
+    $file = $dir . '/index.es.md';
+    file_put_contents($file, "---\ntitle: Inicio\n---\nContenido.\n");
+
+    $entry = Entry::fromArray([
+        'title' => 'Inicio',
+        'slug' => 'index',
+        'collection' => 'pages',
+        'locale' => 'es',
+        'file' => $file,
+        'meta' => ['description' => 'Pagina de inicio'],
+        'slugs' => [],
+        'url' => '/',
+    ]);
+
+    $container = app();
+    $container->set('current_entry', $entry);
+    $container->set('locale', 'es');
+
+    $head = (new SeoExtension())->seoHead();
+
+    expect($head)->toContain('<link rel="canonical" href="https://example.com/">');
+    expect($head)->toContain('hreflang="es" href="https://example.com/"');
+    expect($head)->toContain('hreflang="en" href="https://example.com/en/"');
+    expect($head)->not->toContain('/index');
+});

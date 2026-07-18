@@ -148,7 +148,12 @@ final class SeoExtension extends AbstractExtension
                 $localePrefix = $loc === $defaultLocale ? '' : '/' . $loc;
 
                 if ($collection === 'pages') {
-                    if ($slug === 'home' || $slug === 'inicio') {
+                    // Mismo whitelist que ContentScanner::buildUrlPath(): el
+                    // basename de un archivo de home (p.ej. index.en.md) se
+                    // extrae literalmente como slug "index" cuando no hay
+                    // override explícito en el frontmatter — hay que tratarlo
+                    // como home igual que 'home'/'inicio'/''.
+                    if (in_array($slug, ['index', 'home', 'inicio', ''], true)) {
                         $path = $localePrefix !== '' ? $localePrefix . '/' : '/';
                     } else {
                         $path = $localePrefix . '/' . $slug;
