@@ -310,7 +310,7 @@ final class ContentScanner
     public function buildUrlPath(string $collectionName, string $section, string $slug, string $locale): string
     {
         if ($collectionName === 'pages') {
-            if (in_array($slug, ['index', 'home', 'inicio', ''], true) && $section === '') {
+            if (Entry::isHomeSlug($slug) && $section === '') {
                 return $locale === $this->defaultLocale ? '/' : '/' . $locale . '/';
             }
             $path = '/' . ($section !== '' ? $section . '/' : '') . $slug;

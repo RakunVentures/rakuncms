@@ -160,6 +160,24 @@ final class Entry
     }
 
     /**
+     * Whether a slug identifies the home/index page of a `pages` collection.
+     *
+     * Shared equivalence list for the three places that need to decide
+     * "is this the home page" from a raw slug: ContentScanner::buildUrlPath()
+     * (builds the indexed URL, the source of truth for canonical),
+     * SeoExtension (hreflang self-referencing) and I18nExtension (nav locale
+     * switcher). A home `.md` file without an explicit slug override in its
+     * frontmatter indexes the literal basename as slug — "index" for
+     * `index.en.md`/`index.es.md`, "home"/"inicio" for those basenames, or ""
+     * for files with no basename remainder — so all four must be treated as
+     * home, or canonical/hreflang/nav links diverge and emit `/index` etc.
+     */
+    public static function isHomeSlug(string $slug): bool
+    {
+        return in_array($slug, ['index', 'home', 'inicio', ''], true);
+    }
+
+    /**
      * Get the rendered Markdown content (lazy loaded).
      */
     public function content(): string

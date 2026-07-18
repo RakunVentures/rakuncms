@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Rkn\Cms\Template\Extensions;
 
+use Rkn\Cms\Content\Entry;
 use Twig\Extension\AbstractExtension;
 use Twig\Extension\GlobalsInterface;
 use Twig\TwigFunction;
@@ -59,12 +60,12 @@ final class I18nExtension extends AbstractExtension implements GlobalsInterface
     {
         try {
             $entry = \app('current_entry');
-            if ($entry instanceof \Rkn\Cms\Content\Entry) {
+            if ($entry instanceof Entry) {
                 $slug = $entry->slugForLocale($targetLocale);
                 $collection = $entry->collection();
 
                 if ($collection === 'pages') {
-                    if ($slug === 'home' || $slug === 'inicio') {
+                    if (Entry::isHomeSlug($slug)) {
                         return '/' . $targetLocale . '/';
                     }
                     return '/' . $targetLocale . '/' . $slug;
