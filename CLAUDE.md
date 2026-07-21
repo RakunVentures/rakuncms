@@ -78,13 +78,15 @@ PROHIBIDO:
 ```
 PERMITIDO:
   - herd php vendor/bin/pest
-  - herd php bin/rakun serve
+  - herd php bin/rakun serve          # `bin/rakun` porque este repo ES el paquete rkn/cms.
+                                      # En un WEBSITE consumidor sería `vendor/bin/rakun`.
   - herd php -r "..."
   - herd composer ...
 
 PROHIBIDO:
   - php vendor/bin/pest (sin herd)
   - php bin/rakun (sin herd)
+  - php -S ... (usa Herd o `rakun serve` — nunca servidores HTTP ad-hoc)
   - composer ... (sin herd)
 ```
 
